@@ -62,7 +62,8 @@ class RsshubUrlTest(unittest.TestCase):
         self.assertEqual(parts.path, "/twitter/user/CloverWorks")
         q = parse_qs(parts.query)
         self.assertIn("採用", q["filter"][0].split("|"))
-        self.assertIn("質問募集", q["filterout"][0].split("|"))
+        self.assertEqual(q["filterout"][0].split("|"), ["抽選", "発売", "プレゼント", "🎁"])
+        self.assertEqual(q["filter"][0].split("|"), ["募集", "応募", "採用", "求人", "新卒", "企業説明会", "会社説明会"])
         self.assertEqual(q["format"], ["json"])
         self.assertNotIn("KEY123", feed.url)
         self.assertIn("key=KEY123", feed.request_url)
@@ -84,20 +85,20 @@ class RsshubUrlTest(unittest.TestCase):
 
     def test_filter_add_remove(self):
         def edit(c):
-            c["sns"]["search"]["default_filter"]["include"] = {"add": ["動画研修生"], "remove": ["中途"]}
+            c["sns"]["search"]["default_filter"]["include"] = {"add": ["動画研修生"], "remove": ["求人"]}
             c["sns"]["search"]["default_filter"]["exclude"] = {"add": ["配信"], "remove": ["プレゼント"]}
         cfg, _ = cfg_with(edit)
         feeds, _ = rsshub.build_feeds(cfg, "https://hub.example")
         q = parse_qs(urlsplit(feeds[0].url).query)
         inc, exc = q["filter"][0].split("|"), q["filterout"][0].split("|")
         self.assertIn("動画研修生", inc)
-        self.assertNotIn("中途", inc)
+        self.assertNotIn("求人", inc)
         self.assertIn("配信", exc)
         self.assertNotIn("プレゼント", exc)
 
     def test_no_exclude_means_no_filterout(self):
         def edit(c):
-            c["sns"]["search"]["default_filter"]["exclude"] = {"remove": ["プレゼント", "キャンペーン", "質問募集", "感想募集", "イラスト募集", "投稿募集"]}
+            c["sns"]["search"]["default_filter"]["exclude"] = {"remove": ["抽選", "発売", "プレゼント", "🎁"]}
         cfg, _ = cfg_with(edit)
         feeds, _ = rsshub.build_feeds(cfg, "https://hub.example")
         self.assertNotIn("filterout", feeds[0].url)

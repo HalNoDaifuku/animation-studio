@@ -61,7 +61,7 @@ class ValidateTest(unittest.TestCase):
             "monitor が文字列": (lambda c: c["sns"]["accounts"]["x"][0].update(monitor="yes"), "monitor"),
             "未定義のプリセット": (lambda c: c["sns"]["search"].update(use_presets=["nope"]), "nope"),
             "include が空": (lambda c: c["sns"]["search"].update(default_filter={"include": {"remove": [
-                "採用", "募集", "求人", "研修生", "説明会", "新卒", "中途", "通年採用", "スタッフ募集"]}}), "含める語が空"),
+                "募集", "応募", "採用", "求人", "新卒", "企業説明会", "会社説明会"]}}), "含める語が空"),
             "add/remove 以外のキー": (lambda c: c["sns"]["search"].update(default_filter={"include": {"adds": ["x"]}}), "add"),
             "include と exclude の両方": (lambda c: c["sns"]["search"].update(default_filter={"exclude": {"add": ["採用"]}}), "両方"),
             "クエリが長すぎる": (lambda c: c["sns"]["search"].update(keywords=["あ" * 300, "い" * 300], use_presets=["company_recruit"]), "長すぎ"),

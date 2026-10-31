@@ -213,25 +213,22 @@ sns:
   #   {base}/twitter/user/EXAMPLE?filter=採用|募集|…&filterout=プレゼント|…
   default_filter:
     rsshub_query: "filter={include}&filterout={exclude}"   # exclude が空なら filterout は付けない
-    # 含める語(採用ワード)。「応募」「エントリー」はプレゼント企画などと紛れやすいので入れていない。
+    # 含める語(採用ワード)。X の検索で言う「(募集 OR 応募 OR 採用 …)」の部分。
+    # ※「応募」を含むため、プレゼント企画などを下の exclude で弾いている。
     include:
-      - 採用
       - 募集
+      - 応募
+      - 採用
       - 求人
-      - 研修生
-      - 説明会
       - 新卒
-      - 中途
-      - 通年採用
-      - スタッフ募集
-    # 弾く語。「質問募集」など、採用ワードを含むが採用ではない投稿を弾く。
+      - 企業説明会
+      - 会社説明会
+    # 弾く語。X の検索で言う「-抽選 -発売 -プレゼント -🎁」の部分。
     exclude:
+      - 抽選
+      - 発売
       - プレゼント
-      - キャンペーン
-      - 質問募集
-      - 感想募集
-      - イラスト募集
-      - 投稿募集
+      - "🎁"
 
   # 追加の検索プリセット(既定ではない)。
   # 会社ファイルの sns.search.use_presets に名前を書いたときだけ生成される。
@@ -254,7 +251,7 @@ sns:
     company_recruit:
       description: 会社名 + 採用ワード(アカウントに限定しない)
       x:
-        query: '({company_keywords}) (採用 OR 募集 OR 求人 OR 研修生 OR 説明会 OR 新卒 OR 中途)'
+        query: '({company_keywords}) (募集 OR 応募 OR 採用 OR 求人 OR 新卒 OR 企業説明会 OR 会社説明会) -抽選 -発売 -プレゼント -🎁'
     role_recruit:
       description: 会社名 + その会社が募集する職種名
       x:

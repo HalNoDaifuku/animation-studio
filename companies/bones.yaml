@@ -78,8 +78,8 @@ sns:
     # 含める語(include)と弾く語(exclude)を隣り合わせに書く。必要なときだけ書く。
     default_filter:
       include:                    # 含める語(採用ワード)
-        add: []                   # 例: [動画研修生, 制作進行募集]
-        remove: []                # 例: [中途]
+        add: []                   # 例: [研修生, 動画研修生]
+        remove: []                # 例: [求人]
       exclude:                    # 弾く語
         add: []
         remove: []
