@@ -1,0 +1,125 @@
+# =============================================================================
+# companies/cloverworks.yaml — CloverWorks
+# =============================================================================
+# 値の確度:
+#   - 設立年月・所在地・親会社は Web で確認済み(Wikipedia / Weblio / マイナビ)
+#   - `null` の項目は未確認(公式サイトで確認して埋める)
+#   - roles は「サンプル」です。募集ページ(公式サイト)を取得できず確認できていないため、
+#     実際の募集職種に合わせて直してください
+# =============================================================================
+
+schema_version: 1
+
+# 会社ID: 不変の主キー。会社名が変わってもこの ID で参照する。
+id: cc022dc0-94b6-4505-9d2a-05613926a41f
+# slug: ファイル名・URL用の読みやすい別名。IDとは別物で、変えても参照は壊れない。
+slug: cloverworks
+
+name: 株式会社CloverWorks         # 現在の正式名称
+display_name: CloverWorks         # 通知・一覧での表示名
+name_en: CloverWorks Inc.
+# 社名変更の履歴(変更があったときだけ追記する)
+name_history: []
+
+founded_year: 2018                # 2018年10月1日設立。A-1 Pictures の高円寺スタジオが前身
+
+location:
+  prefecture: 東京都
+  city: 中野区
+  area: 本町
+  address: 東京都中野区本町2-46-1 中野坂上サンブライトツイン30F
+  # 資料により所在地が割れていた。Wikipedia の本文は杉並区(旧スタジオ時代の記述とみられる)、
+  # Weblio は「2024年春に移転」「本店は千代田区六番町」と記載。上の住所は3資料が一致。
+
+# 募集する職種(common.yaml の job_roles のIDから選ぶ)※サンプル値
+# 職種の除外語(job_roles.*.exclude_words)をこの会社だけ調整するときは、IDの代わりに
+# 次の形で、その職種のすぐ隣に書く(add / remove は片方だけでもよい)。
+#   - id: storyboard
+#     exclude_words: {remove: [コンテスト]}
+roles:
+  - production_assistant
+  - key_animator
+  - in_between
+  - finishing
+  - background_art
+  - compositing
+  - cg_3d
+
+# グループ会社・関連会社(会社ファイルが別にある場合は company_id で参照する)
+related_companies:
+  - name: 株式会社アニプレックス
+    company_id: null              # 会社ファイルを作ったらそのUUIDを入れる
+    relation: 親会社(株式の100%を保有する完全子会社)
+  - name: 株式会社A-1 Pictures
+    company_id: null
+    relation: 前身(A-1 Pictures の高円寺スタジオが CloverWorks に改称され、2018年に分社)
+
+website: https://cloverworks.co.jp/
+
+# SNS
+sns:
+  # 公式アカウント。プラットフォームごとにリスト(複数アカウントを書ける)。
+  #   handle: @ なしで書く(@ 付きで書いても生成時に取り除く)。未確認は null。
+  #   label:  どのアカウントか分かる名前(任意)。通知に表示できる。
+  #   monitor: true のアカウントは、common.yaml の既定フィルター(採用ワード)付きで監視される。
+  # 英語版アカウント(_En)は、既定フィルターの採用ワードが日本語のため、そのままでは
+  # ほとんど拾えない。監視するなら sns.search.default_filter.include に英語の語を足す
+  # (例: add: [hiring, recruit, job])。
+  accounts:
+    x:
+      - handle: CloverWorks
+        label: メイン
+        monitor: true
+      - handle: CloverWorks_En
+        label: 英語版
+        monitor: false
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      - handle: cloverworks_en
+        label: 英語版
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+
+  # 検索フィルター設定。何も書かなくても、アカウントがあれば既定フィルターが自動で効く。
+  search:
+    # 既定フィルター(common.yaml の sns.default_filter)に対する、この会社だけの調整。
+    # 含める語(include)と弾く語(exclude)を隣り合わせに書く。必要なときだけ書く。
+    default_filter:
+      include:                    # 含める語(採用ワード)
+        add: []
+        remove: []
+      exclude:                    # 弾く語
+        add: []
+        remove: []
+    # 会社名で広く検索したいときだけ有効にする(アカウントに限定しない検索)。
+    # 共通の search_presets の名前を書く。空なら生成しない。
+    keywords: [CloverWorks, クローバーワークス]   # use_presets を使うときの検索語
+    use_presets: []                # 例: [company_recruit, role_recruit]
+    # 共通のプリセットが使えない場合だけ、この会社専用のクエリを書く。
+    custom: {}
+
+# 監視するURL
+# urlwatch: の中身は urlwatch の urls.yaml の1ジョブにそのまま対応する
+#           (name と url はここの値から自動で組み立てるので書かない)。
+# 共通のWeb除外(common.yaml の web.excludes のうち auto: true のもの)は自動で適用される。
+# snippets: auto: false の除外を追加で使うとき(例: strip_all_html_comments)
+# skip_common_excludes: 自動適用を外したい除外の名前のリスト(all なら全部)
+# urlwatch に渡す name は "{monitors[].name} - {display_name}" で生成
+#           (例: 採用情報 - CloverWorks。いまの urls.yaml と同じ名前になる)。
+monitors:
+  - id: recruit            # 会社内で一意。通知やキャッシュのキーに使う
+    name: 採用情報
+    url: https://cloverworks.co.jp/recruit/
+    category: recruit      # recruit / news / works / other など
+    enabled: true
+    roles: []              # 空=この会社の全職種。特定の職種のページなら職種IDを入れる
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:              # いまの urls.yaml の設定をそのまま引き継いだもの
+      filter:
+        - html2text
+        - strip

@@ -1,0 +1,57 @@
+# =============================================================================
+# config/discord.yaml — Discord の送り先(職種ごとのチャンネル)
+# =============================================================================
+# 送信は Bot で行います(Webhook ではありません)。Bot トークンはこのファイルに書かず、
+# 環境変数 DISCORD_BOT_TOKEN(GitHub Actions では Secrets)で渡します。
+#
+# チャンネルIDの調べ方: Discord の設定 → 詳細設定 → 開発者モード をオン →
+#   チャンネルを右クリック →「チャンネルIDをコピー」。
+#   桁が大きいので、必ず "…" で囲んでください。
+#   チャンネルを自動で作るなら: python scripts/discord_setup_channels.py --apply
+#   (出力の YAML をここへ貼る)
+#
+# 送り先のルール(scripts/watchlib/routing.py):
+#   1. 監視URLの roles(空ならその会社の全職種)が候補
+#   2. SNSの投稿は、本文に職種のキーワードがあれば、その職種のチャンネルだけに送る
+#   3. 職種にチャンネルが無ければ fallback へ。同じチャンネルへは1回だけ送る
+#   4. サイト監視のエラーと RSSHub の取得エラーは errors へ(未設定なら職種のチャンネルへ)
+# =============================================================================
+discord:
+  api_base: https://discord.com/api/v10
+  channels:
+    fallback: null     # どの職種にも当てはまらないとき・職種が未割り当てのときの送り先
+    errors: null       # サイト監視のエラー、RSSHub取得エラーなどの送り先
+    roles:
+      producer: null                  # プロデューサー
+      production_desk: null           # 制作デスク
+      production_assistant: null      # 制作進行
+      setting_production: null        # 設定制作
+      director: null                  # 演出
+      storyboard: null                # 絵コンテ
+      script: null                    # 脚本
+      animation_director: null        # 作画監督
+      key_animator: null              # 原画
+      in_between: null                # 動画
+      in_between_check: null          # 動画検査
+      fx_animator: null               # エフェクト作画
+      finishing: null                 # 仕上げ
+      color_design: null              # 色彩設計
+      background_art: null            # 背景美術
+      art_direction: null             # 美術設定・美術監督
+      compositing: null               # 撮影
+      cg_3d: null                     # 3DCG(工程指定なし)
+      cg_director: null               # CGディレクター・CGスーパーバイザー
+      cg_production: null             # CG制作進行・CGプロデューサー
+      cg_modeler: null                # キャラクター・メカモデリング
+      cg_bg_modeler: null             # 背景モデリング(3D背景)
+      cg_texture_shader: null         # テクスチャ・マテリアル・シェーダー
+      cg_rigger: null                 # リギング・キャラクターセットアップ
+      cg_animator: null               # 3Dアニメーター
+      cg_mocap: null                  # モーションキャプチャ
+      cg_layout: null                 # 3Dレイアウト・カメラ
+      cg_effects: null                # CGエフェクト(VFX)
+      cg_lighting_compositing: null   # ライティング・CGコンポジット
+      cg_technical: null              # テクニカルアーティスト
+      editing: null                   # 編集
+      pipeline_engineer: null         # パイプライン/システムエンジニア
+      corporate: null                 # 管理部門(総務・経理・広報など)

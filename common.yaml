@@ -1,0 +1,344 @@
+# =============================================================================
+# common.yaml — 全社共通設定(サンプル / 方針決め用ドラフト)
+# =============================================================================
+# 会社ファイル (companies/*.yaml) から参照される「共通の辞書」です。
+#   1. job_roles  職種ID → 職種名・検索語・除外語(会社ファイルは ID だけを書く)
+#   2. sns        SNSプラットフォーム定義(RSSHubのルート)・既定フィルター(含める語/弾く語)・検索プリセット
+#   3. web        Webサイト監視(urlwatch)の既定値と、誤検知対策の除外フィルター
+#
+# 除外の設定は、効かせる対象のすぐ隣に書く:
+#   職種の除外語 → job_roles.*.exclude_words(keywords の隣)
+#   SNSの除外語  → sns.default_filter.exclude(include の隣)
+#   Webの除外    → web.excludes.*(条件 auto・説明・フィルター本体を1か所に)
+#
+# ルール:
+#   - 職種ID は一度決めたら変更しない(表示名 name は自由に変えてよい)
+#   - 職種ID は小文字の snake_case
+# =============================================================================
+
+schema_version: 1
+
+# -----------------------------------------------------------------------------
+# 1. 職種
+# -----------------------------------------------------------------------------
+# keywords      SNS検索で職種を拾う語(表記ゆれを含める)。
+# exclude_words この職種の語を使っていても、採用ではない投稿を弾く語(誤検知対策)。
+#   - 職種ごとに閉じて効く。検索クエリは職種ごとのかたまりになる:
+#       ((原画 OR 原画マン) -"原画展" -"原画集") OR ((動画 OR …) -"動画配信" …)
+#     → ある職種の除外語が、別の職種の投稿を巻き込んで消すことはない。
+#   - 緩め運用: 迷ったら入れない。入れるのは「採用の投稿や会社の告知文には、まず出てこない語」
+#     だけ(原画展・撮影会・Webライティング など)。募集文や告知に出うる語
+#     (コンテンツ・動画配信・建築・依頼受付・時代背景 など)は、誤検知を減らせても
+#     正しい投稿まで消えるので入れない。
+#   - 空 [] は「紛れにくい、または紛れ防止より取りこぼしの方が困る」の意味。
+#     運用して紛れが見つかったら足していく。
+#   - 除外語は、同じ職種の keywords と同じ語・その一部にしない(自分の投稿を消すため)。
+job_roles:
+  producer:
+    name: プロデューサー
+    keywords: [プロデューサー, 制作プロデューサー]
+    exclude_words: [プロデューサーさん]
+  production_desk:
+    name: 制作デスク
+    keywords: [制作デスク]
+    exclude_words: []   # 他の意味で使われにくいので空
+  production_assistant:
+    name: 制作進行
+    keywords: [制作進行, 進行]
+    exclude_words: [司会進行, 進行役]
+  setting_production:
+    name: 設定制作
+    keywords: [設定制作]
+    exclude_words: []   # 他の意味で使われにくいので空
+  director:
+    name: 演出
+    keywords: [演出, 監督]
+    exclude_words: [舞台演出, 野球監督, 工事監督]
+  storyboard:
+    name: 絵コンテ
+    keywords: [絵コンテ, コンテ]
+    exclude_words: [コンテスト, コンテナ]
+  script:
+    name: 脚本
+    keywords: [脚本, シナリオ]
+    exclude_words: [TRPG, マーダーミステリー, マダミス, 舞台脚本]
+  animation_director:
+    name: 作画監督
+    keywords: [作画監督, 作監]
+    exclude_words: []   # 他の意味で使われにくいので空
+  key_animator:
+    name: 原画
+    keywords: [原画, 原画マン]
+    exclude_words: [原画展, 原画集, 複製原画, 原画販売, 原画プレゼント]
+  in_between:
+    name: 動画
+    keywords: [動画, 動画マン, 動画研修生]
+    exclude_words: [動画投稿, 動画編集, YouTube動画]
+  in_between_check:
+    name: 動画検査
+    keywords: [動画検査]
+    exclude_words: []   # 他の意味で使われにくいので空
+  fx_animator:
+    name: エフェクト作画
+    keywords: [エフェクト, 特殊効果, エフェクト作画]
+    exclude_words: [サウンドエフェクト, 音響エフェクト, エフェクター, 特殊メイク]
+  finishing:
+    name: 仕上げ
+    keywords: [仕上げ, 色指定, 検査]
+    exclude_words: [PCR検査, 抗原検査, 血液検査, 内装仕上げ, 塗装仕上げ]
+  color_design:
+    name: 色彩設計
+    keywords: [色彩設計, 色設計]
+    exclude_words: [インテリア, 内装, カラーコーディネーター]
+  background_art:
+    name: 背景美術
+    keywords: [背景, 美術, 背景美術]
+    exclude_words: [美術展, 背景透過, 壁紙]
+  art_direction:
+    name: 美術設定・美術監督
+    keywords: [美術設定, 美術監督]
+    exclude_words: []   # 他の意味で使われにくいので空
+  compositing:
+    name: 撮影
+    keywords: [撮影, 撮影監督, コンポジット]
+    exclude_words: [撮影会, 撮影禁止, 撮影モデル, 撮影スポット, オフショット, ロケ撮影, コンポジットレジン, コンポジット材]
+  # --- 3DCG(工程別) ---
+  # cg_3d は「3DCGアーティスト」など工程を指定しない募集用の総称。
+  # 工程が分かる募集は下の個別の職種を使う(複数選んでよい)。
+  cg_3d:
+    name: 3DCG(工程指定なし)
+    keywords: [3DCG, CGアーティスト, CGジェネラリスト, CGデザイナー]
+    exclude_words: [建築パース, 3DCGパース, 3Dモデル販売]
+  cg_director:
+    name: CGディレクター・CGスーパーバイザー
+    keywords: [CGディレクター, CGスーパーバイザー, CGSV]
+    exclude_words: []   # 他の意味で使われにくいので空
+  cg_production:
+    name: CG制作進行・CGプロデューサー
+    keywords: [CG制作進行, CGプロデューサー, CGプロダクションマネージャー]
+    exclude_words: []   # 他の意味で使われにくいので空
+  cg_modeler:
+    name: キャラクター・メカモデリング
+    keywords: [CGモデラー, モデラー, モデリング, キャラクターモデラー, メカモデラー]
+    exclude_words: [ガンプラ, プラモ, ジオラマ, データモデリング]
+  cg_bg_modeler:
+    name: 背景モデリング(3D背景)
+    keywords: [背景モデラー, 背景CG, 3D背景, CG背景]
+    exclude_words: [VRChat, Vket]
+  cg_texture_shader:
+    name: テクスチャ・マテリアル・シェーダー
+    keywords: [テクスチャ, マテリアル, シェーダー, テクスチャアーティスト]
+    exclude_words: [食感, スキンケア, ヘアケア, 化粧品, 建築マテリアル, マテリアルハンドリング, Minecraft, マイクラ]
+  cg_rigger:
+    name: リギング・キャラクターセットアップ
+    keywords: [リガー, リギング, キャラクターセットアップ]
+    exclude_words: [玉掛け, クレーン, 船舶, ヨット]
+  cg_animator:
+    name: 3Dアニメーター
+    keywords: [CGアニメーター, 3Dアニメーター, 3Dアニメーション]
+    exclude_words: []   # 他の意味で使われにくいので空
+  cg_mocap:
+    name: モーションキャプチャ
+    keywords: [モーションキャプチャ, モーキャプ, モーションデータ]
+    exclude_words: [被験者, 歩行分析]
+  cg_layout:
+    name: 3Dレイアウト・カメラ
+    keywords: [3Dレイアウト, CGレイアウト, レイアウトアーティスト]
+    exclude_words: [店舗レイアウト, 工場レイアウト]
+  cg_effects:
+    name: CGエフェクト(VFX)
+    keywords: [CGエフェクト, VFX, FXアーティスト, Houdini]
+    exclude_words: [FX取引, 為替, マジシャン]
+  cg_lighting_compositing:
+    name: ライティング・CGコンポジット
+    keywords: [CGライティング, ライティング, ライティングアーティスト, CGコンポジット]
+    exclude_words: [Webライティング, SEOライティング, コピーライティング, セールスライティング]
+  cg_technical:
+    name: テクニカルアーティスト
+    keywords: [テクニカルアーティスト, TA]
+    exclude_words: [ティーチングアシスタント]
+  editing:
+    name: 編集
+    keywords: [編集, アニメ編集]
+    exclude_words: [編集部, 編集者, 編集長, 書籍編集, 雑誌編集, 漫画編集]
+  pipeline_engineer:
+    name: パイプライン/システムエンジニア
+    keywords: [パイプライン, システムエンジニア, 制作システム]
+    exclude_words: [営業パイプライン, 石油パイプライン]
+  corporate:
+    name: 管理部門(総務・経理・広報など)
+    keywords: [総務, 経理, 広報, 管理部門]
+    exclude_words: [総務省, 広報誌, 広報紙]
+
+# -----------------------------------------------------------------------------
+# 2. SNS
+# -----------------------------------------------------------------------------
+sns:
+  # RSSHubのルート定義。
+  #   handle_prefix: ルートへ渡すときにアカウントIDの前へ付ける文字。
+  #     会社ファイルのアカウントIDは @ なしで書く。YouTube のように @ が必要なものだけ
+  #     生成時にここで付ける。@ 付きで書かれていても生成時に取り除いてから処理する。
+  # ※ルートはRSSHubのバージョンや認証設定で変わるため、実運用前に使うインスタンスで要確認。
+  #   {base} は RSSHub インスタンスのURL(設定または GitHub Actions の secrets で渡す)。
+  platforms:
+    x:
+      label: X (旧Twitter)
+      handle_prefix: ""
+      user_feed: "{base}/twitter/user/{handle}"
+      search_feed: "{base}/twitter/keyword/{query}"
+    youtube:
+      label: YouTube
+      handle_prefix: "@"
+      user_feed: "{base}/youtube/user/{handle}"
+      search_feed: null
+    instagram:
+      label: Instagram
+      handle_prefix: ""
+      user_feed: "{base}/instagram/user/{handle}"
+      search_feed: null
+    bluesky:
+      label: Bluesky
+      handle_prefix: ""
+      user_feed: "{base}/bsky/posts/{handle}"
+      search_feed: null
+
+  # 既定フィルター: 公式アカウント(monitor: true)のフィードを、採用ワードで絞り込む。
+  # 会社ファイルに何も書かなくても、アカウントさえあれば自動で適用される。
+  # include(含める語)と exclude(弾く語)は、隣り合った2つで1組。
+  # RSSHub 共通の filter / filterout パラメータ(正規表現)を使うので、
+  # X・YouTube・Instagram・Bluesky のどれでも同じ考え方で動く。
+  # 会社ごとの調整は、会社ファイルの sns.search.default_filter に
+  # include / exclude それぞれの add / remove で書く。
+  # 生成時に URL エンコードする。生成例:
+  #   {base}/twitter/user/EXAMPLE?filter=採用|募集|…&filterout=プレゼント|…
+  default_filter:
+    rsshub_query: "filter={include}&filterout={exclude}"   # exclude が空なら filterout は付けない
+    # 含める語(採用ワード)。「応募」「エントリー」はプレゼント企画などと紛れやすいので入れていない。
+    include:
+      - 採用
+      - 募集
+      - 求人
+      - 研修生
+      - 説明会
+      - 新卒
+      - 中途
+      - 通年採用
+      - スタッフ募集
+    # 弾く語。「質問募集」など、採用ワードを含むが採用ではない投稿を弾く。
+    exclude:
+      - プレゼント
+      - キャンペーン
+      - 質問募集
+      - 感想募集
+      - イラスト募集
+      - 投稿募集
+
+  # 追加の検索プリセット(既定ではない)。
+  # 会社ファイルの sns.search.use_presets に名前を書いたときだけ生成される。
+  # 会社名で広く拾いたいとき用(X のキーワード検索ルートが使えるインスタンスのみ)。
+
+  # 検索クエリ1本あたりの最大文字数。
+  # X の検索クエリは 500 文字前後が上限の目安(X API は 512 文字。RSSHub 経由で同じかは要確認)。
+  # {role_clauses} を入れると、この長さを超えるぶんは職種のかたまり単位で複数のクエリに自動分割する。
+  search_max_query_length: 480
+  # 全プリセットの末尾に自動で付ける除外(リツイートを除く)。プリセット側には書かない。
+  search_query_suffix: "-filter:retweets"
+
+  # プリセットのプレースホルダ:
+  #   {company_keywords} 会社ファイルの sns.search.keywords を OR で連結
+  #   {role_keywords}    会社ファイルの roles に対応する job_roles.keywords を OR で連結(除外語なし)
+  #   {role_clauses}     職種ごとのかたまりを OR で連結(職種ごとの exclude_words 付き)。
+  #                      かたまり = ((keywords を OR) -"除外語1" -"除外語2" …)
+  #                      会社ごとの調整は、会社ファイルの roles で、その職種のすぐ隣に書く。
+  search_presets:
+    company_recruit:
+      description: 会社名 + 採用ワード(アカウントに限定しない)
+      x:
+        query: '({company_keywords}) (採用 OR 募集 OR 求人 OR 研修生 OR 説明会 OR 新卒 OR 中途)'
+    role_recruit:
+      description: 会社名 + その会社が募集する職種名
+      x:
+        query: '({company_keywords}) ({role_clauses}) (募集 OR 採用 OR 求む)'
+    announcement:
+      description: 会社名 + 新作・体制変更などのお知らせ
+      x:
+        query: '({company_keywords}) (お知らせ OR 制作決定 OR 参加決定 OR スタッフ募集)'
+
+# -----------------------------------------------------------------------------
+# 3. Webサイト監視(urlwatch)
+# -----------------------------------------------------------------------------
+web:
+  # urlwatch ジョブの既定値(監視URL側で同じキーを書けばそちらが優先)。
+  # 一時的な HTTP エラー(タイムアウト・メンテナンス中の 503 など)だけを通知しない。
+  # 404 や 403 は含めていない(ページ消失・アクセス拒否は気づきたいため)。
+  job_defaults:
+    max_tries: 3
+    ignore_http_error_codes: "408, 429, 500, 502, 503, 504"
+
+  # 誤検知対策の除外フィルター。1つの除外に「効かせる条件(auto)・説明・フィルター本体」をまとめて書く。
+  #   auto: true   全監視URLの filter の先頭に、ここに書いた順で自動挿入する。
+  #                HTML のまま処理する段階なので、サイト側の beautify / css / html2text /
+  #                re.findall より前に動く。外したい監視URLは skip_common_excludes に名前(または all)を書く。
+  #   auto: false  自動では使わない。必要な監視URLだけ、会社ファイルの monitors[].snippets に名前を書く。
+  # regex は YAML の単引用符の中に書くため、属性の引用符は " だけを想定している
+  # (WordPress の出力に合わせた形)。' で書かれたサイトには効かない場合がある。
+  excludes:
+    strip_script_style:
+      auto: true    # nonce など毎回変わる値が <script> に入っている
+      description: <script> と <style> を中身ごと除去する(nonce 等の誤検知対策)
+      filter:
+        - re.sub:
+            pattern: '(?is)<script\b[^>]*>.*?</script>'
+            repl: ''
+        - re.sub:
+            pattern: '(?is)<style\b[^>]*>.*?</style>'
+            repl: ''
+
+    strip_cache_comments:
+      auto: true    # <!-- Cached by ... 2026-09-26 --> のようなキャッシュ系コメント
+      description: キャッシュ系プラグインが入れる時刻入りHTMLコメントを除去する。
+        キーワードを含むコメントだけを対象にするので、<!-- p-block-recruit --> のような
+        目印コメントは残る(re.findall で目印を使うサイト向け)。
+      filter:
+        - re.sub:
+            pattern: '(?is)<!--(?:(?!-->).)*?(?:cache|generated in|served from|optimized by)(?:(?!-->).)*?-->'
+            repl: ''
+
+    strip_asset_versions:
+      auto: true    # style.css?ver=1234 のキャッシュバスター
+      description: URL 末尾のキャッシュバスター(?ver= など)を除去する。差分用の正規化なので URL の見た目が崩れてもよい。
+        YouTube の watch?v= は対象外。
+      filter:
+        - re.sub:
+            pattern: '(?i)[?&](?:amp;)?(?:ver|cb|ts|timestamp|nocache)=[^"&\s<>]*'
+            repl: ''
+
+    strip_form_tokens:
+      auto: true    # フォームの hidden nonce / CSRF トークン
+      description: フォームの hidden nonce / CSRF トークンの値を空にする(name が value より前にある形のみ対応)。
+      filter:
+        - re.sub:
+            pattern: '(?is)(<input\b[^>]*\bname="(?:_wpnonce|_wp_http_referer|_csrf|csrf[-_]?token|authenticity_token|__RequestVerificationToken|nonce)"[^>]*\bvalue=")[^"]*(")'
+            repl: '\1\2'
+        - re.sub:
+            pattern: '(?is)(<meta\b[^>]*\bname="csrf-token"[^>]*\bcontent=")[^"]*(")'
+            repl: '\1\2'
+        - re.sub:
+            pattern: '(?i)(\bdata-(?:nonce|csrf|token)[\w-]*=")[^"]*(")'
+            repl: '\1\2'
+
+    normalize_copyright_year:
+      auto: true    # © 2026 → 毎年1月1日に全サイトが一斉に変わるのを防ぐ
+      description: 著作権表記の年(© 2026 / © 2020-2026)を取り除く。
+      filter:
+        - re.sub:
+            pattern: '(?i)(©|&copy;|&#169;|copyright)\s*(?:19|20)\d{2}(?:\s*[-–~〜]\s*(?:19|20)\d{2})?'
+            repl: '\1'
+
+    strip_all_html_comments:
+      auto: false
+      description: HTMLコメントをすべて除去する。<!-- 目印 --> を re.findall で使うサイトでは使わないこと。
+      filter:
+        - re.sub:
+            pattern: '(?s)<!--.*?-->'
+            repl: ''
