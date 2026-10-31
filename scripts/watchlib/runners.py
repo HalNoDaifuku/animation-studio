@@ -143,6 +143,14 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
     result = RunResult()
     by_name = {i.name: i for i in infos}
     entries = parse_report(report_text, set(by_name))
+    # どのジョブがどう報告されたかを必ず出す(「0件」の理由が分かるように)
+    counts: dict[str, int] = {}
+    for e in entries:
+        counts[e.status] = counts.get(e.status, 0) + 1
+    log("urlwatch の結果: " + (", ".join(f"{k} {v}件" for k, v in sorted(counts.items())) or "報告なし")
+        + f"(ジョブ {len(by_name)}件)")
+    for name in sorted(set(by_name) - {e.name for e in entries}):
+        log(f"[報告なし] {name}: 変更なし、または無視する一時エラー(503など)のためレポートに載りませんでした")
     for entry in entries:
         info = by_name.get(entry.name)
         if entry.status == "UNCHANGED" or not info:

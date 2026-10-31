@@ -191,6 +191,17 @@ class UrlwatchE2E(unittest.TestCase):
         self.assertEqual(self.go("--generate-only"), 0)
         self.assertTrue((self.root / "build" / "urls.yaml").exists())
 
+    def test_summary_lists_jobs_missing_from_report(self):
+        import io, contextlib
+        report = self.root / "r.txt"
+        report.write_text("-" * 75 + "\nNEW: 採用情報 - CloverWorks ( http://x/ )\n" + "-" * 75 + "\n", encoding="utf-8")
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            self.go("--report", str(report), "--skip-new", "--dry-run")
+        out = buf.getvalue()
+        self.assertIn("NEW 1件", out)
+        self.assertIn("[報告なし] 消えるページ - CloverWorks", out)
+
     def test_wayback_failure_does_not_block(self):
         import watchlib.runners as runners
         report = self.root / "r.txt"
