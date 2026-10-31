@@ -166,7 +166,7 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
         + f"(ジョブ {len(by_name)}件)")
     for name in sorted(set(by_name) - {e.name for e in entries}):
         note = f" / 今のURLの状態: {probe(by_name[name].url)}" if probe else ""
-        log(f"[報告なし] {name}: 変更なし、または無視する一時エラー(408/429/5xx)のためレポートに載りませんでした{note}")
+        log(f"[報告なし] {name}: 変更なし、または無視する一時エラー(408/429/5xx)のためレポートに載りませんでした。フィルターの失敗は max_tries 回続くまで報告されません{note}")
     for entry in entries:
         info = by_name.get(entry.name)
         if entry.status == "UNCHANGED" or not info:

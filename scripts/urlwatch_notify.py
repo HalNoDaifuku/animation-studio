@@ -23,7 +23,7 @@ from watchlib.config import ROOT, ConfigError, load_config  # noqa: E402
 from watchlib.discord import DiscordBot, DryRunBot  # noqa: E402
 from watchlib.messages import truncate  # noqa: E402
 from watchlib.runners import RunResult, run_urlwatch_command, run_urlwatch_report, send_to_errors_channel  # noqa: E402
-from watchlib.urlwatch_jobs import build_jobs, write_urls_yaml  # noqa: E402
+from watchlib.urlwatch_jobs import build_jobs, missing_filter_modules, write_urls_yaml  # noqa: E402
 from watchlib.validate import ERROR, validate_config  # noqa: E402
 
 
@@ -62,6 +62,13 @@ def main(argv=None) -> int:
     print(f"{urls_path} に {len(jobs)}件のジョブを書きました。")
     if args.generate_only:
         return 0
+    if not args.report:
+        missing = missing_filter_modules(jobs)
+        if missing:
+            for module, names in missing.items():
+                print(f"[エラー] Pythonモジュール {module} がありません。使うジョブ: {', '.join(names)}")
+            print("pip install -r requirements.txt を実行してください(入っていないと、そのジョブは通知されません)。")
+            return 2
 
     if args.dry_run:
         bot = DryRunBot()

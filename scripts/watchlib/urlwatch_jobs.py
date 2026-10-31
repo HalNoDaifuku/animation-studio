@@ -72,3 +72,26 @@ def write_urls_yaml(jobs: list[dict], path: Path) -> None:
     text = yaml.safe_dump_all(jobs, allow_unicode=True, sort_keys=False, explicit_start=True,
                               default_flow_style=False, width=1000)
     path.write_text(text, encoding="utf-8")
+
+
+# urlwatch のフィルター → 必要なPythonモジュール(標準の依存に入っていないもの)
+FILTER_MODULES = {"beautify": ["bs4"], "html2text": [], "css": ["cssselect", "lxml"], "xpath": ["lxml"]}
+
+
+def missing_filter_modules(jobs: list[dict], find_spec=None) -> dict[str, list[str]]:
+    """使うフィルターに必要なモジュールのうち、入っていないもの {モジュール: [使うジョブ名]}。
+
+    入っていないと urlwatch はそのジョブを静かに失敗扱いにし、max_tries 回続くまで報告しないため、先に検出する。
+    """
+    import importlib.util
+    find = find_spec or importlib.util.find_spec
+    missing: dict[str, list[str]] = {}
+    for job in jobs:
+        for f in job.get("filter") or []:
+            name = f if isinstance(f, str) else next(iter(f))
+            for module in FILTER_MODULES.get(str(name).split(":", 1)[0], []):
+                if find(module) is None:
+                    missing.setdefault(module, [])
+                    if job["name"] not in missing[module]:
+                        missing[module].append(job["name"])
+    return missing

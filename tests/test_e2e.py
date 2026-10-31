@@ -203,6 +203,12 @@ class UrlwatchE2E(unittest.TestCase):
         self.assertIn("[報告なし] 消えるページ - CloverWorks", out)
         self.assertIn("今のURLの状態: HTTP 404", out)   # 原因調べとして、実際のURLを1回取得する
 
+    def test_missing_filter_module_stops_before_running(self):
+        from watchlib.urlwatch_jobs import missing_filter_modules
+        jobs = [{"name": "A", "filter": ["beautify", {"re.sub": {"pattern": "a"}}]}, {"name": "B", "filter": ["strip"]}]
+        self.assertEqual(missing_filter_modules(jobs, find_spec=lambda m: None), {"bs4": ["A"]})
+        self.assertEqual(missing_filter_modules(jobs, find_spec=lambda m: object()), {})
+
     def test_wayback_failure_does_not_block(self):
         import watchlib.runners as runners
         report = self.root / "r.txt"
