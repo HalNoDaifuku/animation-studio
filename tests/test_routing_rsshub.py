@@ -65,9 +65,22 @@ class RsshubUrlTest(unittest.TestCase):
         self.assertEqual(q["filterout"][0].split("|"), ["抽選", "発売", "プレゼント", "🎁"])
         self.assertEqual(q["filter"][0].split("|"), ["募集", "応募", "採用", "求人", "新卒", "企業説明会", "会社説明会"])
         self.assertEqual(q["format"], ["json"])
+        self.assertEqual(q["includeRts"], ["0"])                      # リポストを含めない
         self.assertNotIn("KEY123", feed.url)
         self.assertIn("key=KEY123", feed.request_url)
         self.assertNotIn("KEY123", rsshub.mask_key(feed.request_url))
+
+    def test_retweet_switch_off_removes_param(self):
+        cfg, _ = cfg_with()
+        cfg.common["sns"]["exclude_retweets"] = False
+        feeds, _ = rsshub.build_feeds(cfg, "https://hub.example")
+        self.assertNotIn("includeRts", feeds[0].url)
+
+    def test_is_retweet(self):
+        for text in ("RT @a: 採用", "  RT @a: x", "🔁 a: 採用"):
+            self.assertTrue(rsshub.is_retweet(text), text)
+        for text in ("採用のお知らせ RT @a 募集", "", "RTは含まない", None):
+            self.assertFalse(rsshub.is_retweet(text), text)
 
     def test_handle_with_at_sign_and_youtube_prefix(self):
         self.assertEqual(normalize_handle(" @Name "), "Name")

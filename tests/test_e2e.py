@@ -88,6 +88,16 @@ class RsshubE2E(unittest.TestCase):
         self.go("--limit", "3")
         self.assertEqual(len(self.discord.messages(CH_A)), 3)     # 省略分は既読になり、洪水にならない
 
+    def test_retweets_are_not_notified(self):
+        self.hub.feeds[self.path] = []
+        self.go()
+        self.hub.feeds[self.path] = [self.item(2, "RT @other: 原画マン募集"), self.item(1, "原画マン募集")]
+        self.go()
+        self.assertEqual(len(self.discord.messages(CH_A)), 1)
+        self.assertNotIn("RT @", self.discord.messages(CH_A)[0]["content"])
+        self.go()
+        self.assertEqual(len(self.discord.messages(CH_A)), 1)    # RTは既読扱いで、再判定・再通知されない
+
     def test_feed_error_goes_to_errors_channel_without_failing(self):
         # フィードが無い(404) → 取得エラー
         self.assertEqual(self.go(), 0)

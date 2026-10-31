@@ -102,7 +102,8 @@ def build_user_feed(cfg: Config, platform: str, handle: str, include: list[str],
     if not template:
         raise FeedBuildError(f"{platform}: user_feed が未定義です")
     url = template.format(base=base.rstrip("/"), handle=urllib.parse.quote((p.get("handle_prefix") or "") + clean, safe="@"))
-    return _finish(_with_query(url, filter_query(cfg, include, exclude)), access_key)
+    extra = (p.get("user_params") or "") if cfg.sns.get("exclude_retweets", True) else ""
+    return _finish(_with_query(url, extra, filter_query(cfg, include, exclude)), access_key)
 
 
 # --- 検索クエリ ---------------------------------------------------------------------------
@@ -271,6 +272,14 @@ def build_feeds(cfg: Config, base: str, access_key: str | None = None, only: str
 
 
 # --- 取得・解析 -------------------------------------------------------------------------------
+
+_RETWEET = re.compile(r"^\s*(?:RT @|🔁)")
+
+
+def is_retweet(text: str) -> bool:
+    """本文が「RT @…」「🔁」で始まるリポスト。"""
+    return bool(_RETWEET.match(text or ""))
+
 
 def _html_to_text(value: str) -> str:
     value = re.sub(r"(?i)<br\s*/?>|</p>|</div>", "\n", value)

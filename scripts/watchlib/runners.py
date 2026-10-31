@@ -13,7 +13,7 @@ from .messages import (build_diff_message, build_error_message, build_feed_error
                        split_long_text, CHUNK_LIMIT)
 from .report import ReportEntry, parse_report
 from .routing import Target, pick_roles, resolve_channels
-from .rsshub import Feed, FeedFetchError, fetch_feed
+from .rsshub import Feed, FeedFetchError, fetch_feed, is_retweet
 from .state import State
 from .urlwatch_jobs import JobInfo
 from . import wayback as wayback_mod
@@ -78,7 +78,15 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
             log(f"[初回] {feed.key}: {len(items)}件を既読にしました(通知なし)")
             continue
         new = [i for i in items if not state.seen(feed.key, i.id)]
+        if cfg.sns.get("exclude_retweets", True):
+            retweets = [i for i in new if is_retweet(i.text)]
+            if retweets:
+                if not dry_run:
+                    state.mark(feed.key, [i.id for i in retweets])  # 次回また判定しないよう既読にする
+                new = [i for i in new if not is_retweet(i.text)]
         if not new:
+            if not dry_run:
+                state.save()
             continue
         new.reverse()  # 古い順に送る
         if len(new) > limit:

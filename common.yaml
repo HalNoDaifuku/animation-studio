@@ -185,6 +185,9 @@ sns:
       label: X (旧Twitter)
       handle_prefix: ""
       user_feed: "{base}/twitter/user/{handle}"
+      # ユーザーフィードのURLに足すパラメータ。includeRts=0 でリポスト(RT)を含めない。
+      # ※RSSHubのバージョンによっては効かないので、下の exclude_retweets でも本文から判定して除く。
+      user_params: "includeRts=0"
       search_feed: "{base}/twitter/keyword/{query}"
     youtube:
       label: YouTube
@@ -201,6 +204,10 @@ sns:
       handle_prefix: ""
       user_feed: "{base}/bsky/posts/{handle}"
       search_feed: null
+
+  # リポスト(リツイート)を通知しない。true なら、RSSHubのパラメータ(user_params)に加えて、
+  # 本文が「RT @」「🔁」で始まる投稿も取り除く(検索系のクエリには -filter:retweets が付く)。
+  exclude_retweets: true
 
   # 既定フィルター: 公式アカウント(monitor: true)のフィードを、採用ワードで絞り込む。
   # 会社ファイルに何も書かなくても、アカウントさえあれば自動で適用される。
@@ -229,7 +236,6 @@ sns:
       - 発売
       - プレゼント
       - "🎁"
-      - "キャンペーン"
 
   # 追加の検索プリセット(既定ではない)。
   # 会社ファイルの sns.search.use_presets に名前を書いたときだけ生成される。

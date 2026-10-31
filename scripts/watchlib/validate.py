@@ -151,6 +151,9 @@ def check_common(c: _Collector, cfg: Config) -> None:
         sf = p.get("search_feed")
         if sf is not None and (not isinstance(sf, str) or "{base}" not in sf or "{query}" not in sf):
             c.error(w, "search_feed は null か、{base} と {query} を含む文字列にしてください")
+        up = p.get("user_params")
+        if up is not None and (not isinstance(up, str) or up.startswith(("?", "&"))):
+            c.error(w, "user_params は「a=1&b=2」の形の文字列にしてください(先頭に ? や & は付けない)")
         if not isinstance(p.get("label"), str):
             c.warn(w, "label(表示名)がありません")
 
@@ -168,6 +171,8 @@ def check_common(c: _Collector, cfg: Config) -> None:
     if "{include}" not in str(tpl):
         c.error(f"{f}: sns.default_filter.rsshub_query", "{include} が必要です")
 
+    if not isinstance(sns.get("exclude_retweets", True), bool):
+        c.error(f"{f}: sns.exclude_retweets", "true / false にしてください")
     limit = sns.get("search_max_query_length")
     if not isinstance(limit, int) or not 100 <= limit <= 1000:
         c.error(f"{f}: sns.search_max_query_length", "100〜1000 の整数にしてください")
