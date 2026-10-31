@@ -18,6 +18,9 @@ URLWATCH = os.environ.get("URLWATCH_CMD") or shutil.which("urlwatch") or ("/tmp/
 
 def run(main, *args, env=None):
     old = dict(os.environ)
+    # 実行環境(GitHub Actions の Secrets など)の値が混ざらないよう、関係する環境変数を先に消す
+    for key in ("DISCORD_BOT_TOKEN", "DISCORD_GUILD_ID", "RSSHUB_BASE_URL", "RSSHUB_ACCESS_KEY", "URLWATCH_CMD"):
+        os.environ.pop(key, None)
     os.environ.update(env or {})
     try:
         return main(list(args))

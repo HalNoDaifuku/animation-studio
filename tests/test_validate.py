@@ -115,7 +115,7 @@ class ValidateTest(unittest.TestCase):
 
     def test_common_yaml_mistakes(self):
         import yaml
-        base = yaml.safe_load(open(helpers.REPO / "common.yaml", encoding="utf-8"))
+        base = yaml.safe_load((helpers.REPO / "common.yaml").read_text(encoding="utf-8"))
 
         def run(mutate):
             data = copy.deepcopy(base)
