@@ -18,6 +18,20 @@ from .state import State
 from .urlwatch_jobs import JobInfo
 from . import wayback as wayback_mod
 
+def probe_url(url: str, timeout: int = 20) -> str:
+    """URLを1回だけ取得して、状態を短い文字列で返す(報告に載らなかったジョブの原因調べ用)。"""
+    import urllib.error
+    import urllib.request
+    request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (compatible; website-checker/1.0)"})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return f"HTTP {response.status}({len(response.read())}バイト)"
+    except urllib.error.HTTPError as e:
+        return f"HTTP {e.code}"
+    except (urllib.error.URLError, TimeoutError) as e:
+        return f"接続できません: {getattr(e, 'reason', e)}"
+
+
 MAX_DIFF_MESSAGES = 8  # 1件の差分を、1チャンネルへ何通まで分割して送るか
 
 
@@ -139,6 +153,7 @@ def run_urlwatch_command(urls_path: Path, cache_path: Path, command: str = "urlw
 def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot, *, dry_run: bool = False,
                         skip_new: bool = False, use_wayback: bool = False,
                         capture: Callable[[str], tuple[str, str]] | None = None,
+                        probe: Callable[[str], str] | None = probe_url,
                         log: Callable[[str], None] = print) -> RunResult:
     result = RunResult()
     by_name = {i.name: i for i in infos}
@@ -150,7 +165,8 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
     log("urlwatch の結果: " + (", ".join(f"{k} {v}件" for k, v in sorted(counts.items())) or "報告なし")
         + f"(ジョブ {len(by_name)}件)")
     for name in sorted(set(by_name) - {e.name for e in entries}):
-        log(f"[報告なし] {name}: 変更なし、または無視する一時エラー(503など)のためレポートに載りませんでした")
+        note = f" / 今のURLの状態: {probe(by_name[name].url)}" if probe else ""
+        log(f"[報告なし] {name}: 変更なし、または無視する一時エラー(408/429/5xx)のためレポートに載りませんでした{note}")
     for entry in entries:
         info = by_name.get(entry.name)
         if entry.status == "UNCHANGED" or not info:

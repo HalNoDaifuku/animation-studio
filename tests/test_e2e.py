@@ -201,6 +201,7 @@ class UrlwatchE2E(unittest.TestCase):
         out = buf.getvalue()
         self.assertIn("NEW 1件", out)
         self.assertIn("[報告なし] 消えるページ - CloverWorks", out)
+        self.assertIn("今のURLの状態: HTTP 404", out)   # 原因調べとして、実際のURLを1回取得する
 
     def test_wayback_failure_does_not_block(self):
         import watchlib.runners as runners
