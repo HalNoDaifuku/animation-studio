@@ -1,0 +1,61 @@
+# 本番の定期実行: 15分おきに、SNS監視(RSSHub)とサイト監視(urlwatch)を行い、Discord(Bot)へ通知する。
+# 手動実行のテストは watch-test.yml。状態(既読・キャッシュ)は、そちらと共有する。
+name: watch
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # GitHub の定期実行は、混雑時に数分〜十数分遅れることがある
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: watch
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+      RSSHUB_BASE_URL: ${{ secrets.RSSHUB_BASE_URL }}
+      RSSHUB_ACCESS_KEY: ${{ secrets.RSSHUB_ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: 設定ファイルのチェック
+        run: python scripts/check_companies.py
+
+      - name: 状態を復元
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .urlwatch/cache-companies.db
+            .rsshub-state/state.json
+          key: watch-state-${{ github.run_id }}
+          restore-keys: watch-state-
+
+      - name: RSSHub(SNS監視)
+        run: python scripts/rsshub_notify.py
+
+      # RSSHub の送信に失敗しても、サイト監視は続ける
+      - name: urlwatch(サイト監視)
+        if: ${{ !cancelled() }}
+        run: python scripts/urlwatch_notify.py --skip-new --wayback
+
+      # どちらかが失敗しても、進んだ状態は必ず保存する(同じ通知を繰り返さないため)
+      - name: 状態を保存
+        if: ${{ always() }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .urlwatch/cache-companies.db
+            .rsshub-state/state.json
+          key: watch-state-${{ github.run_id }}

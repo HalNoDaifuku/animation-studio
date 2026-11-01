@@ -68,6 +68,13 @@ Actions → **watch-test** → Run workflow。最初は `job=check` と `dry_run
 
 `.gitignore` に追加を推奨: `build/` `.rsshub-state/` `.urlwatch/cache-companies.db`
 
+## 4.5 定期実行(本番)
+
+`.github/workflows/watch.yml` が15分おきに、RSSHub → urlwatch の順で実行します(`watch-test` と状態を共有)。
+- GitHub の定期実行は数分〜十数分遅れることがあります。
+- 公開リポジトリは無料。**非公開リポジトリは、無料枠(月2000分)を超える可能性**があります(1回1分として15分おきで月約2900分)。その場合は間隔を広げてください。
+- 公開リポジトリは、60日間リポジトリに動きがないと定期実行が止まります(Actionsの画面で再開できます)。
+
 ## 5. 動作確認の範囲(正直なところ)
 
 - **確認済み**: 偽サーバーによる自動テスト(Discordの429再試行・2000文字制限・User-Agent・Bot認証ヘッダー、ルーティング、RSSHub URL生成と既読管理、本物の urlwatch 2.29 の実行→差分→送信、設定の誤りの検出)。

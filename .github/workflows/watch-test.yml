@@ -60,7 +60,7 @@ jobs:
       # 状態(キャッシュ)。実行のたびに保存し直す。
       - name: 状態を復元
         if: inputs.job != 'check'
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: |
             .urlwatch/cache-companies.db
@@ -75,3 +75,12 @@ jobs:
       - name: urlwatch
         if: inputs.job == 'urlwatch' || inputs.job == 'all'
         run: python scripts/urlwatch_notify.py ${{ inputs.dry_run && '--dry-run' || '' }} ${{ inputs.skip_new && '--skip-new' || '' }} ${{ inputs.only && format('--only {0}', inputs.only) || '' }}
+
+      - name: 状態を保存
+        if: ${{ always() && inputs.job != 'check' && !inputs.dry_run }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .urlwatch/cache-companies.db
+            .rsshub-state/state.json
+          key: watch-state-${{ github.run_id }}
