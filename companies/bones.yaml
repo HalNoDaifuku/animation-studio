@@ -57,11 +57,11 @@ sns:
   #   handle: @ なしで書く(@ 付きで書いても生成時に取り除く)。未確認は null。
   #   label:  どのアカウントか分かる名前(任意)。通知に表示できる。
   #   monitor: true のアカウントは、common.yaml の既定フィルター(採用ワード)付きで監視される。
-  # 公式サイトのトップにはSNSへのリンクが見つからなかったため、すべて未設定。
+  # 公式のSNSアカウントは存在しない(本人確認済み)。アカウントができたら handle と monitor を書く。
   accounts:
     x:
       - handle: null
-        monitor: true
+        monitor: false
     youtube:
       - handle: null
         monitor: false

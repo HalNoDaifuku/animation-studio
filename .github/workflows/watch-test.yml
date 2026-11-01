@@ -14,6 +14,14 @@ on:
         description: 送信せず内容だけ表示する(dry-run)
         type: boolean
         default: true
+      only:
+        description: この会社だけ実行(slug。空なら全社)
+        type: string
+        default: ""
+      smoke_test:
+        description: RSSHubの配信確認(採用ワードで絞らず、最新2件を送る。rsshub のときだけ)
+        type: boolean
+        default: false
       skip_new:
         description: urlwatch の初回(NEW)を通知しない
         type: boolean
@@ -62,8 +70,8 @@ jobs:
 
       - name: RSSHub
         if: inputs.job == 'rsshub' || inputs.job == 'all'
-        run: python scripts/rsshub_notify.py ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: python scripts/rsshub_notify.py ${{ inputs.dry_run && '--dry-run' || '' }} ${{ inputs.only && format('--only {0}', inputs.only) || '' }} ${{ inputs.smoke_test && '--no-filter --notify-on-first-run --limit 2' || '' }}
 
       - name: urlwatch
         if: inputs.job == 'urlwatch' || inputs.job == 'all'
-        run: python scripts/urlwatch_notify.py ${{ inputs.dry_run && '--dry-run' || '' }} ${{ inputs.skip_new && '--skip-new' || '' }}
+        run: python scripts/urlwatch_notify.py ${{ inputs.dry_run && '--dry-run' || '' }} ${{ inputs.skip_new && '--skip-new' || '' }} ${{ inputs.only && format('--only {0}', inputs.only) || '' }}

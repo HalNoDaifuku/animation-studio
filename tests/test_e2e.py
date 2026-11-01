@@ -98,6 +98,14 @@ class RsshubE2E(unittest.TestCase):
         self.go()
         self.assertEqual(len(self.discord.messages(CH_A)), 1)    # RTは既読扱いで、再判定・再通知されない
 
+    def test_no_filter_smoke_test_sends_latest_posts(self):
+        self.hub.feeds[self.path] = [self.item(2, "新作のお知らせ"), self.item(1, "原画マン募集")]
+        self.assertEqual(self.go("--no-filter", "--notify-on-first-run", "--limit", "2"), 0)
+        contents = [m["content"] for m in self.discord.messages()]
+        self.assertTrue(any("新作のお知らせ" in c for c in contents))       # 採用ワードの無い投稿も届く
+        self.assertEqual(sum("原画マン募集" in c for c in contents), 1)      # 職種が分かる投稿は、その職種のチャンネルだけ
+        self.assertTrue(all("filter=" not in p for p in self.hub.requested))
+
     def test_feed_error_goes_to_errors_channel_without_failing(self):
         # フィードが無い(404) → 取得エラー
         self.assertEqual(self.go(), 0)

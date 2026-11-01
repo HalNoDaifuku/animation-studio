@@ -4,6 +4,8 @@
   python scripts/rsshub_notify.py --list                 # 作られるURLの一覧(送信しない)
   python scripts/rsshub_notify.py --dry-run              # 送信内容を表示(送信も既読の保存もしない)
   python scripts/rsshub_notify.py                        # 本番
+  python scripts/rsshub_notify.py --only cloverworks --no-filter --notify-on-first-run --limit 2
+                                                         # 配信経路の確認(絞り込みなしの最新2件を送る)
 
 環境変数:
   RSSHUB_BASE_URL     RSSHub のURL(--base でも指定可)
@@ -37,6 +39,8 @@ def main(argv=None) -> int:
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--notify-on-first-run", action="store_true", help="初回も通知する(テスト用)")
+    ap.add_argument("--no-filter", action="store_true",
+                    help="動作確認用: 採用ワードで絞らず、最新の投稿を取る(--notify-on-first-run --limit 2 と併用)")
     ap.add_argument("--limit", type=int, default=5, help="1フィード・1回あたりの最大通知数(既定5)")
     args = ap.parse_args(argv)
 
@@ -57,7 +61,7 @@ def main(argv=None) -> int:
         print("RSSHub のURLがありません。--base か環境変数 RSSHUB_BASE_URL を指定してください。")
         return 2
     key = os.environ.get("RSSHUB_ACCESS_KEY") or None
-    feeds, errors = build_feeds(cfg, base, key, args.only)
+    feeds, errors = build_feeds(cfg, base, key, args.only, apply_filter=not args.no_filter)
 
     if args.list:
         for f in feeds:

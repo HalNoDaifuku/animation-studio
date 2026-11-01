@@ -187,7 +187,7 @@ def expand_query(cfg: Config, company: dict, template: str) -> list[tuple[str, l
 # --- 会社 → フィード一覧 -------------------------------------------------------------------
 
 def company_feeds(cfg: Config, company: dict, base: str, access_key: str | None = None,
-                  ) -> tuple[list[Feed], list[tuple[str, str]]]:
+                  apply_filter: bool = True) -> tuple[list[Feed], list[tuple[str, str]]]:
     """1社ぶんのフィード。組み立てられなかったものは errors [(ラベル, 理由)] に入れる。"""
     platforms = cfg.sns.get("platforms") or {}
     slug = company.get("slug", "?")
@@ -197,6 +197,8 @@ def company_feeds(cfg: Config, company: dict, base: str, access_key: str | None 
     feeds: list[Feed] = []
     errors: list[tuple[str, str]] = []
     include, exclude = effective_filter(cfg, company)
+    if not apply_filter:  # 動作確認用: 採用ワードで絞らず、最新の投稿をそのまま取る
+        include, exclude = [], []
 
     for platform, accounts in (sns.get("accounts") or {}).items():
         p = platforms.get(platform)
@@ -259,13 +261,13 @@ def company_feeds(cfg: Config, company: dict, base: str, access_key: str | None 
 
 
 def build_feeds(cfg: Config, base: str, access_key: str | None = None, only: str | None = None,
-                ) -> tuple[list[Feed], list[tuple[str, str]]]:
+                apply_filter: bool = True) -> tuple[list[Feed], list[tuple[str, str]]]:
     feeds: list[Feed] = []
     errors: list[tuple[str, str]] = []
     for company in cfg.companies:
         if only and only not in (company.get("slug"), company.get("id")):
             continue
-        f, e = company_feeds(cfg, company, base, access_key)
+        f, e = company_feeds(cfg, company, base, access_key, apply_filter)
         feeds += f
         errors += e
     return feeds, errors
