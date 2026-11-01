@@ -4,7 +4,7 @@ name: watch
 
 on:
   schedule:
-    - cron: "*/15 * * * *"   # GitHub の定期実行は、混雑時に数分〜十数分遅れることがある
+    - cron: "0 * * * *"   # GitHub の定期実行は、混雑時に数分〜十数分遅れることがある
   workflow_dispatch:
 
 permissions:
