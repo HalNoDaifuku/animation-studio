@@ -2,3 +2,11 @@
 .DS_Store
 dot_DS_Store
 Icon?
+
+# 監視の仕組み(生成物・状態)
+build/
+.rsshub-state/
+.urlwatch/cache-companies.db
+.urlwatch-last-good/
+__pycache__/
+*.pyc

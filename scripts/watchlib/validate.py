@@ -20,8 +20,8 @@ KNOWN_FILTERS = {
     "element-by-id", "element-by-style", "element-by-tag", "csv2text", "shellpipe", "execute", "wdiff",
 }
 COMPANY_KEYS = {
-    "schema_version", "id", "slug", "name", "display_name", "name_en", "name_history", "founded_year",
-    "location", "roles", "related_companies", "website", "sns", "monitors", "_file",
+    "schema_version", "type", "id", "slug", "name", "display_name", "name_en", "name_history", "founded_year",
+    "location", "roles", "related_companies", "website", "sns", "monitors", "_file", "_folder",
 }
 SLUG = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 ROLE_ID = re.compile(r"^[a-z][a-z0-9_]*$")
@@ -135,6 +135,9 @@ def check_common(c: _Collector, cfg: Config) -> None:
             if hit:
                 c.error(w, f"除外語「{word}」は自分のキーワード「{hit}」に含まれるため、その職種を自分で消してしまいます")
 
+    types = cfg.common.get("company_types")
+    if not isinstance(types, dict) or "studio" not in types:
+        c.error(f"{f}: company_types", "company_types に studio が必要です")
     sns = cfg.sns
     platforms = sns.get("platforms")
     if not isinstance(platforms, dict) or not platforms:
@@ -247,6 +250,10 @@ def check_discord(c: _Collector, cfg: Config) -> None:
 
     for key in ("fallback", "errors"):
         check_id(f"{f}: discord.channels.{key}", ch.get(key))
+    for tid, value in (ch.get("types") or {}).items():
+        if tid not in (cfg.common.get("company_types") or {}):
+            c.error(f"{f}: discord.channels.types.{tid}", "common.yaml の company_types にない種別です(綴りの間違い?)")
+        check_id(f"{f}: discord.channels.types.{tid}", value)
     roles = ch.get("roles") or {}
     if not isinstance(roles, dict):
         c.error(f"{f}: discord.channels.roles", "辞書が必要です")
@@ -285,11 +292,18 @@ def _valid_uuid(value) -> bool:
 
 
 def check_company(c: _Collector, cfg: Config, company: dict) -> None:
-    f = f"companies/{company.get('_file', '?')}"
+    f = company.get("_file", "?")
     stem = Path(company.get("_file", "")).stem
 
     for key in sorted(set(company) - COMPANY_KEYS):
         c.warn(f, f"知らない項目です(綴りの間違い?): {key}")
+    ctype = company.get("type", "studio")
+    if ctype not in (cfg.common.get("company_types") or {}):
+        c.error(f, f"type は common.yaml の company_types にあるものにしてください(portal など): {ctype!r}")
+    elif company.get("_folder") == "companies" and ctype != "studio":
+        c.error(f, f"companies/ にはアニメ会社(studio)だけ置けます。type: {ctype} のファイルは sites/ へ移してください")
+    elif company.get("_folder") == "sites" and ctype == "studio":
+        c.error(f, "sites/ はアニメ会社ではないサイト用です。アニメ会社なら companies/ へ移してください")
     if company.get("schema_version") != 1:
         c.error(f, f"schema_version は 1 にしてください(現在: {company.get('schema_version')!r})")
     if not _valid_uuid(company.get("id")):
@@ -494,6 +508,10 @@ def check_monitors(c: _Collector, cfg: Config, company: dict, f: str, company_ro
         elif url in urls:
             c.warn(w, f"同じURLが重複しています: {url}")
         urls.add(str(url))
+        if m.get("job_name") is not None and (not isinstance(m["job_name"], str) or not m["job_name"].strip()):
+            c.error(w, "job_name は空でない文字列にしてください")
+        if m.get("command") is not None and (not isinstance(m["command"], str) or not m["command"].strip()):
+            c.error(w, "command は空でない文字列にしてください(url は表示用として必要です)")
         if "enabled" in m and not isinstance(m["enabled"], bool):
             c.error(w, "enabled は true/false にしてください")
         mroles = m.get("roles") or []
@@ -535,7 +553,7 @@ def check_cross(c: _Collector, cfg: Config) -> None:
     by_name: dict[str, str] = {}
     by_job: dict[str, str] = {}
     for co in cfg.companies:
-        f = f"companies/{co.get('_file')}"
+        f = co.get("_file", "?")
         for table, key, label in ((by_id, co.get("id"), "id"), (by_slug, co.get("slug"), "slug")):
             if key in table:
                 c.error(f, f"{label} が {table[key]} と重複しています: {key}")

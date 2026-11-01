@@ -211,6 +211,50 @@ class UrlwatchE2E(unittest.TestCase):
         self.assertIn("[報告なし] 消えるページ - CloverWorks", out)
         self.assertIn("今のURLの状態: HTTP 404", out)   # 原因調べとして、実際のURLを1回取得する
 
+    def test_command_job_and_job_name_override(self):
+        company = load_sample("cloverworks")
+        company["slug"] = "cmdco"
+        company["id"] = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+        company["display_name"] = "コマンド社"
+        last = self.root / "last-good.txt"
+        company["monitors"] = [{"id": "recruit", "name": "採用情報", "job_name": "元の名前のまま", "category": "recruit",
+                                "url": self.web.base + "/recruit/", "enabled": True, "roles": [], "snippets": [],
+                                "skip_common_excludes": ["all"],
+                                "command": f"{sys.executable} scripts/fetch_urlwatch_last_good.py --url {self.web.base}/recruit/ "
+                                           f"--last-good {last} --retries 1 --sleep 0 --timeout 10"}]
+        write_company(self.root, "cmdco", company)
+        for stem in ("cloverworks",):
+            (self.root / "companies" / f"{stem}.yaml").unlink()
+        cwd = os.getcwd()
+        os.chdir(helpers.REPO)  # command は、リポジトリのルートで実行される
+        try:
+            self.assertEqual(self.go("--skip-new"), 0)
+            self.web.pages["/recruit/"] = "<html><body><p>制作進行・原画を募集</p></body></html>"
+            self.assertEqual(self.go("--skip-new"), 0)
+        finally:
+            os.chdir(cwd)
+        changed = [m for m in self.discord.messages() if "変更検知: 元の名前のまま" in m["content"]]
+        self.assertTrue(changed)
+        self.assertIn(f"URL: {self.web.base}/recruit/", changed[0]["content"])   # コマンドではなく、表示用のURL
+        self.assertNotIn("fetch_urlwatch_last_good", changed[0]["content"])
+
+    def test_portal_goes_to_type_channel(self):
+        import yaml
+        portal = load_sample("cloverworks")
+        portal.update(slug="jobsite", id="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", display_name="就活サイト", roles=[])
+        portal["monitors"][0].update(url=self.web.base + "/recruit/", roles=[])
+        write_company(self.root, "jobsite", portal, folder="sites")   # sites/ に置けば、type は自動で portal
+        (self.root / "companies" / "cloverworks.yaml").unlink()
+        path = self.root / "config" / "discord.yaml"
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        data["discord"]["channels"]["types"] = {"portal": "100000000000000009"}
+        path.write_text(yaml.safe_dump(data), encoding="utf-8")
+        self.go("--skip-new")
+        self.web.pages["/recruit/"] = "<html><body><p>新着の求人</p></body></html>"
+        self.go("--skip-new")
+        changed = [m for m in self.discord.messages() if "変更検知" in m["content"]]
+        self.assertEqual([m["channel"] for m in changed], ["100000000000000009"])   # 職種のチャンネルでも fallback でもない
+
     def test_missing_filter_module_stops_before_running(self):
         from watchlib.urlwatch_jobs import missing_filter_modules
         jobs = [{"name": "A", "filter": ["beautify", {"re.sub": {"pattern": "a"}}]}, {"name": "B", "filter": ["strip"]}]

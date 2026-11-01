@@ -19,9 +19,12 @@ class JobInfo:
     monitor_id: str
     category: str
     roles: list[str] = field(default_factory=list)  # 監視URLのroles(空=その会社の全職種)
+    is_command: bool = False                          # command ジョブ(url は表示用)
 
 
 def job_name(monitor: dict, company: dict) -> str:
+    if monitor.get("job_name"):  # 元の名前をそのまま使いたいとき(例: 「つくジョブ！」)
+        return str(monitor["job_name"])
     return f"{monitor.get('name')} - {company.get('display_name') or company.get('name')}"
 
 
@@ -51,8 +54,10 @@ def build_jobs(cfg: Config, only: str | None = None) -> tuple[list[dict], list[J
             if not monitor.get("enabled", True):
                 continue
             name = job_name(monitor, company)
-            job: dict = {"name": name, "url": monitor["url"]}
-            job.update(copy.deepcopy(defaults))
+            command = monitor.get("command")
+            job: dict = {"name": name, **({"command": command} if command else {"url": monitor["url"]})}
+            if not command:  # command(shell)ジョブには、HTTP用の既定値(ignore_http_error_codes など)は使えない
+                job.update(copy.deepcopy(defaults))
             own = copy.deepcopy(monitor.get("urlwatch") or {})
             own_filter = own.pop("filter", None) or []
             job.update(own)
@@ -63,7 +68,7 @@ def build_jobs(cfg: Config, only: str | None = None) -> tuple[list[dict], list[J
             infos.append(JobInfo(name, monitor["url"], company.get("slug", ""),
                                  company.get("display_name") or company.get("name", ""),
                                  monitor.get("id", ""), monitor.get("category", ""),
-                                 list(monitor.get("roles") or [])))
+                                 list(monitor.get("roles") or []), bool(command)))
     return jobs, infos
 
 

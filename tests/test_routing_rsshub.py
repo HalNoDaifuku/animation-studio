@@ -48,6 +48,12 @@ class RoutingTest(unittest.TestCase):
         self.assertEqual(by_id["111"].roles, ["a", "b"])
         self.assertTrue(by_id["999"].is_fallback)
         self.assertEqual(resolve_channels(["x"], {"roles": {}, "fallback": None}), [])
+        # 種別(type)のチャンネル: 職種なし・未割り当ての通知は、種別のチャンネル → fallback の順
+        ch = {"roles": {"a": "111"}, "fallback": "999", "types": {"portal": "555"}}
+        self.assertEqual([t.channel_id for t in resolve_channels([], ch, "portal")], ["555"])
+        self.assertEqual([t.channel_id for t in resolve_channels(["x"], ch, "portal")], ["555"])
+        self.assertEqual([t.channel_id for t in resolve_channels([], ch, "studio")], ["999"])   # studio は未設定 → fallback
+        self.assertEqual([t.channel_id for t in resolve_channels(["a"], ch, "portal")], ["111"])  # 職種があればそちら
         self.assertEqual(resolve_channels(["a"], {"roles": {"a": "111"}, "fallback": "999"})[0].channel_id, "111")
 
 

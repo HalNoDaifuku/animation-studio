@@ -1,0 +1,70 @@
+# =============================================================================
+# companies/roll2.yaml — ROLL2
+# =============================================================================
+# 元の .urlwatch/urls.yaml から自動生成した初期版です。
+#   確認済み: 監視URLと urlwatch の設定(元の urls.yaml のまま)
+#   未確認(null / 空): 設立年・所在地・職種(roles)・SNSアカウント。分かったところから埋めてください。
+#   roles が空の会社の通知は、職種ごとのチャンネルではなく「未分類」(fallback)へ送られます。
+
+schema_version: 1
+
+id: e57a92de-3688-4c24-8bdc-2d923df7459d
+slug: roll2
+
+name: ROLL2
+display_name: ROLL2
+name_en: null
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: null
+  city: null
+  area: null
+  address: null
+
+# 募集する職種(common.yaml の job_roles のIDから選ぶ)
+roles: []
+
+related_companies: []
+
+website: https://www.roll2.co.jp/
+
+sns:
+  accounts:
+    x:
+      - handle: null
+        monitor: false
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      - handle: null
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [ROLL2]
+    use_presets: []
+    custom: {}
+
+monitors:
+  - id: recruit
+    name: 採用情報
+    url: https://www.roll2.co.jp/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - css: section#recruit
+      - html2text
+      - strip
+      - striplines

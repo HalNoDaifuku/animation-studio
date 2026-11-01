@@ -1,0 +1,70 @@
+# =============================================================================
+# companies/a-1-pictures.yaml — A-1 Pictures
+# =============================================================================
+# 元の .urlwatch/urls.yaml から自動生成した初期版です。
+#   確認済み: 監視URLと urlwatch の設定(元の urls.yaml のまま)
+#   未確認(null / 空): 設立年・所在地・職種(roles)・SNSアカウント。分かったところから埋めてください。
+#   roles が空の会社の通知は、職種ごとのチャンネルではなく「未分類」(fallback)へ送られます。
+
+schema_version: 1
+
+id: 4b09c7b5-5362-4e23-9674-3c7b2ac1e44b
+slug: a-1-pictures
+
+name: A-1 Pictures
+display_name: A-1 Pictures
+name_en: null
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: null
+  city: null
+  area: null
+  address: null
+
+# 募集する職種(common.yaml の job_roles のIDから選ぶ)
+roles:
+  - compositing
+
+related_companies: []
+
+website: https://a1p.jp/
+
+sns:
+  accounts:
+    x:
+      - handle: null
+        monitor: false
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      - handle: null
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [A-1 Pictures]
+    use_presets: []
+    custom: {}
+
+monitors:
+  - id: recruit-newgrad-compositing
+    name: 採用情報(撮影 新卒)
+    url: https://a1p.jp/new_grad/shooting/
+    category: recruit
+    enabled: true
+    roles:
+    - compositing
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - beautify
+      - strip

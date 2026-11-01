@@ -49,7 +49,7 @@ class RunResult:
 
 def _targets(cfg: Config, company: dict, hint_roles, text, dry_run: bool) -> list[Target]:
     roles = pick_roles(cfg, company, hint_roles=hint_roles, text=text)
-    targets = resolve_channels(roles, cfg.discord_channels)
+    targets = resolve_channels(roles, cfg.discord_channels, company.get("type"))
     if not targets and dry_run:
         targets = [Target("(未設定)", roles)]
     return targets
@@ -175,8 +175,9 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
             result.skipped += 1
             continue
         company = cfg.company(info.company_slug) or {}
+        shown_url = info.url if info.is_command else (entry.url or info.url)  # command ジョブは、報告にコマンドが出るので表示用URLを使う
         if entry.status == "ERROR":
-            msg = build_error_message(name=entry.name, url=entry.url or info.url, body=entry.body)
+            msg = build_error_message(name=entry.name, url=shown_url, body=entry.body)
             ch = cfg.discord_channels
             if ch.get("errors"):
                 targets = [Target(ch["errors"])]
@@ -187,17 +188,17 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
             targets = _targets(cfg, company, info.roles, None, dry_run)
             archive_url = archive_status = ""
             if use_wayback and not dry_run:
-                archive_url, archive_status = (capture or wayback_mod.capture)(entry.url or info.url)
+                archive_url, archive_status = (capture or wayback_mod.capture)(shown_url)
                 if archive_status:
                     archive_status = f"保存失敗({archive_status})"
             empty = "(初めて取得しました。以降の変更を通知します)" if entry.status == "NEW" else "(差分の本文なし)"
             chunks = split_long_text(entry.body, CHUNK_LIMIT) or [empty]
-            messages = [build_diff_message(status=entry.status, name=entry.name, url=entry.url or info.url,
+            messages = [build_diff_message(status=entry.status, name=entry.name, url=shown_url,
                                            archive_url=archive_url, archive_status=archive_status,
                                            chunk=c, index=n, total=len(chunks))
                         for n, c in enumerate(chunks[:MAX_DIFF_MESSAGES], 1)]
             if len(chunks) > MAX_DIFF_MESSAGES:
-                messages.append(f"(ほか{len(chunks) - MAX_DIFF_MESSAGES}分割は省略しました。URL: {entry.url or info.url})")
+                messages.append(f"(ほか{len(chunks) - MAX_DIFF_MESSAGES}分割は省略しました。URL: {shown_url})")
         if not targets:
             result.send_failures.append(f"{entry.name}: 送り先チャンネルがありません(config/discord.yaml を確認)")
             continue

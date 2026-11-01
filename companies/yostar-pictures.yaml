@@ -1,0 +1,72 @@
+# =============================================================================
+# companies/yostar-pictures.yaml — Yostar Pictures
+# =============================================================================
+# 元の .urlwatch/urls.yaml から自動生成した初期版です。
+#   確認済み: 監視URLと urlwatch の設定(元の urls.yaml のまま)
+#   未確認(null / 空): 設立年・所在地・職種(roles)・SNSアカウント。分かったところから埋めてください。
+#   roles が空の会社の通知は、職種ごとのチャンネルではなく「未分類」(fallback)へ送られます。
+
+schema_version: 1
+
+id: 6429e8d0-a0c9-48f5-8700-24180eaae3cd
+slug: yostar-pictures
+
+name: Yostar Pictures
+display_name: Yostar Pictures
+name_en: null
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: null
+  city: null
+  area: null
+  address: null
+
+# 募集する職種(common.yaml の job_roles のIDから選ぶ)
+roles:
+  - compositing
+
+related_companies: []
+
+website: https://yostar-pictures.co.jp/
+
+sns:
+  accounts:
+    x:
+      - handle: null
+        monitor: false
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      - handle: null
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [Yostar Pictures]
+    use_presets: []
+    custom: {}
+
+monitors:
+  - id: recruit-compositing
+    name: 採用情報(撮影)
+    url: https://yostar-pictures.co.jp/recruit/detail/photograph/
+    category: recruit
+    enabled: true
+    roles:
+    - compositing
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - re.findall: 撮影[\s\S]*?BACK
+      - strip
+      - striplines

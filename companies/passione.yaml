@@ -1,0 +1,71 @@
+# =============================================================================
+# companies/passione.yaml — パッショーネ
+# =============================================================================
+# 元の .urlwatch/urls.yaml から自動生成した初期版です。
+#   確認済み: 監視URLと urlwatch の設定(元の urls.yaml のまま)
+#   未確認(null / 空): 設立年・所在地・職種(roles)・SNSアカウント。分かったところから埋めてください。
+#   roles が空の会社の通知は、職種ごとのチャンネルではなく「未分類」(fallback)へ送られます。
+# 元の urls.yaml にあった <script>/<style> の除去(nonce対策)は、全社共通の web.excludes.strip_script_style に移したので、ここには書かない。
+
+schema_version: 1
+
+id: c7430f13-b6cb-4d36-892f-bcf25b9cb60f
+slug: passione
+
+name: パッショーネ
+display_name: パッショーネ
+name_en: null
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: null
+  city: null
+  area: null
+  address: null
+
+# 募集する職種(common.yaml の job_roles のIDから選ぶ)
+roles: []
+
+related_companies: []
+
+website: https://passione-anime.com/
+
+sns:
+  accounts:
+    x:
+      - handle: null
+        monitor: false
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      - handle: null
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [パッショーネ]
+    use_presets: []
+    custom: {}
+
+monitors:
+  - id: recruit
+    name: 採用情報
+    url: https://passione-anime.com/recruit
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - re.findall: 求人情報[\s\S]*?個人情報の保護方針
+      - strip
+      - striplines

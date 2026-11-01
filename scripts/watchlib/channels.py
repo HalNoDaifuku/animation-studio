@@ -34,11 +34,21 @@ def used_role_ids(cfg: Config) -> list[str]:
     return [r for r in cfg.job_roles if r in used]  # common.yaml の並び順
 
 
+def used_types(cfg: Config) -> list[str]:
+    """studio 以外で、会社ファイルに使われている種別(common.yaml の並び順)。"""
+    used = {co.get("type") for co in cfg.companies if co.get("type") and co.get("type") != "studio"}
+    return [t for t in (cfg.common.get("company_types") or {}) if t in used]
+
+
 def plan_channels(cfg: Config, existing: list[dict], category_name: str, role_ids: list[str]) -> list[Planned]:
     """作る(または再利用する)チャンネルの計画。名前が同じ既存チャンネルは再利用する。"""
     by_name = {c["name"]: c for c in existing if c.get("type") == GUILD_TEXT}
     items: list[tuple[str, str, str]] = [("fallback", FALLBACK_NAME, "どの職種にも当てはまらない通知"),
                                          ("errors", ERRORS_NAME, "サイト監視・RSSHubの取得エラー")]
+    # アニメ会社以外の種別(portal など)の会社があれば、その種別のチャンネルも作る
+    for type_id in used_types(cfg):
+        label = (cfg.common.get("company_types") or {}).get(type_id, {}).get("name", type_id)
+        items.append((f"type:{type_id}", channel_name(type_id), f"{label}の通知"))
     items += [(rid, channel_name(rid), cfg.job_roles[rid].get("name", rid)) for rid in role_ids]
     plan: list[Planned] = []
     for n, (key, name, topic) in enumerate(items):
@@ -71,9 +81,14 @@ def mapping_yaml(cfg: Config, plan: list[Planned], ids: dict[str, str | None]) -
     def val(key: str) -> str:
         v = ids.get(key)
         return f'"{v}"' if v else "null   # (作成予定)"
-    lines = ["discord:", "  channels:", f"    fallback: {val('fallback')}", f"    errors: {val('errors')}", "    roles:"]
+    lines = ["discord:", "  channels:", f"    fallback: {val('fallback')}", f"    errors: {val('errors')}"]
+    types = [p for p in plan if p.key.startswith("type:")]
+    if types:
+        lines.append("    types:")
+        lines += [f"      {p.key[5:]}: {val(p.key)}   # {p.topic}" for p in types]
+    lines.append("    roles:")
     for p in plan:
-        if p.key in ("fallback", "errors"):
+        if p.key in ("fallback", "errors") or p.key.startswith("type:"):
             continue
         lines.append(f"      {p.key}: {val(p.key)}   # {p.topic}")
     return "\n".join(lines)

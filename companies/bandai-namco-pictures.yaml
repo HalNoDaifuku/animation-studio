@@ -1,0 +1,70 @@
+# =============================================================================
+# companies/bandai-namco-pictures.yaml — バンダイナムコピクチャーズ
+# =============================================================================
+# 元の .urlwatch/urls.yaml から自動生成した初期版です。
+#   確認済み: 監視URLと urlwatch の設定(元の urls.yaml のまま)
+#   未確認(null / 空): 設立年・所在地・職種(roles)・SNSアカウント。分かったところから埋めてください。
+#   roles が空の会社の通知は、職種ごとのチャンネルではなく「未分類」(fallback)へ送られます。
+
+schema_version: 1
+
+id: f7cffcc8-b50f-4308-b49c-6166a3610fbd
+slug: bandai-namco-pictures
+
+name: バンダイナムコピクチャーズ
+display_name: バンダイナムコピクチャーズ
+name_en: null
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: null
+  city: null
+  area: null
+  address: null
+
+# 募集する職種(common.yaml の job_roles のIDから選ぶ)
+roles: []
+
+related_companies: []
+
+website: https://recruit.bn-pictures.co.jp/
+
+sns:
+  accounts:
+    x:
+      - handle: null
+        monitor: false
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      - handle: null
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [バンダイナムコピクチャーズ]
+    use_presets: []
+    custom: {}
+
+monitors:
+  - id: recruit
+    name: 採用情報
+    url: https://recruit.bn-pictures.co.jp/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - re.findall: 採用のお知らせ[\s\S]*?キャリア採用\s*募集職種一覧
+      - strip
+      - striplines

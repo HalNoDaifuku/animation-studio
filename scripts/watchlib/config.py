@@ -1,4 +1,4 @@
-"""設定ファイル(common.yaml / config/discord.yaml / companies/*.yaml)の読み込みと共通ヘルパー。"""
+"""設定ファイル(common.yaml / config/discord.yaml / companies/*.yaml / sites/*.yaml)の読み込みと共通ヘルパー。"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -80,6 +80,7 @@ class Config:
             "api_base": d.get("api_base") or "https://discord.com/api/v10",
             "fallback": channel_id(ch.get("fallback")),
             "errors": channel_id(ch.get("errors")),
+            "types": {k: channel_id(v) for k, v in (ch.get("types") or {}).items()},
             "roles": {k: channel_id(v) for k, v in (ch.get("roles") or {}).items()},
         }
 
@@ -90,6 +91,7 @@ class Config:
 def load_config(
     root: Path | None = None,
     companies_dir: Path | None = None,
+    sites_dir: Path | None = None,
     common_path: Path | None = None,
     discord_path: Path | None = None,
     require_discord: bool = False,
@@ -97,6 +99,7 @@ def load_config(
     root = Path(root) if root else ROOT
     common_path = Path(common_path) if common_path else root / "common.yaml"
     companies_dir = Path(companies_dir) if companies_dir else root / "companies"
+    sites_dir = Path(sites_dir) if sites_dir else root / "sites"
     discord_path = Path(discord_path) if discord_path else root / "config" / "discord.yaml"
 
     common = load_yaml(common_path)
@@ -110,13 +113,18 @@ def load_config(
     else:
         discord = {}
 
+    # companies/ = アニメ会社(type は studio 固定)、sites/ = アニメ会社ではない就活・求人サイトなど(type は studio 以外)
     companies: list[dict] = []
-    if companies_dir.exists():
-        for p in sorted(companies_dir.glob("*.yaml")):
+    for folder, directory in (("companies", companies_dir), ("sites", sites_dir)):
+        if not directory.exists():
+            continue
+        for p in sorted(directory.glob("*.yaml")):
             data = load_yaml(p)
             if not isinstance(data, dict):
                 raise ConfigError(f"{p}: 最上位が辞書ではありません")
-            data["_file"] = p.name
+            data["_file"] = f"{folder}/{p.name}"
+            data["_folder"] = folder
+            data.setdefault("type", "studio" if folder == "companies" else "portal")
             companies.append(data)
     return Config(root=root, common=common, discord=discord, companies=companies)
 

@@ -70,10 +70,13 @@ class Target:
     is_fallback: bool = False
 
 
-def resolve_channels(role_ids: list[str], discord_channels: dict) -> list[Target]:
-    """職種IDのリストを、送り先チャンネルにする(重複なし)。"""
+def resolve_channels(role_ids: list[str], discord_channels: dict, company_type: str | None = None) -> list[Target]:
+    """職種IDのリストを、送り先チャンネルにする(重複なし)。
+
+    職種が無い・職種にチャンネルが無い通知は、会社の type のチャンネル → fallback の順で送る。
+    """
     role_map = discord_channels.get("roles") or {}
-    fallback = discord_channels.get("fallback")
+    fallback = (discord_channels.get("types") or {}).get(company_type or "studio") or discord_channels.get("fallback")
     targets: dict[str, Target] = {}
     unmapped: list[str] = []
     for rid in role_ids:

@@ -44,6 +44,7 @@ class ValidateTest(unittest.TestCase):
             "存在しない職種ID": (lambda c: c["roles"].append("no_such_role"), "no_such_role"),
             "職種の重複": (lambda c: c["roles"].append("in_between"), "重複"),
             "職種の除外語の形が違う": (lambda c: c["roles"].append({"id": "script", "exclude_words": ["a"]}), "add"),
+            "type が未定義": (lambda c: c.update(type="school"), "company_types"),
             "schema_version が違う": (lambda c: c.update(schema_version=2), "schema_version"),
             "location が無い": (lambda c: c.pop("location"), "location"),
             "company_id が UUID でない": (lambda c: c["related_companies"][0].update(company_id="x"), "company_id"),
@@ -98,6 +99,18 @@ class ValidateTest(unittest.TestCase):
         self.assertHasError(issues, "ジョブ名")                     # urlwatch ジョブ名の重複
         clone2 = {**clone, "slug": "cloverworks", "id": GOOD_ID}
         self.assertHasError(issues_for(extra={"zz": clone2}), "slug")
+
+    def test_folder_decides_type(self):
+        site = load_sample("cloverworks")
+        site.update(slug="jobsite", id="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", display_name="就活サイト")
+        root = make_root(companies={"cloverworks": load_sample("cloverworks")})
+        write_company(root, "jobsite", site, folder="sites")
+        self.assertEqual(errors(validate_config(root)), [])                 # sites/ では portal が既定
+        write_company(root, "jobsite", {**site, "type": "studio"}, folder="sites")
+        self.assertHasError(validate_config(root), "sites/ はアニメ会社ではない")
+        (root / "sites" / "jobsite.yaml").unlink()
+        write_company(root, "jobsite", {**site, "type": "portal"}, folder="companies")
+        self.assertHasError(validate_config(root), "companies/ にはアニメ会社")
 
     def test_unknown_key_is_warning(self):
         issues = issues_for(lambda c: c.update(foundd_year=2018))
@@ -160,6 +173,19 @@ class DiscordConfigTest(unittest.TestCase):
         self.assertTrue(any("未割り当て" in i.message and "fallback も未設定" in i.message for i in w))
         w2 = self.check(roles_to_channels={}, fallback="123456789012345678")
         self.assertTrue(any("fallback に送られます" in i.message for i in w2))
+
+    def test_types_channel_ids(self):
+        ok = self.check(roles_to_channels={}, fallback="123456789012345678")
+        self.assertEqual(errors(ok), [])
+        import yaml
+        root = make_root(companies={"cloverworks": load_sample("cloverworks")})
+        path = root / "config" / "discord.yaml"
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        data["discord"]["channels"]["types"] = {"school": "123456789012345678", "portal": "abc"}
+        path.write_text(yaml.safe_dump(data), encoding="utf-8")
+        msgs = " ".join(i.message for i in errors(validate_config(root)))
+        self.assertIn("company_types", msgs)
+        self.assertIn("チャンネルID", msgs)
 
     def test_missing_discord_file_is_only_a_warning(self):
         root = make_root(companies={"cloverworks": load_sample("cloverworks")})
