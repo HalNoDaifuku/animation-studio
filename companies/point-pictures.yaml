@@ -3,7 +3,8 @@
 # =============================================================================
 # 元の .urlwatch/urls.yaml から自動生成した初期版です。
 #   確認済み: 監視URLと urlwatch の設定(元の urls.yaml のまま)
-#   未確認(null / 空): 設立年・所在地・職種(roles)・SNSアカウント。分かったところから埋めてください。
+#   SNSアカウント: 公式サイト・Wikipedia の外部リンクから 2026-11-02 に調査(各アカウントの「出典」を参照)。見つからないものは null。
+#   未確認(null / 空): 設立年・所在地・職種(roles)。分かったところから埋めてください。
 #   roles が空の会社の通知は、職種ごとのチャンネルではなく「未分類」(fallback)へ送られます。
 
 schema_version: 1
@@ -35,8 +36,10 @@ website: https://www.point-p.jp/
 sns:
   accounts:
     x:
-      - handle: null
-        monitor: false
+      # 出典: https://www.point-p.jp/
+      - handle: POINT_P_PR
+        label: メイン
+        monitor: true
     youtube:
       - handle: null
         monitor: false
