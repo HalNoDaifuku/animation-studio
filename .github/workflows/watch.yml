@@ -1,10 +1,12 @@
-# 本番の定期実行: 15分おきに、SNS監視(RSSHub)とサイト監視(urlwatch)を行い、Discord(Bot)へ通知する。
+# 本番の定期実行: 1時間おきに、SNS監視(RSSHub)とサイト監視(urlwatch)を行い、Discord(Bot)へ通知する。
 # 手動実行のテストは watch-test.yml。状態(既読・キャッシュ)は、そちらと共有する。
 name: watch
 
 on:
   schedule:
-    - cron: "0 * * * *"   # GitHub の定期実行は、混雑時に数分〜十数分遅れることがある
+    # 毎時17分(UTC)に実行。毎時0分は GitHub が混み合って遅れやすいので、ずらしている。
+    # GitHub の定期実行は、混雑時に数分〜十数分遅れることがある。
+    - cron: "17 * * * *"
   workflow_dispatch:
 
 permissions:
