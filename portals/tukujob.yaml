@@ -1,5 +1,5 @@
 # =============================================================================
-# sites/tukujob.yaml — つくジョブ！
+# portals/tukujob.yaml — つくジョブ！
 # =============================================================================
 # 元の .urlwatch/urls.yaml から自動生成した初期版です。
 #   確認済み: 監視URLと urlwatch の設定(元の urls.yaml のまま)
@@ -10,7 +10,7 @@
 
 schema_version: 1
 
-# 種別: sites/ に置くファイルは studio 以外(portal など)。省略すると portal になる。common.yaml の company_types を参照
+# 種別: portals/ に置くファイルは studio 以外(portal など)。省略すると portal になる。common.yaml の company_types を参照
 type: portal
 
 id: bb5a9b0f-d10f-4009-a215-1ada2724c46b

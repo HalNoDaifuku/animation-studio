@@ -301,9 +301,9 @@ def check_company(c: _Collector, cfg: Config, company: dict) -> None:
     if ctype not in (cfg.common.get("company_types") or {}):
         c.error(f, f"type は common.yaml の company_types にあるものにしてください(portal など): {ctype!r}")
     elif company.get("_folder") == "companies" and ctype != "studio":
-        c.error(f, f"companies/ にはアニメ会社(studio)だけ置けます。type: {ctype} のファイルは sites/ へ移してください")
-    elif company.get("_folder") == "sites" and ctype == "studio":
-        c.error(f, "sites/ はアニメ会社ではないサイト用です。アニメ会社なら companies/ へ移してください")
+        c.error(f, f"companies/ にはアニメ会社(studio)だけ置けます。type: {ctype} のファイルは portals/ へ移してください")
+    elif company.get("_folder") == "portals" and ctype == "studio":
+        c.error(f, "portals/ はアニメ会社ではない窓口(就活サイト・SNSなど)用です。アニメ会社なら companies/ へ移してください")
     if company.get("schema_version") != 1:
         c.error(f, f"schema_version は 1 にしてください(現在: {company.get('schema_version')!r})")
     if not _valid_uuid(company.get("id")):
@@ -319,8 +319,10 @@ def check_company(c: _Collector, cfg: Config, company: dict) -> None:
     year = company.get("founded_year")
     if year is not None and (not isinstance(year, int) or isinstance(year, bool) or not 1900 <= year <= dt.date.today().year):
         c.error(f, f"founded_year は 1900〜今年の整数か null にしてください: {year!r}")
-    if not isinstance(company.get("location"), dict):
-        c.error(f, "location(所在地)が必要です")
+    if company.get("location") is not None and not isinstance(company.get("location"), dict):
+        c.error(f, "location(所在地)は辞書にしてください")
+    elif company.get("location") is None and ctype == "studio":
+        c.error(f, "location(所在地)が必要です(分からない項目は null)")
     site = company.get("website")
     if site is not None and not (isinstance(site, str) and re.match(r"^https?://\S+$", site)):
         c.error(f, f"website は http(s) のURLか null にしてください: {site!r}")

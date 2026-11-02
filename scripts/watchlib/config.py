@@ -1,4 +1,4 @@
-"""設定ファイル(common.yaml / config/discord.yaml / companies/*.yaml / sites/*.yaml)の読み込みと共通ヘルパー。"""
+"""設定ファイル(common.yaml / config/discord.yaml / companies/*.yaml / portals/*.yaml)の読み込みと共通ヘルパー。"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -91,7 +91,7 @@ class Config:
 def load_config(
     root: Path | None = None,
     companies_dir: Path | None = None,
-    sites_dir: Path | None = None,
+    portals_dir: Path | None = None,
     common_path: Path | None = None,
     discord_path: Path | None = None,
     require_discord: bool = False,
@@ -99,7 +99,7 @@ def load_config(
     root = Path(root) if root else ROOT
     common_path = Path(common_path) if common_path else root / "common.yaml"
     companies_dir = Path(companies_dir) if companies_dir else root / "companies"
-    sites_dir = Path(sites_dir) if sites_dir else root / "sites"
+    portals_dir = Path(portals_dir) if portals_dir else root / "portals"
     discord_path = Path(discord_path) if discord_path else root / "config" / "discord.yaml"
 
     common = load_yaml(common_path)
@@ -113,9 +113,9 @@ def load_config(
     else:
         discord = {}
 
-    # companies/ = アニメ会社(type は studio 固定)、sites/ = アニメ会社ではない就活・求人サイトなど(type は studio 以外)
+    # companies/ = アニメ会社(type は studio 固定)、portals/ = アニメ会社ではない就活・求人サイト、SNSだけの窓口など(type は studio 以外)
     companies: list[dict] = []
-    for folder, directory in (("companies", companies_dir), ("sites", sites_dir)):
+    for folder, directory in (("companies", companies_dir), ("portals", portals_dir)):
         if not directory.exists():
             continue
         for p in sorted(directory.glob("*.yaml")):

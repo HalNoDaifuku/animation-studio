@@ -10,7 +10,7 @@
 |---|---|
 | `common.yaml` | 職種・SNSフィルター・Web誤検知対策の共通設定 |
 | `companies/*.yaml` | アニメ会社ごとの設定(アニメ会社だけを置く) |
-| `sites/*.yaml` | アニメ会社ではない就活・求人サイトなどの設定(同じ形式) |
+| `portals/*.yaml` | アニメ会社ではない就活・求人サイト、SNSだけの窓口などの設定(同じ形式) |
 | `scripts/verify_files.py` | 展開したファイルが、渡したZIPと一致するかの照合(`docs/FILES.sha256` と比較) |
 | `config/discord.yaml` | 職種 → Discordチャンネルの対応(最初は全部 null) |
 | `scripts/check_companies.py` | ① 設定ファイルのエラーチェック |
@@ -34,11 +34,13 @@
   出力された YAML を `config/discord.yaml` に貼る。会社ファイルで使われている職種 + 未分類 + 監視エラーのチャンネルを作ります。
 - 手動: 開発者モードをオン → チャンネルを右クリック →「チャンネルIDをコピー」→ `config/discord.yaml` に `"…"` で囲んで書く。
 
-### アニメ会社以外(就活サイト・求人ポータルなど)
-`companies/` には**アニメ会社だけ**を置きます。アニメ会社ではない就活・求人サイトやそのSNSは、**`sites/`** に同じ形式のYAMLで置きます(例: `sites/tukujob.yaml`)。
-`sites/` のファイルの `type` は、省略すると `portal` になります(`common.yaml` の `company_types` に種別を足せば、別の種別も使えます)。
-職種が決まらない通知は、`config/discord.yaml` の `channels.types.portal` のチャンネルへ送られます(未設定なら fallback)。
-フォルダと type が食い違うと(companies/ に portal、sites/ に studio)、設定チェックがエラーにします。
+### アニメ会社以外(就活サイト・求人ポータル・SNSだけの窓口など)
+`companies/` には**アニメ会社だけ**を置きます。アニメ会社ではないもの(就活・求人サイト、就活情報のSNSアカウントだけの窓口など)は、**`portals/`** に同じ形式のYAMLで置きます(例: `portals/tukujob.yaml`)。
+- サイトだけでも、SNSだけでも構いません。サイトだけなら `sns.accounts` は全部 null、SNSだけなら `monitors` を書かない(または空)にします。
+- `portals/` のファイルは、所在地(`location`)を省略できます。
+- `type` は省略すると `portal` になります(`common.yaml` の `company_types` に足せば、別の種別も使えます)。
+- 職種が決まらない通知は、`config/discord.yaml` の `channels.types.portal` のチャンネルへ送られます(未設定なら fallback)。
+- フォルダと type が食い違うと(companies/ に portal、portals/ に studio)、設定チェックがエラーにします。
 
 ### 送り先のルール
 1. 監視URLの `roles`(空ならその会社の全職種)が候補。

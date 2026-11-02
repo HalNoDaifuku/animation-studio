@@ -104,13 +104,26 @@ class ValidateTest(unittest.TestCase):
         site = load_sample("cloverworks")
         site.update(slug="jobsite", id="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", display_name="就活サイト")
         root = make_root(companies={"cloverworks": load_sample("cloverworks")})
-        write_company(root, "jobsite", site, folder="sites")
-        self.assertEqual(errors(validate_config(root)), [])                 # sites/ では portal が既定
-        write_company(root, "jobsite", {**site, "type": "studio"}, folder="sites")
-        self.assertHasError(validate_config(root), "sites/ はアニメ会社ではない")
-        (root / "sites" / "jobsite.yaml").unlink()
+        write_company(root, "jobsite", site, folder="portals")
+        self.assertEqual(errors(validate_config(root)), [])                 # portals/ では portal が既定
+        write_company(root, "jobsite", {**site, "type": "studio"}, folder="portals")
+        self.assertHasError(validate_config(root), "portals/ はアニメ会社ではない")
+        (root / "portals" / "jobsite.yaml").unlink()
         write_company(root, "jobsite", {**site, "type": "portal"}, folder="companies")
         self.assertHasError(validate_config(root), "companies/ にはアニメ会社")
+
+    def test_sns_only_portal_without_monitors_or_location(self):
+        portal = {"schema_version": 1, "id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc", "slug": "jobhunt-sns",
+                  "name": "就活情報アカウント", "display_name": "就活情報アカウント", "roles": [], "website": None,
+                  "sns": {"accounts": {"x": [{"handle": "@example_jobs", "label": "公式", "monitor": True}]},
+                          "search": {"keywords": [], "use_presets": [], "custom": {}}}}
+        root = make_root(companies={"cloverworks": load_sample("cloverworks")})
+        write_company(root, "jobhunt-sns", portal, folder="portals")
+        self.assertEqual(errors(validate_config(root)), [])
+        write_company(root, "jobhunt-sns", portal, folder="companies")   # アニメ会社(studio)に置くと、所在地が必要
+        (root / "portals" / "jobhunt-sns.yaml").unlink()
+        msgs = " ".join(i.message for i in errors(validate_config(root)))
+        self.assertIn("location", msgs)
 
     def test_unknown_key_is_warning(self):
         issues = issues_for(lambda c: c.update(foundd_year=2018))

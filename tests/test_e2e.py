@@ -243,7 +243,7 @@ class UrlwatchE2E(unittest.TestCase):
         portal = load_sample("cloverworks")
         portal.update(slug="jobsite", id="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", display_name="就活サイト", roles=[])
         portal["monitors"][0].update(url=self.web.base + "/recruit/", roles=[])
-        write_company(self.root, "jobsite", portal, folder="sites")   # sites/ に置けば、type は自動で portal
+        write_company(self.root, "jobsite", portal, folder="portals")   # portals/ に置けば、type は自動で portal
         (self.root / "companies" / "cloverworks.yaml").unlink()
         path = self.root / "config" / "discord.yaml"
         data = yaml.safe_load(path.read_text(encoding="utf-8"))

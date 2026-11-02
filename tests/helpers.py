@@ -165,7 +165,7 @@ def make_root(discord_base: str | None = None, *, roles_to_channels: dict | None
     root = Path(tempfile.mkdtemp(prefix="wc-test-"))
     shutil.copy(REPO / "common.yaml", root / "common.yaml")
     (root / "companies").mkdir()
-    (root / "sites").mkdir()
+    (root / "portals").mkdir()
     (root / "config").mkdir()
     for stem, data in (companies or {}).items():
         write_company(root, stem, data)
