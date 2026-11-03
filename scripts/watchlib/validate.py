@@ -301,9 +301,9 @@ def check_company(c: _Collector, cfg: Config, company: dict) -> None:
     if ctype not in (cfg.common.get("company_types") or {}):
         c.error(f, f"type は common.yaml の company_types にあるものにしてください(portal など): {ctype!r}")
     elif company.get("_folder") == "companies" and ctype != "studio":
-        c.error(f, f"companies/ にはアニメ会社(studio)だけ置けます。type: {ctype} のファイルは portals/ へ移してください")
+        c.error(f, f"db/companies/ にはアニメ会社(studio)だけ置けます。type: {ctype} のファイルは db/portals/ へ移してください")
     elif company.get("_folder") == "portals" and ctype == "studio":
-        c.error(f, "portals/ はアニメ会社ではない窓口(就活サイト・SNSなど)用です。アニメ会社なら companies/ へ移してください")
+        c.error(f, "db/portals/ はアニメ会社ではない窓口(就活サイト・SNSなど)用です。アニメ会社なら db/companies/ へ移してください")
     if company.get("schema_version") != 1:
         c.error(f, f"schema_version は 1 にしてください(現在: {company.get('schema_version')!r})")
     if not _valid_uuid(company.get("id")):
@@ -588,5 +588,5 @@ def validate_config(root: Path | None = None, **paths) -> list[Issue]:
         check_company(c, cfg, company)
     check_cross(c, cfg)
     if not cfg.companies:
-        c.warn("companies/", "会社ファイルが1つもありません")
+        c.warn("db/companies/", "会社ファイルが1つもありません")
     return c.issues

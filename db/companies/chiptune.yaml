@@ -1,0 +1,74 @@
+# =============================================================================
+# db/companies/chiptune.yaml — チップチューン
+# =============================================================================
+# 元の .urlwatch/urls.yaml から自動生成した初期版です。
+#   確認済み: 監視URLと urlwatch の設定(元の urls.yaml のまま)
+#   未確認(null / 空): 設立年・所在地・職種(roles)・SNSアカウント。分かったところから埋めてください。
+#   roles が空の会社の通知は、職種ごとのチャンネルではなく「未分類」(fallback)へ送られます。
+
+schema_version: 1
+
+id: 2262e64f-fe43-4526-b79c-7f4cfaf05901
+slug: chiptune
+
+name: チップチューン
+display_name: チップチューン
+name_en: null
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: null
+  city: null
+  area: null
+  address: null
+
+# 募集する職種(common.yaml の job_roles のIDから選ぶ)
+roles: []
+
+related_companies:
+  - name: 株式会社Studio One Base
+    company_id: null
+    relation: 2026-11-01 の合併で新会社に統合(屋号は継続)。旧サイト・旧Xアカウントは今後変更の可能性あり
+
+
+website: http://chiptune.co.jp/
+
+sns:
+  accounts:
+    x:
+      # 出典: オーナー(Hal)が2026-11-03に調査
+      - handle: chiptune0720
+        label: メイン
+        monitor: true
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      - handle: null
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [チップチューン]
+    use_presets: []
+    custom: {}
+
+monitors:
+  - id: recruit
+    name: 採用情報
+    url: http://chiptune.co.jp/recruit.html
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - beautify
+      - strip

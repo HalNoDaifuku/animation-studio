@@ -224,7 +224,7 @@ class UrlwatchE2E(unittest.TestCase):
                                            f"--last-good {last} --retries 1 --sleep 0 --timeout 10"}]
         write_company(self.root, "cmdco", company)
         for stem in ("cloverworks",):
-            (self.root / "companies" / f"{stem}.yaml").unlink()
+            (self.root / "db" / "companies" / f"{stem}.yaml").unlink()
         cwd = os.getcwd()
         os.chdir(helpers.REPO)  # command は、リポジトリのルートで実行される
         try:
@@ -244,7 +244,7 @@ class UrlwatchE2E(unittest.TestCase):
         portal.update(slug="jobsite", id="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", display_name="就活サイト", roles=[])
         portal["monitors"][0].update(url=self.web.base + "/recruit/", roles=[])
         write_company(self.root, "jobsite", portal, folder="portals")   # portals/ に置けば、type は自動で portal
-        (self.root / "companies" / "cloverworks.yaml").unlink()
+        (self.root / "db" / "companies" / "cloverworks.yaml").unlink()
         path = self.root / "config" / "discord.yaml"
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         data["discord"]["channels"]["types"] = {"portal": "100000000000000009"}

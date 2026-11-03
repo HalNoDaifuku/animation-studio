@@ -164,8 +164,8 @@ def make_root(discord_base: str | None = None, *, roles_to_channels: dict | None
     """一時フォルダに common.yaml と設定を作る。companies は {ファイル名(拡張子なし): 会社の辞書}。"""
     root = Path(tempfile.mkdtemp(prefix="wc-test-"))
     shutil.copy(REPO / "common.yaml", root / "common.yaml")
-    (root / "companies").mkdir()
-    (root / "portals").mkdir()
+    (root / "db" / "companies").mkdir(parents=True)
+    (root / "db" / "portals").mkdir()
     (root / "config").mkdir()
     for stem, data in (companies or {}).items():
         write_company(root, stem, data)
@@ -176,8 +176,8 @@ def make_root(discord_base: str | None = None, *, roles_to_channels: dict | None
 
 
 def write_company(root: Path, stem: str, data: dict, folder: str = "companies") -> None:
-    (root / folder / f"{stem}.yaml").write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
+    (root / "db" / folder / f"{stem}.yaml").write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
 
 
 def load_sample(slug: str) -> dict:
-    return yaml.safe_load((REPO / "companies" / f"{slug}.yaml").read_text(encoding="utf-8"))
+    return yaml.safe_load((REPO / "db" / "companies" / f"{slug}.yaml").read_text(encoding="utf-8"))

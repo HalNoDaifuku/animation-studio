@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""会社ファイル(companies/*.yaml)・就活サイトなど(portals/*.yaml)・common.yaml・config/discord.yaml のエラーチェック。
+"""会社ファイル(db/companies/*.yaml)・就活サイトなど(db/portals/*.yaml)・common.yaml・config/discord.yaml のエラーチェック。
 
   python scripts/check_companies.py             # エラーがあれば終了コード1
   python scripts/check_companies.py --strict    # 警告があっても終了コード1

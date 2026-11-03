@@ -1,4 +1,4 @@
-"""設定ファイル(common.yaml / config/discord.yaml / companies/*.yaml / portals/*.yaml)の読み込みと共通ヘルパー。"""
+"""設定ファイル(common.yaml / config/discord.yaml / db/companies/*.yaml / db/portals/*.yaml)の読み込みと共通ヘルパー。"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -98,8 +98,8 @@ def load_config(
 ) -> Config:
     root = Path(root) if root else ROOT
     common_path = Path(common_path) if common_path else root / "common.yaml"
-    companies_dir = Path(companies_dir) if companies_dir else root / "companies"
-    portals_dir = Path(portals_dir) if portals_dir else root / "portals"
+    companies_dir = Path(companies_dir) if companies_dir else root / "db" / "companies"
+    portals_dir = Path(portals_dir) if portals_dir else root / "db" / "portals"
     discord_path = Path(discord_path) if discord_path else root / "config" / "discord.yaml"
 
     common = load_yaml(common_path)
@@ -113,7 +113,7 @@ def load_config(
     else:
         discord = {}
 
-    # companies/ = アニメ会社(type は studio 固定)、portals/ = アニメ会社ではない就活・求人サイト、SNSだけの窓口など(type は studio 以外)
+    # db/companies/ = アニメ会社(type は studio 固定)、db/portals/ = アニメ会社ではない就活・求人サイト、SNSだけの窓口など(type は studio 以外)
     companies: list[dict] = []
     for folder, directory in (("companies", companies_dir), ("portals", portals_dir)):
         if not directory.exists():
@@ -122,7 +122,7 @@ def load_config(
             data = load_yaml(p)
             if not isinstance(data, dict):
                 raise ConfigError(f"{p}: 最上位が辞書ではありません")
-            data["_file"] = f"{folder}/{p.name}"
+            data["_file"] = f"db/{folder}/{p.name}"
             data["_folder"] = folder
             data.setdefault("type", "studio" if folder == "companies" else "portal")
             companies.append(data)

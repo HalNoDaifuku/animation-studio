@@ -1,0 +1,83 @@
+# =============================================================================
+# db/companies/studio-one-base.yaml — Studio One Base
+# =============================================================================
+# 2026-11-03 作成。出典: KADOKAWAグループ プレスリリース(2026-09-08)、ENGI公式の告知。
+#   2026-11-01 に ENGI / Studio KADAN / レイジングブル / ベルノックスフィルムズ / チップチューン の5社が
+#   新会社「株式会社Studio One Base」に統合されました(各社の屋号は継続)。
+#   公式サイト・SNS・設立年は未確認のため null です。分かったところから埋めてください。
+#   roles が空の会社の通知は「未分類」(fallback)へ送られます。
+
+schema_version: 1
+
+id: 02dd0ecd-8b63-4dbd-a5b8-23b54c54f8b2
+slug: studio-one-base
+
+name: 株式会社Studio One Base
+display_name: Studio One Base
+name_en: Studio One Base Inc.
+name_history: []
+
+founded_year: 2026
+
+location:
+  prefecture: 東京都
+  city: 豊島区
+  area: 東池袋
+  address: 東京都豊島区東池袋三丁目1番1号
+
+roles: []
+
+related_companies:
+  - name: ENGI
+    company_id: null
+    relation: 2026-11-01 に統合された5社の一つ(屋号は継続)
+  - name: Studio KADAN
+    company_id: null
+    relation: 2026-11-01 に統合された5社の一つ(屋号は継続)
+  - name: レイジングブル
+    company_id: null
+    relation: 2026-11-01 に統合された5社の一つ(屋号は継続)
+  - name: ベルノックスフィルムズ
+    company_id: null
+    relation: 2026-11-01 に統合された5社の一つ(屋号は継続)
+  - name: チップチューン
+    company_id: null
+    relation: 2026-11-01 に統合された5社の一つ(屋号は継続)
+
+website: null
+
+sns:
+  accounts:
+    x:
+      - handle: null
+        monitor: false
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      - handle: null
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [Studio One Base]
+    use_presets: []
+    custom: {}
+
+monitors:
+  - id: kadokawa-anime-studio-recruit
+    name: KADOKAWAグループ アニメスタジオ採用(統合ページ)
+    url: https://group.kadokawa.co.jp/recruit/anime-studio/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - beautify
+      - strip

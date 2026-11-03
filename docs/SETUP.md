@@ -1,6 +1,6 @@
 # アニメ会社データベース監視(新しい仕組み)セットアップ
 
-会社ごとのYAML(`companies/*.yaml`)と共通設定(`common.yaml`)から、
+会社ごとのYAML(`db/companies/*.yaml`)と共通設定(`common.yaml`)から、
 **サイト監視(urlwatch)** と **SNS監視(RSSHub)** を動かし、結果を **Discord Bot** で **職種ごとのチャンネル**へ送ります。
 いまの定期監視(`.urlwatch/urls.yaml` など)とは別のファイル・別のキャッシュで動くので、**今の監視は壊れません**。
 
@@ -9,8 +9,8 @@
 | パス | 役割 |
 |---|---|
 | `common.yaml` | 職種・SNSフィルター・Web誤検知対策の共通設定 |
-| `companies/*.yaml` | アニメ会社ごとの設定(アニメ会社だけを置く) |
-| `portals/*.yaml` | アニメ会社ではない就活・求人サイト、SNSだけの窓口などの設定(同じ形式) |
+| `db/companies/*.yaml` | アニメ会社ごとの設定(アニメ会社だけを置く) |
+| `db/portals/*.yaml` | アニメ会社ではない就活・求人サイト、SNSだけの窓口などの設定(同じ形式) |
 | `scripts/verify_files.py` | 展開したファイルが、渡したZIPと一致するかの照合(`docs/FILES.sha256` と比較) |
 | `config/discord.yaml` | 職種 → Discordチャンネルの対応(最初は全部 null) |
 | `scripts/check_companies.py` | ① 設定ファイルのエラーチェック |
@@ -35,12 +35,12 @@
 - 手動: 開発者モードをオン → チャンネルを右クリック →「チャンネルIDをコピー」→ `config/discord.yaml` に `"…"` で囲んで書く。
 
 ### アニメ会社以外(就活サイト・求人ポータル・SNSだけの窓口など)
-`companies/` には**アニメ会社だけ**を置きます。アニメ会社ではないもの(就活・求人サイト、就活情報のSNSアカウントだけの窓口など)は、**`portals/`** に同じ形式のYAMLで置きます(例: `portals/tukujob.yaml`)。
+`db/companies/` には**アニメ会社だけ**を置きます。アニメ会社ではないもの(就活・求人サイト、就活情報のSNSアカウントだけの窓口など)は、**`db/portals/`** に同じ形式のYAMLで置きます(例: `db/portals/tukujob.yaml`)。
 - サイトだけでも、SNSだけでも構いません。サイトだけなら `sns.accounts` は全部 null、SNSだけなら `monitors` を書かない(または空)にします。
-- `portals/` のファイルは、所在地(`location`)を省略できます。
+- `db/portals/` のファイルは、所在地(`location`)を省略できます。
 - `type` は省略すると `portal` になります(`common.yaml` の `company_types` に足せば、別の種別も使えます)。
 - 職種が決まらない通知は、`config/discord.yaml` の `channels.types.portal` のチャンネルへ送られます(未設定なら fallback)。
-- フォルダと type が食い違うと(companies/ に portal、portals/ に studio)、設定チェックがエラーにします。
+- フォルダと type が食い違うと(db/companies/ に portal、db/portals/ に studio)、設定チェックがエラーにします。
 
 ### 送り先のルール
 1. 監視URLの `roles`(空ならその会社の全職種)が候補。

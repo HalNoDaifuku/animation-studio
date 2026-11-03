@@ -108,7 +108,7 @@ class ValidateTest(unittest.TestCase):
         self.assertEqual(errors(validate_config(root)), [])                 # portals/ では portal が既定
         write_company(root, "jobsite", {**site, "type": "studio"}, folder="portals")
         self.assertHasError(validate_config(root), "portals/ はアニメ会社ではない")
-        (root / "portals" / "jobsite.yaml").unlink()
+        (root / "db" / "portals" / "jobsite.yaml").unlink()
         write_company(root, "jobsite", {**site, "type": "portal"}, folder="companies")
         self.assertHasError(validate_config(root), "companies/ にはアニメ会社")
 
@@ -121,7 +121,7 @@ class ValidateTest(unittest.TestCase):
         write_company(root, "jobhunt-sns", portal, folder="portals")
         self.assertEqual(errors(validate_config(root)), [])
         write_company(root, "jobhunt-sns", portal, folder="companies")   # アニメ会社(studio)に置くと、所在地が必要
-        (root / "portals" / "jobhunt-sns.yaml").unlink()
+        (root / "db" / "portals" / "jobhunt-sns.yaml").unlink()
         msgs = " ".join(i.message for i in errors(validate_config(root)))
         self.assertIn("location", msgs)
 
@@ -132,9 +132,9 @@ class ValidateTest(unittest.TestCase):
 
     def test_missing_files_and_bad_yaml(self):
         root = make_root(companies={"cloverworks": load_sample("cloverworks")})
-        (root / "companies" / "broken.yaml").write_text("id: [未閉じ\n", encoding="utf-8")
+        (root / "db" / "companies" / "broken.yaml").write_text("id: [未閉じ\n", encoding="utf-8")
         self.assertHasError(validate_config(root), "YAMLとして読めません")
-        (root / "companies" / "broken.yaml").write_text("- ただのリスト\n", encoding="utf-8")
+        (root / "db" / "companies" / "broken.yaml").write_text("- ただのリスト\n", encoding="utf-8")
         self.assertHasError(validate_config(root), "辞書ではありません")
         (root / "common.yaml").unlink()
         self.assertHasError(validate_config(root), "見つかりません")

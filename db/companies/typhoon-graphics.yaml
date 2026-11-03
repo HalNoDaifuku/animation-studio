@@ -1,0 +1,73 @@
+# =============================================================================
+# db/companies/typhoon-graphics.yaml — 颱風グラフィックス
+# =============================================================================
+# 元の .urlwatch/urls.yaml から自動生成した初期版です。
+#   確認済み: 監視URLと urlwatch の設定(元の urls.yaml のまま)
+#   SNSアカウント: 公式サイト・Wikipedia の外部リンクから 2026-11-02 に調査(各アカウントの「出典」を参照)。見つからないものは null。
+#   未確認(null / 空): 設立年・所在地・職種(roles)。分かったところから埋めてください。
+#   roles が空の会社の通知は、職種ごとのチャンネルではなく「未分類」(fallback)へ送られます。
+
+schema_version: 1
+
+id: 9de48e35-fc90-4996-bbac-66e656efa050
+slug: typhoon-graphics
+
+name: 颱風グラフィックス
+display_name: 颱風グラフィックス
+name_en: null
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: null
+  city: null
+  area: null
+  address: null
+
+# 募集する職種(common.yaml の job_roles のIDから選ぶ)
+roles: []
+
+related_companies: []
+
+website: https://jobs.typhoon-g.com/
+
+sns:
+  accounts:
+    x:
+      # 出典: https://ja.wikipedia.org/wiki/颱風グラフィックス(外部リンク)
+      - handle: Typhoon_g_anime
+        label: メイン
+        monitor: true
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      - handle: null
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [颱風グラフィックス]
+    use_presets: []
+    custom: {}
+
+monitors:
+  - id: recruit
+    name: 採用情報
+    url: https://jobs.typhoon-g.com/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - re.findall: 求人一覧[\s\S]*?応募フォーム
+      - strip
+      - striplines
