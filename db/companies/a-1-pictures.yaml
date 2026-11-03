@@ -20,9 +20,9 @@ name_history: []
 founded_year: null
 
 location:
-  prefecture: null
-  city: null
-  area: null
+  prefecture: 東京都
+  city: 杉並区
+  area: 高円寺
   address: null
 
 # 募集する職種(common.yaml の job_roles のIDから選ぶ)

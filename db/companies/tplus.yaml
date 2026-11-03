@@ -19,8 +19,8 @@ name_history: []
 founded_year: null
 
 location:
-  prefecture: null
-  city: null
+  prefecture: 東京都
+  city: 小金井市
   area: null
   address: null
 

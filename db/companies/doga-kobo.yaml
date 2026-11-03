@@ -1,0 +1,57 @@
+# =============================================================================
+# db/companies/doga-kobo.yaml — 動画工房
+# =============================================================================
+# 2026-11-03 に Hal の Excel(撮影職情報・3DCG職情報・エフェクト職情報)から自動生成した初期版です。
+#   確認済み: 会社名・勤務場所(都道府県・市区町村まで)・職種の分類(どのシートに載っていたか)
+#   未確認: 設立年・SNSアカウント・公式サイトのURL(Excelの出典欄から抽出したもの。要確認)
+#   roles は「Excelのどのシートに載っていたか」から付けた分類です(撮影=compositing、3DCG=cg_3d、エフェクト=cg_effects)。
+#   通知は本文から職種を判定して振り分けます(roles は、その会社だけ除外語を調整したいときに使います)。
+
+schema_version: 1
+
+id: 1e17313e-eb6c-430b-b54f-0b0a25a78e94
+slug: doga-kobo
+
+name: 動画工房
+display_name: 動画工房
+name_en: Doga Kobo
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: 東京都
+  city: null
+  area: 練馬区周辺
+  address: null
+
+roles: 
+  - compositing
+
+related_companies: []
+
+website: https://dogakobo.com/
+
+sns:
+  accounts:
+    x:
+      - handle: null
+        monitor: false
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      - handle: null
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [動画工房]
+    use_presets: []
+    custom: {}
+
+monitors: []

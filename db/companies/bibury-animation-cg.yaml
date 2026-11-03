@@ -20,9 +20,9 @@ name_history: []
 founded_year: null
 
 location:
-  prefecture: null
-  city: null
-  area: null
+  prefecture: 東京都
+  city: 三鷹市
+  area: 吉祥寺・三鷹
   address: null
 
 # 募集する職種(common.yaml の job_roles のIDから選ぶ)

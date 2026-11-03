@@ -1,0 +1,71 @@
+# =============================================================================
+# db/companies/studio-khronos.yaml — Studio Khronos
+# =============================================================================
+# 2026-11-03 に Hal の Excel(撮影職情報・3DCG職情報・エフェクト職情報)から自動生成した初期版です。
+#   確認済み: 会社名・勤務場所(都道府県・市区町村まで)・職種の分類(どのシートに載っていたか)
+#   未確認: 設立年・SNSアカウント・公式サイトのURL(Excelの出典欄から抽出したもの。要確認)
+#   roles は「Excelのどのシートに載っていたか」から付けた分類です(撮影=compositing、3DCG=cg_3d、エフェクト=cg_effects)。
+#   通知は本文から職種を判定して振り分けます(roles は、その会社だけ除外語を調整したいときに使います)。
+
+schema_version: 1
+
+id: dedba0b8-8cfd-4210-a9dd-7f77dc157069
+slug: studio-khronos
+
+name: Studio Khronos
+display_name: Studio Khronos
+name_en: Studio Khronos
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: 東京都
+  city: 杉並区
+  area: null
+  address: null
+
+roles: 
+  - cg_3d
+
+related_companies: []
+
+website: https://studio-khronos.co.jp/
+
+sns:
+  accounts:
+    x:
+      - handle: null
+        monitor: false
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      - handle: null
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [Studio Khronos]
+    use_presets: []
+    custom: {}
+
+monitors:
+  # 出典の Excel(2026-11-03)にあるURLから作成。未検証のため、動作を確認してから enabled: true にしてください。
+  - id: recruit
+    name: 採用情報
+    url: https://studio-khronos.co.jp/recruit
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

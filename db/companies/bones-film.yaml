@@ -1,0 +1,60 @@
+# =============================================================================
+# db/companies/bones-film.yaml — ボンズフィルム
+# =============================================================================
+# 2026-11-03 に Hal の Excel(撮影職情報・3DCG職情報・エフェクト職情報)から自動生成した初期版です。
+#   確認済み: 会社名・勤務場所(都道府県・市区町村まで)・職種の分類(どのシートに載っていたか)
+#   未確認: 設立年・SNSアカウント・公式サイトのURL(Excelの出典欄から抽出したもの。要確認)
+#   roles は「Excelのどのシートに載っていたか」から付けた分類です(撮影=compositing、3DCG=cg_3d、エフェクト=cg_effects)。
+#   通知は本文から職種を判定して振り分けます(roles は、その会社だけ除外語を調整したいときに使います)。
+
+schema_version: 1
+
+id: 70c5626e-4bd3-42d2-b3d3-fb922fbd3e09
+slug: bones-film
+
+name: ボンズフィルム
+display_name: ボンズフィルム
+name_en: null
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: 東京都
+  city: 杉並区
+  area: 荻窪
+  address: null
+
+roles: 
+  - compositing
+
+related_companies:
+  - name: 株式会社ボンズ
+    company_id: 24c7cee1-2d78-4ad4-b145-f5ba4ff7fca4
+    relation: 2024-10-01 にボンズのアニメ制作部門を分社化して発足
+
+website: null
+
+sns:
+  accounts:
+    x:
+      - handle: null
+        monitor: false
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      - handle: null
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [ボンズフィルム]
+    use_presets: []
+    custom: {}
+
+monitors: []
