@@ -24,7 +24,7 @@ discord:
     errors: "1567032167597604864"       # サイト監視のエラー、RSSHub取得エラーなどの送り先
     types:             # 会社ファイルの type ごとの送り先(職種が決まらない通知用)。未設定なら fallback
       studio: null     # アニメ会社
-      portal: null     # 就活・求人サイト
+      portal: "1567047200176087091"     # 就活・求人サイト
     roles:
       producer: null                  # プロデューサー
       production_desk: null           # 制作デスク
