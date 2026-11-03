@@ -30,7 +30,7 @@ roles: []
 
 related_companies: []
 
-website: https://cygamespictures.co.jp/
+website: https://cypic.co.jp/   # 2026-11-03 に Hal が新URLを確認(旧: cygamespictures.co.jp)
 
 sns:
   accounts:
@@ -52,14 +52,14 @@ sns:
     default_filter:
       include: {add: [], remove: []}
       exclude: {add: [], remove: []}
-    keywords: [CygamesPictures]
+    keywords: [CygamesPictures, Cypic, サイピク]
     use_presets: []
     custom: {}
 
 monitors:
   - id: recruit
     name: 採用情報
-    url: https://cygamespictures.co.jp/recruit/
+    url: https://cypic.co.jp/recruit/
     category: recruit
     enabled: true
     roles: []
@@ -67,7 +67,7 @@ monitors:
     skip_common_excludes: []
     urlwatch:
       filter:
+      # 旧サイトの「Recruit〜© CygamesPictures」の切り出しは新サイトで使えないため、ページ全体を比べる
       - html2text
-      - re.findall: Recruit[\s\S]*?© CygamesPictures
       - strip
       - striplines

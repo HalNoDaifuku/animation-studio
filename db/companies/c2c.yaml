@@ -70,7 +70,7 @@ monitors:
     skip_common_excludes: []
     urlwatch:
       filter:
+      # 以前の「RECRUIT 【2027年新卒向け】〜CONTACT」の切り出しは、ページが中途採用の内容に変わって合わなくなったため、ページ全体を比べる
       - html2text
-      - re.findall: RECRUIT\s*【2027年新卒向け】[\s\S]*?CONTACT
       - strip
       - striplines
