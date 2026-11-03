@@ -1,0 +1,88 @@
+# =============================================================================
+# db/portals/wakuwork.yaml — ワクワーク(WAKU WORK)
+# =============================================================================
+# ワクワークはアニメ会社ではなく、アニメ業界の就活情報(求人・イベント・会社説明会)を紹介するサイトです(type: portal)。
+# 通知は、職種ごとではなく、種別 portal のチャンネル(config/discord.yaml の channels.types.portal)へ送られます。
+#   X(@Wakuwork2021): 求人・イベントを、通常のツイートと引用リツイートで紹介している
+#                     → 紹介が主な用途なので、募集系キーワードでの絞り込みはせず、リツイート以外をすべて通知する
+#   お知らせ        : https://wakuwork.net/information.list(イベント開催告知・会社説明会・選考会の案内など)
+#   新卒の求人一覧  : https://wakuwork.net/shinsotsu/contents.list(更新日の新しい順。1ページ目の12件)
+
+schema_version: 1
+
+type: portal
+
+id: 8d56aba8-ad12-4b00-af76-9a0f3686666d
+slug: wakuwork
+
+name: ワクワーク
+display_name: ワクワーク
+name_en: WAKU WORK
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: null
+  city: null
+  area: null
+  address: null
+
+roles: []
+
+related_companies: []
+
+website: https://wakuwork.net/
+
+sns:
+  accounts:
+    x:
+      # 出典: オーナー(Hal)が2026-11-03に指定
+      - handle: Wakuwork2021
+        label: メイン(求人・イベントの紹介)
+        monitor: true
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      - handle: null
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      # ほぼ全ツイートが就活情報なので、共通の「募集/応募/採用…を含む」条件を外す(弾く語は共通のまま)
+      include: {add: [], remove: [募集, 応募, 採用, 求人, 新卒, 企業説明会, 会社説明会]}
+      exclude: {add: [], remove: []}
+    keywords: [ワクワーク, WAKUWORK]
+    use_presets: []
+    custom: {}
+
+monitors:
+  - id: information
+    name: お知らせ
+    url: https://wakuwork.net/information.list
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  - id: shinsotsu-jobs
+    name: 新卒の求人一覧(新着順)
+    url: https://wakuwork.net/shinsotsu/contents.list
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

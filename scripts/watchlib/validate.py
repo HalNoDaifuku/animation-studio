@@ -452,7 +452,7 @@ def check_sns(c: _Collector, cfg: Config, company: dict, f: str) -> None:
                 c.warn(w, f"add の「{word}」は、すでに共通の語にあります")
     from .rsshub import effective_filter
     inc, exc = effective_filter(cfg, company)
-    if any_monitor and not inc:
+    if any_monitor and not inc and company.get("type", "studio") == "studio":   # portal(就活情報アカウントなど)は、全投稿を通知してよい
         c.error(f"{f}: sns.search.default_filter.include", "監視するアカウントがあるのに、含める語が空です")
     for word in set(inc) & set(exc):
         c.error(f"{f}: sns.search.default_filter", f"「{word}」が include と exclude の両方にあります")
