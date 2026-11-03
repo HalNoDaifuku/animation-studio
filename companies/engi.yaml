@@ -28,7 +28,11 @@ location:
 # 募集する職種(common.yaml の job_roles のIDから選ぶ)
 roles: []
 
-related_companies: []
+related_companies:
+  - name: 株式会社Studio One Base
+    company_id: null
+    relation: 2026-11-01 の合併で新会社に統合(屋号は継続)。旧サイト・旧Xアカウントは今後変更の可能性あり
+
 
 website: https://engi-st.net/
 

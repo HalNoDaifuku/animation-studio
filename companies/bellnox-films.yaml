@@ -1,0 +1,59 @@
+# =============================================================================
+# companies/bellnox-films.yaml — ベルノックスフィルムズ
+# =============================================================================
+# 2026-11-03 作成。出典: KADOKAWAグループ プレスリリース(2026-09-08)、ENGI公式の告知。
+#   2026-11-01 に ENGI / Studio KADAN / レイジングブル / ベルノックスフィルムズ / チップチューン の5社が
+#   新会社「株式会社Studio One Base」に統合されました(各社の屋号は継続)。
+#   公式サイト・SNS・設立年は未確認のため null です。分かったところから埋めてください。
+#   roles が空の会社の通知は「未分類」(fallback)へ送られます。
+
+schema_version: 1
+
+id: 09922c3d-0b20-43ab-9eb3-b633e82f65c8
+slug: bellnox-films
+
+name: 株式会社ベルノックスフィルムズ
+display_name: ベルノックスフィルムズ
+name_en: null
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: null
+  city: null
+  area: null
+  address: null
+
+roles: []
+
+related_companies:
+  - name: 株式会社Studio One Base
+    company_id: null
+    relation: 2026-11-01 の合併で新会社に統合(屋号は継続)
+
+website: null
+
+sns:
+  accounts:
+    x:
+      - handle: null
+        monitor: false
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      - handle: null
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [ベルノックスフィルムズ]
+    use_presets: []
+    custom: {}
+
+monitors: []
