@@ -20,8 +20,8 @@
 discord:
   api_base: https://discord.com/api/v10
   channels:
-    fallback: null     # どの職種にも当てはまらないとき・職種が未割り当てのときの送り先
-    errors: null       # サイト監視のエラー、RSSHub取得エラーなどの送り先
+    fallback: "1567043928811634778"     # どの職種にも当てはまらないとき・職種が未割り当てのときの送り先
+    errors: "1567032167597604864"       # サイト監視のエラー、RSSHub取得エラーなどの送り先
     types:             # 会社ファイルの type ごとの送り先(職種が決まらない通知用)。未設定なら fallback
       studio: null     # アニメ会社
       portal: null     # 就活・求人サイト
