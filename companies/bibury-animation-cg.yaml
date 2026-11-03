@@ -36,9 +36,10 @@ sns:
   accounts:
     x:
       # 出典: http://bibury-cg.com/ のメタタグ(リンクではない)
+      # studio 側(bibury-animation-studio.yaml)と同じアカウントなので、通知の重複を避けるためここでは監視しない。
       - handle: BiburyAnimation
-        label: メイン(サイトのtwitter:site)
-        monitor: true
+        label: メイン(サイトのtwitter:site)・studio側で監視
+        monitor: false
     youtube:
       - handle: null
         monitor: false
