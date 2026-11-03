@@ -39,10 +39,10 @@ website: https://engi-st.net/
 sns:
   accounts:
     x:
-      # 出典: https://engi-st.net/
-      - handle: ENGI_Inc
-        label: メイン
-        monitor: true
+      # ENGI_Inc は x.com で「アカウントなし」を確認(2026-11-03)。2026-11-01 の合併(Studio One Base)に伴い
+      # 停止・削除された可能性があります。新アカウントが分かったら handle に入れて monitor: true にしてください。
+      - handle: null
+        monitor: false
     youtube:
       - handle: null
         monitor: false
