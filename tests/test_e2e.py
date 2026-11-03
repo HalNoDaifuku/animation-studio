@@ -60,13 +60,24 @@ class RsshubE2E(unittest.TestCase):
         self.go()
         self.assertEqual(len(self.discord.messages()), 2)        # 同じ投稿は再通知しない
 
-    def test_unmatched_text_goes_to_all_candidate_channels_and_fallback(self):
+    def test_unmatched_text_goes_only_to_fallback(self):
         self.hub.feeds[self.path] = []
         self.go()
         self.hub.feeds[self.path] = [self.item(1, "採用に関するお知らせ")]
         self.go()
         channels = sorted(m["channel"] for m in self.discord.messages())
-        self.assertEqual(channels, sorted([CH_A, CH_B, CH_FB]))   # 割り当て済み2つ + 未割り当て職種ぶんのfallback(1回だけ)
+        self.assertEqual(channels, [CH_FB])                       # 職種が分からない通知は、全職種ではなく fallback だけ
+
+    def test_text_goes_only_to_matching_roles(self):
+        self.hub.feeds[self.path] = []
+        self.go()
+        self.hub.feeds[self.path] = [self.item(1, "原画マンを募集します")]
+        self.go()
+        self.assertEqual([m["channel"] for m in self.discord.messages()], [CH_A])   # 原画の channel だけ(動画の CH_B や fallback には送らない)
+        self.discord.requests.clear()
+        self.hub.feeds[self.path] = [self.item(2, "制作進行を募集します"), self.item(1, "原画マンを募集します")]
+        self.go()
+        self.assertEqual([m["channel"] for m in self.discord.messages()], [CH_FB])  # 制作進行はチャンネル未割り当て → fallback
 
     def test_send_failure_keeps_item_unseen_and_exit_1(self):
         self.hub.feeds[self.path] = []
@@ -173,13 +184,13 @@ class UrlwatchE2E(unittest.TestCase):
         self.go("--skip-new")                                       # script だけの変更(nonce) → 誤検知しない
         self.assertEqual([m for m in self.discord.messages() if m["channel"] != CH_ERR], [])
 
-        self.web.pages["/recruit/"] = "<html><body><p>制作進行・原画を募集</p></body></html>"
+        self.web.pages["/recruit/"] = "<html><body><p>制作進行を募集</p><p>原画を募集</p></body></html>"
         self.assertEqual(self.go("--skip-new"), 0)
         changed = [m for m in self.discord.messages() if "変更検知" in m["content"]]
         self.assertTrue(changed)
         self.assertTrue(all("```diff" in m["content"] and len(m["content"]) <= 2000 for m in changed))
         self.assertTrue(all(m["flags"] == 4 for m in changed))
-        self.assertEqual({m["channel"] for m in changed}, {CH_A, CH_B, CH_FB})   # 全職種(roles: [])の候補ぶん。同じチャンネルは1回
+        self.assertEqual({m["channel"] for m in changed}, {CH_A, CH_B})          # 増えた行にある職種(原画・制作進行)だけ。他の職種や fallback には送らない
 
     def test_dry_run_does_not_advance_cache(self):
         self.go("--skip-new")
@@ -286,7 +297,7 @@ class SetupChannelsE2E(unittest.TestCase):
         posts = [r["json"] for r in discord.requests if r["method"] == "POST"]
         self.assertEqual(posts[0]["type"], 4)                                           # カテゴリ
         names = [p["name"] for p in posts if p["type"] == 0]
-        self.assertEqual(len(names), 2 + 7)                                             # fallback+errors+7職種
+        self.assertEqual(len(names), 2 + 33)                                            # fallback+errors+全33職種(本文から全職種に振り分けるため)
         self.assertIn("key-animator", names)
         self.assertTrue(all("parent_id" in p for p in posts if p["type"] == 0))
         before = len(posts)

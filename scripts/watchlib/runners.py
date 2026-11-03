@@ -47,6 +47,13 @@ class RunResult:
         return bool(self.send_failures)
 
 
+def added_text(body: str) -> str:
+    """urlwatch の差分から、増えた行(+ の行)だけを取り出す。差分の形でなければ、本文全体。"""
+    lines = body.splitlines()
+    added = [ln[1:] for ln in lines if ln.startswith("+") and not ln.startswith("+++")]
+    return "\n".join(added) if added else body
+
+
 def _targets(cfg: Config, company: dict, hint_roles, text, dry_run: bool) -> list[Target]:
     roles = pick_roles(cfg, company, hint_roles=hint_roles, text=text)
     targets = resolve_channels(roles, cfg.discord_channels, company.get("type"))
@@ -185,7 +192,7 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
                 targets = _targets(cfg, company, info.roles, None, dry_run)
             messages = [msg]
         else:
-            targets = _targets(cfg, company, info.roles, None, dry_run)
+            targets = _targets(cfg, company, info.roles, added_text(entry.body), dry_run)
             archive_url = archive_status = ""
             if use_wayback and not dry_run:
                 archive_url, archive_status = (capture or wayback_mod.capture)(shown_url)

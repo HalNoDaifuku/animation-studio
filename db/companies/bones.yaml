@@ -110,7 +110,7 @@ monitors:
     url: https://www.bones.co.jp/recruit/
     category: recruit      # recruit / news / works / other など
     enabled: true
-    roles: []              # 空=この会社の全職種。特定の職種のページなら職種IDを入れる
+    roles: []              # 空=本文から職種を判定して振り分ける。特定の職種専用のページなら職種IDを入れる
     snippets: []
     skip_common_excludes: []
     urlwatch:              # 現行の urls.yaml にある <script>/<style> 除去(nonce対策)は、

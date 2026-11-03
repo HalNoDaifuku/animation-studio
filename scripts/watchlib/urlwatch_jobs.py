@@ -18,7 +18,7 @@ class JobInfo:
     company_name: str
     monitor_id: str
     category: str
-    roles: list[str] = field(default_factory=list)  # 監視URLのroles(空=その会社の全職種)
+    roles: list[str] = field(default_factory=list)  # 監視URLのroles(空=本文から職種を判定)
     is_command: bool = False                          # command ジョブ(url は表示用)
 
 

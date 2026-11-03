@@ -30,8 +30,10 @@ def channel_name(text: str) -> str:
 
 
 def used_role_ids(cfg: Config) -> list[str]:
+    if any(co.get("type", "studio") == "studio" for co in cfg.companies):
+        return list(cfg.job_roles)  # 通知は本文から全職種に振り分けるので、全職種ぶんのチャンネルが要る(common.yaml の並び順)
     used = {r for co in cfg.companies for r in company_role_ids(co)}
-    return [r for r in cfg.job_roles if r in used]  # common.yaml の並び順
+    return [r for r in cfg.job_roles if r in used]
 
 
 def used_types(cfg: Config) -> list[str]:

@@ -116,7 +116,7 @@ monitors:
     url: https://cloverworks.co.jp/recruit/
     category: recruit      # recruit / news / works / other など
     enabled: true
-    roles: []              # 空=この会社の全職種。特定の職種のページなら職種IDを入れる
+    roles: []              # 空=本文から職種を判定して振り分ける。特定の職種専用のページなら職種IDを入れる
     snippets: []
     skip_common_excludes: []
     urlwatch:              # いまの urls.yaml の設定をそのまま引き継いだもの

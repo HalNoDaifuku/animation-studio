@@ -33,10 +33,13 @@ class RoutingTest(unittest.TestCase):
         cfg, _ = cfg_with()
         company = cfg.company("cloverworks")
         self.assertEqual(pick_roles(cfg, company, text="原画マンを募集します"), ["key_animator"])
-        # 原画の除外語(原画展)を含む投稿は、原画には送らない → 絞れないので全職種
-        all_roles = pick_roles(cfg, company)
-        self.assertEqual(pick_roles(cfg, company, text="原画展を開催します"), all_roles)
-        self.assertEqual(pick_roles(cfg, company, text="なんの関係もない本文"), all_roles)
+        # 原画の除外語(原画展)を含む投稿は、原画には送らない。職種が分からなければ職種なし(→ fallback)
+        self.assertEqual(pick_roles(cfg, company, text="原画展を開催します"), [])
+        self.assertEqual(pick_roles(cfg, company, text="なんの関係もない本文"), [])
+        self.assertEqual(pick_roles(cfg, company), [])
+        self.assertEqual(pick_roles(cfg, company, text="制作進行・原画を募集"), ["production_assistant", "key_animator"])
+        # 会社の roles に書いていない職種でも、本文に出てくれば送る
+        self.assertIn("background_art", pick_roles(cfg, {**company, "roles": []}, text="美術を募集"))
         self.assertEqual(pick_roles(cfg, company, hint_roles=["finishing", "compositing"]), ["finishing", "compositing"])
         self.assertEqual(pick_roles(cfg, company, hint_roles=["finishing", "key_animator"], text="原画を募集"), ["key_animator"])
 
