@@ -38,8 +38,10 @@ website: http://chiptune.co.jp/
 sns:
   accounts:
     x:
-      - handle: null
-        monitor: false
+      # 出典: オーナー(Hal)が2026-11-03に調査
+      - handle: chiptune0720
+        label: メイン
+        monitor: true
     youtube:
       - handle: null
         monitor: false
