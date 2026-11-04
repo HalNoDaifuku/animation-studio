@@ -55,12 +55,12 @@ sns:
     custom: {}
 
 monitors:
-  # 出典の Excel(2026-11-03)にあるURLから作成。未検証のため、動作を確認してから enabled: true にしてください。
+  # 公式サイトの採用リンクから作成(2026-11-04 調査)。
   - id: recruit
     name: 採用情報
-    url: https://makaria.biz/recruit
+    url: https://www.makaria.biz/recruit
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []

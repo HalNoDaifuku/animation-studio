@@ -35,13 +35,17 @@ website: https://team-lab.com/
 sns:
   accounts:
     x:
-      - handle: null
-        monitor: false
+      # 出典: https://team-lab.com/(2026-11-04 調査)
+      - handle: teamlab_news
+        label: メイン
+        monitor: true
     youtube:
       - handle: null
         monitor: false
+      # YouTube(公式サイト記載): https://www.youtube.com/user/TEAMLABNET/
     instagram:
-      - handle: null
+      # 出典: 公式サイト(2026-11-04 調査)
+      - handle: teamlab
         monitor: false
     bluesky:
       - handle: null
@@ -55,12 +59,12 @@ sns:
     custom: {}
 
 monitors:
-  # 出典の Excel(2026-11-03)にあるURLから作成。未検証のため、動作を確認してから enabled: true にしてください。
+  # 公式サイトの採用リンクから作成(2026-11-04 調査)。
   - id: recruit
     name: 採用情報
-    url: https://team-lab.com/recruit/fresh/3dcg
+    url: https://www.team-lab.com/jp/recruit/
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []

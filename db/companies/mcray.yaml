@@ -4,6 +4,7 @@
 # 2026-11-03 に Hal の Excel(撮影職情報・3DCG職情報・エフェクト職情報)から自動生成した初期版です。
 #   確認済み: 会社名・勤務場所(都道府県・市区町村まで)・職種の分類(どのシートに載っていたか)
 #   未確認: 設立年・SNSアカウント・公式サイトのURL(Excelの出典欄から抽出したもの。要確認)
+#   調査メモ: マックレイは株式会社レイが保有する編集スタジオ。採用はレイ(rei)側
 #   roles は「Excelのどのシートに載っていたか」から付けた分類です(撮影=compositing、3DCG=cg_3d、エフェクト=cg_effects)。
 #   通知は本文から職種を判定して振り分けます(roles は、その会社だけ除外語を調整したいときに使います)。
 
@@ -41,7 +42,8 @@ sns:
       - handle: null
         monitor: false
     instagram:
-      - handle: null
+      # 出典: 公式サイト(2026-11-04 調査)
+      - handle: mcray3230
         monitor: false
     bluesky:
       - handle: null

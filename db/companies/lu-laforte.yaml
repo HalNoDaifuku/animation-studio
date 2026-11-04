@@ -35,8 +35,10 @@ website: https://sites.google.com/view/ll-anime
 sns:
   accounts:
     x:
-      - handle: null
-        monitor: false
+      # 出典: https://sites.google.com/view/ll-anime(2026-11-04 調査)
+      - handle: LuLaforte_2023
+        label: メイン
+        monitor: true
     youtube:
       - handle: null
         monitor: false
@@ -54,4 +56,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 公式サイトの採用リンクから作成(2026-11-04 調査)。
+  - id: recruit
+    name: 採用情報
+    url: https://sites.google.com/view/ll-anime/saiyo
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

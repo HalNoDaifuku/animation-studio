@@ -36,13 +36,17 @@ website: https://orange-cg.com/
 sns:
   accounts:
     x:
-      - handle: null
-        monitor: false
+      # 出典: https://orange-cg.com/(2026-11-04 調査)
+      - handle: cg_orange_inc
+        label: メイン
+        monitor: true
     youtube:
       - handle: null
         monitor: false
+      # YouTube(公式サイト記載): https://www.youtube.com/channel/UCPpZ2HSOn-pyaOAJ8Cx-0yw
     instagram:
-      - handle: null
+      # 出典: 公式サイト(2026-11-04 調査)
+      - handle: cg_orange_inc
         monitor: false
     bluesky:
       - handle: null
@@ -56,12 +60,12 @@ sns:
     custom: {}
 
 monitors:
-  # 出典の Excel(2026-11-03)にあるURLから作成。未検証のため、動作を確認してから enabled: true にしてください。
+  # 公式サイトの採用リンクから作成(2026-11-04 調査)。
   - id: recruit
     name: 採用情報
-    url: https://orange-cg.com/recruit
+    url: https://www.orange-cg.com/recruit/
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []
