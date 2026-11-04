@@ -185,6 +185,21 @@ job_roles:
 # -----------------------------------------------------------------------------
 # 2. SNS
 # -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# 通信の設定(タイムアウト・再試行)。スクリプトの中には書かず、ここだけで調整する。
+#   SNS の取得は sns.fetch、サイト監視の再試行は web.retry を参照。
+# -----------------------------------------------------------------------------
+network:
+  discord:
+    timeout_seconds: 30
+    max_retries: 4            # 429(レート制限)と 5xx のとき、同じ送信を何回まで試すか(待ち時間は 2倍ずつ増える)
+  wayback:
+    timeout_seconds: 60
+    retries: 2                # 保存に失敗したとき、あと何回やり直すか
+    retry_wait_seconds: 10
+  probe_timeout_seconds: 20   # 「報告なし」のURLの状態を調べるときのタイムアウト
+  urlwatch_run_timeout_seconds: 1800   # urlwatch 1回の実行の上限
+
 sns:
   # フィードの取得方法。
   #   失敗したものは、全フィードの取得が終わってから retry_wait_seconds 秒待って取り直す(retry_rounds 回まで)。
@@ -299,16 +314,31 @@ sns:
 web:
   # エラー(接続できないなど)になったジョブを、全部の確認が終わってから wait_seconds 秒待って取り直す(rounds 回まで)。
   # 取り直してもエラーのままのものは、同じジョブについて error_renotify_hours 時間おきにしか通知しない。
+  #   rounds を増やすほど、bot対策で一時的に弾かれたサイトが取れる可能性が上がる(そのぶん実行時間が延びる)。
   retry:
-    rounds: 1
+    rounds: 3
     wait_seconds: 120
   error_renotify_hours: 24
+
+  # bot対策の確認ページ("One moment, please..." など)が返ってきたら、変更とは扱わず「エラー」にして取り直す。
+  # markers は正規表現(大文字小文字は区別する)。確認ページに出る文言を足せば、対象が増える。
+  bot_challenge:
+    enabled: true
+    markers:
+      - 'One moment, please\.\.\.'
+      - 'Please wait while your request is being verified'
+      - 'Just a moment\.\.\.'
+      - 'Checking your browser before accessing'
+      - 'Attention Required! \| Cloudflare'
+      - 'Enable JavaScript and cookies to continue'
 
   # urlwatch ジョブの既定値(監視URL側で同じキーを書けばそちらが優先)。
   # 一時的な HTTP エラー(タイムアウト・メンテナンス中の 503 など)だけを通知しない。
   # 404 や 403 は含めていない(ページ消失・アクセス拒否は気づきたいため)。
+  #   max_tries: 1 にしてあるのは、エラーを「何回続いたら報告するか」を urlwatch に任せず、
+  #   スクリプト側の再試行(web.retry)で取り直し、それでも失敗したものだけを通知するため。
   job_defaults:
-    max_tries: 3
+    max_tries: 1
     ignore_http_error_codes: "408, 429, 500, 502, 503, 504"
 
   # 誤検知対策の除外フィルター。1つの除外に「効かせる条件(auto)・説明・フィルター本体」をまとめて書く。

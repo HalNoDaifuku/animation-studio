@@ -215,12 +215,43 @@ class UrlwatchE2E(unittest.TestCase):
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
             self.assertEqual(self.go("--skip-new"), 0)
-        self.assertIn("[再試行 1/1]", buf.getvalue())              # エラーのジョブだけ、全部終わってから取り直す
+        self.assertIn("[再試行 1/3]", buf.getvalue())              # エラーのジョブだけ、全部終わってから取り直す
         self.assertEqual(len(self.discord.messages(CH_ERR)), 1)
         self.go("--skip-new")
         self.assertEqual(len(self.discord.messages(CH_ERR)), 1)    # 同じエラーは24時間は繰り返さない
         self.go("--skip-new", "--retry-rounds", "0")
         self.assertEqual(len(self.discord.messages(CH_ERR)), 1)
+
+    def test_bot_challenge_page_is_an_error_not_a_change(self):
+        challenge = "<html><body><p>One moment, please...</p><p>Please wait while your request is being verified...</p></body></html>"
+        self.go("--skip-new")                                       # 通常のページを保存
+        self.discord.requests.clear()
+        self.web.pages["/recruit/"] = challenge
+        self.go("--skip-new", "--retry-rounds", "2")                # 取り直しても確認ページのまま
+        self.assertEqual([m for m in self.discord.messages() if "変更検知" in m["content"]], [])   # 変更としては通知しない
+        self.web.pages["/recruit/"] = "<html><body><p>制作進行を募集</p></body></html>"
+        self.go("--skip-new")                                       # 元に戻っても「変更」にならない(保存内容は更新されていない)
+        self.assertEqual([m for m in self.discord.messages() if "変更検知" in m["content"]], [])
+
+    def test_bot_challenge_recovers_by_retry(self):
+        self.go("--skip-new")
+        self.discord.requests.clear()
+        calls = {"n": 0}
+        good = "<html><body><p>制作進行を募集</p><p>原画を募集</p></body></html>"
+        bad = "<html><body><p>Just a moment...</p></body></html>"
+        orig = self.web.pages
+
+        class Flaky(dict):
+            def get(self_inner, k, d=None):
+                if k == "/recruit/":
+                    calls["n"] += 1
+                    return bad if calls["n"] == 1 else good   # 1回目だけ確認ページ
+                return dict.get(self_inner, k, d)
+        self.web.pages = Flaky(orig)
+        self.go("--skip-new")
+        changed = [m for m in self.discord.messages() if "変更検知" in m["content"]]
+        self.assertEqual(sorted(m["channel"] for m in changed), sorted([CH_A, CH_B]))   # 取り直して取れた分を、職種ごとに1回ずつ通知する
+        self.assertFalse(any("One moment" in m["content"] or "Just a moment" in m["content"] for m in changed))
 
     def test_dry_run_does_not_advance_cache(self):
         self.go("--skip-new")
@@ -307,7 +338,7 @@ class UrlwatchE2E(unittest.TestCase):
         report = self.root / "r.txt"
         report.write_text("-" * 75 + "\nCHANGED: 採用情報 - CloverWorks ( http://x/ )\n" + "-" * 75 + "\n+新しい\n", encoding="utf-8")
         orig = runners.wayback_mod.capture
-        runners.wayback_mod.capture = lambda url: ("", "HTTP 429")
+        runners.wayback_mod.capture = lambda url, **kw: ("", "HTTP 429")
         try:
             self.assertEqual(self.go("--report", str(report), "--wayback"), 0)
         finally:

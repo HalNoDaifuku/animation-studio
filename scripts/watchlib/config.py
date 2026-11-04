@@ -72,6 +72,10 @@ class Config:
         return self.common.get("web") or {}
 
     @property
+    def network(self) -> dict:
+        return self.common.get("network") or {}
+
+    @property
     def discord_channels(self) -> dict:
         """config/discord.yaml を、チャンネルIDを文字列にそろえて返す。"""
         d = (self.discord or {}).get("discord") or {}

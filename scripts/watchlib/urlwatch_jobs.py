@@ -43,6 +43,15 @@ def common_excludes(cfg: Config, monitor: dict) -> list:
     return filters
 
 
+def bot_guard_filter(cfg: Config) -> dict | None:
+    """common.yaml の web.bot_challenge から、botguard フィルターを作る(無効・目印なしなら None)。"""
+    c = cfg.web.get("bot_challenge") or {}
+    markers = [str(m) for m in (c.get("markers") or []) if str(m)]
+    if not c.get("enabled", True) or not markers:
+        return None
+    return {"botguard": "|".join(f"(?:{m})" for m in markers)}
+
+
 def build_jobs(cfg: Config, only: str | None = None) -> tuple[list[dict], list[JobInfo]]:
     jobs: list[dict] = []
     infos: list[JobInfo] = []
@@ -62,6 +71,9 @@ def build_jobs(cfg: Config, only: str | None = None) -> tuple[list[dict], list[J
             own_filter = own.pop("filter", None) or []
             job.update(own)
             filters = common_excludes(cfg, monitor) + list(own_filter)
+            guard = bot_guard_filter(cfg)
+            if guard and not command:
+                filters.insert(0, guard)  # HTMLのまま、いちばん先に確認ページを検出する
             if filters:
                 job["filter"] = filters
             jobs.append(job)

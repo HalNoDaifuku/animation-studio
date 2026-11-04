@@ -137,3 +137,10 @@ class DryRunBot:
         self.sent.append((str(channel_id), content))
         self.out(f"[dry-run] → チャンネル {channel_id}\n{content}\n{'-' * 40}")
         return {}
+
+
+def make_bot(cfg, token: str) -> "DiscordBot":
+    """common.yaml の network.discord(タイムアウト・再試行回数)を反映した Bot を作る。"""
+    n = (cfg.network.get("discord") or {})
+    return DiscordBot(token, cfg.discord_channels["api_base"], timeout=int(n.get("timeout_seconds", 30)),
+                      max_retries=int(n.get("max_retries", 4)))

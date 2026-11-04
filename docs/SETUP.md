@@ -99,3 +99,7 @@ Actions → **watch-test** → Run workflow。最初は `job=check` と `dry_run
   記録は `.rsshub-state/state.json` と `.urlwatch/error-state.json` に入り、GitHub Actions のキャッシュで引き継ぎます。
 - 接続タイムアウトが同じサイトで続く場合は、そのサイトが GitHub Actions のIP(海外・クラウド)からの接続を落としている可能性があります。
   再試行では直らないので、そのURLは `enabled: false` にして手動確認にするか、別の取得手段を検討してください。
+
+- bot対策の確認ページ("One moment, please..." など)が返ってきたときは、変更とは扱わず「エラー」にして、全部の確認が終わってから取り直します(`common.yaml` の `web.bot_challenge`)。
+  保存済みの内容は更新されないので、確認ページに変わった・元に戻った、という2回の誤検知も出ません。
+- タイムアウト・再試行回数など通信の設定は、`common.yaml` の `network`(Discord・Wayback・urlwatch の実行上限)、`sns.fetch`、`web.retry` にまとめてあります。

@@ -23,7 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from watchlib.config import ROOT, ConfigError, load_config  # noqa: E402
-from watchlib.discord import DiscordBot, DryRunBot  # noqa: E402
+from watchlib.discord import DryRunBot, make_bot  # noqa: E402
 from watchlib.rsshub import build_feeds, mask_key  # noqa: E402
 from watchlib.runners import run_rsshub  # noqa: E402
 from watchlib.state import State  # noqa: E402
@@ -81,7 +81,7 @@ def main(argv=None) -> int:
         if not token:
             print("環境変数 DISCORD_BOT_TOKEN がありません。")
             return 2
-        bot = DiscordBot(token, cfg.discord_channels["api_base"])
+        bot = make_bot(cfg, token)
 
     state = State(args.state or args.root / ".rsshub-state" / "state.json")
     result = run_rsshub(cfg, feeds, state, bot, dry_run=args.dry_run, build_errors=errors,

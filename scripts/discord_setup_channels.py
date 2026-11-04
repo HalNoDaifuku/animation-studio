@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from watchlib.channels import apply_plan, mapping_yaml, plan_channels, used_role_ids  # noqa: E402
 from watchlib.config import ROOT, ConfigError, load_config  # noqa: E402
-from watchlib.discord import DiscordBot, DiscordError  # noqa: E402
+from watchlib.discord import make_bot, DiscordError  # noqa: E402
 
 
 def main(argv=None) -> int:
@@ -39,7 +39,7 @@ def main(argv=None) -> int:
         print(e)
         return 2
     role_ids = list(cfg.job_roles) if args.all_roles else used_role_ids(cfg)
-    bot = DiscordBot(token, cfg.discord_channels["api_base"])
+    bot = make_bot(cfg, token)
     try:
         existing = bot.list_guild_channels(args.guild)
         plan = plan_channels(cfg, existing, args.category, role_ids)

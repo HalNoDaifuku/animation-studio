@@ -21,13 +21,16 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from watchlib.config import ROOT, ConfigError, load_config  # noqa: E402
-from watchlib.discord import DiscordBot, DryRunBot  # noqa: E402
+from watchlib.discord import DryRunBot, make_bot  # noqa: E402
 from watchlib.messages import truncate  # noqa: E402
 from watchlib.report import parse_report  # noqa: E402
 from watchlib.runners import RunResult, run_urlwatch_command, run_urlwatch_report, send_to_errors_channel  # noqa: E402
 from watchlib.state import State  # noqa: E402
 from watchlib.urlwatch_jobs import build_jobs, missing_filter_modules, write_urls_yaml  # noqa: E402
 from watchlib.validate import ERROR, validate_config  # noqa: E402
+
+
+HOOKS = Path(__file__).resolve().parent / "urlwatch_hooks.py"  # bot対策ページを「エラー」にするフィルター
 
 
 def main(argv=None) -> int:
@@ -83,7 +86,7 @@ def main(argv=None) -> int:
         if not token:
             print("環境変数 DISCORD_BOT_TOKEN がありません。")
             return 2
-        bot = DiscordBot(token, cfg.discord_channels["api_base"])
+        bot = make_bot(cfg, token)
 
     result = RunResult()
     entries = None
@@ -99,11 +102,12 @@ def main(argv=None) -> int:
             if cache.exists():
                 shutil.copy(cache, copy)
             cache = copy
+        run_timeout = int(cfg.network.get("urlwatch_run_timeout_seconds", 1800))
         retry_cfg = cfg.web.get("retry") or {}
         rounds = int(retry_cfg.get("rounds", 1) if args.retry_rounds is None else args.retry_rounds)
         wait = float(retry_cfg.get("wait_seconds", 120) if args.retry_wait is None else args.retry_wait)
         try:
-            code, report_text, err = run_urlwatch_command(urls_path, cache, args.urlwatch_cmd)
+            code, report_text, err = run_urlwatch_command(urls_path, cache, args.urlwatch_cmd, run_timeout, HOOKS)
             if code == 0:
                 entries = parse_report(report_text, {i.name for i in infos})
                 for attempt in range(1, rounds + 1):
@@ -115,7 +119,7 @@ def main(argv=None) -> int:
                     time.sleep(wait)  # 全部の確認が終わってから。続けて同じ相手へ要求しない
                     retry_path = urls_path.with_name(urls_path.stem + "-retry.yaml")
                     write_urls_yaml([j for j in jobs if j["name"] in failed], retry_path)
-                    rcode, rtext, rerr = run_urlwatch_command(retry_path, cache, args.urlwatch_cmd)
+                    rcode, rtext, rerr = run_urlwatch_command(retry_path, cache, args.urlwatch_cmd, run_timeout, HOOKS)
                     if rcode != 0:
                         print(f"[再試行] urlwatch の実行に失敗しました(終了コード {rcode}): {rerr.strip()[:300]}")
                         break

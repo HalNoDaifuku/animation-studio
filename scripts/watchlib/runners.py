@@ -19,7 +19,7 @@ from .state import State
 from .urlwatch_jobs import JobInfo
 from . import wayback as wayback_mod
 
-def probe_url(url: str, timeout: int = 20) -> str:
+def probe_url(url: str, timeout: int = 20) -> str:  # 既定値。実際は common.yaml の network.probe_timeout_seconds
     """URLを1回だけ取得して、状態を短い文字列で返す(報告に載らなかったジョブの原因調べ用)。"""
     import urllib.error
     import urllib.request
@@ -198,9 +198,10 @@ _ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 
 
 def run_urlwatch_command(urls_path: Path, cache_path: Path, command: str = "urlwatch",
-                         timeout: int = 1800) -> tuple[int, str, str]:
+                         timeout: int = 1800, hooks: Path | None = None) -> tuple[int, str, str]:
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-    proc = subprocess.run([command, "--urls", str(urls_path), "--cache", str(cache_path)],
+    extra = ["--hooks", str(hooks)] if hooks else []
+    proc = subprocess.run([command, "--urls", str(urls_path), "--cache", str(cache_path), *extra],
                           capture_output=True, timeout=timeout,
                           env={**__import__("os").environ, "PYTHONIOENCODING": "utf-8"})
     out = _ANSI.sub("", proc.stdout.decode("utf-8", "replace"))
@@ -231,7 +232,9 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
     log("urlwatch の結果: " + (", ".join(f"{k} {v}件" for k, v in sorted(counts.items())) or "報告なし")
         + f"(ジョブ {len(by_name)}件)")
     for name in sorted(set(by_name) - {e.name for e in entries}):
-        note = f" / 今のURLの状態: {probe(by_name[name].url)}" if probe else ""
+        probe_timeout = int(cfg.network.get("probe_timeout_seconds", 20))
+        note = (f" / 今のURLの状態: {probe(by_name[name].url, timeout=probe_timeout) if probe is probe_url else probe(by_name[name].url)}"
+                if probe else "")
         log(f"[報告なし] {name}: 変更なし、または無視する一時エラー(408/429/5xx)のためレポートに載りませんでした。フィルターの失敗は max_tries 回続くまで報告されません{note}")
     for entry in entries:
         info = by_name.get(entry.name)
@@ -259,7 +262,10 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
             targets = _targets(cfg, company, info.roles, added_text(entry.body), dry_run)
             archive_url = archive_status = ""
             if use_wayback and not dry_run:
-                archive_url, archive_status = (capture or wayback_mod.capture)(shown_url)
+                wb = cfg.network.get("wayback") or {}
+                archive_url, archive_status = (capture or (lambda u: wayback_mod.capture(
+                    u, timeout=int(wb.get("timeout_seconds", 60)), retries=int(wb.get("retries", 2)),
+                    wait=float(wb.get("retry_wait_seconds", 10)))))(shown_url)
                 if archive_status:
                     archive_status = f"保存失敗({archive_status})"
             empty = "(初めて取得しました。以降の変更を通知します)" if entry.status == "NEW" else "(差分の本文なし)"
