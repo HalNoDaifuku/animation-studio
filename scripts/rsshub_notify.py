@@ -42,6 +42,9 @@ def main(argv=None) -> int:
     ap.add_argument("--no-filter", action="store_true",
                     help="動作確認用: 採用ワードで絞らず、最新の投稿を取る(--notify-on-first-run --limit 2 と併用)")
     ap.add_argument("--limit", type=int, default=5, help="1フィード・1回あたりの最大通知数(既定5)")
+    ap.add_argument("--retry-rounds", type=int, default=None, help="取得に失敗したフィードを、全部終わってから再取得する回数(既定: common.yaml の sns.fetch.retry_rounds)")
+    ap.add_argument("--retry-wait", type=float, default=None, help="再取得の前に待つ秒数(既定: common.yaml の sns.fetch.retry_wait_seconds)")
+    ap.add_argument("--request-interval", type=float, default=None, help="フィードの取得と取得のあいだの秒数(既定: common.yaml の sns.fetch.request_interval_seconds)")
     args = ap.parse_args(argv)
 
     problems = [i for i in validate_config(args.root) if i.level == ERROR]
@@ -82,7 +85,9 @@ def main(argv=None) -> int:
 
     state = State(args.state or args.root / ".rsshub-state" / "state.json")
     result = run_rsshub(cfg, feeds, state, bot, dry_run=args.dry_run, build_errors=errors,
-                        notify_on_first_run=args.notify_on_first_run, limit=args.limit)
+                        notify_on_first_run=args.notify_on_first_run, limit=args.limit,
+                        retry_rounds=args.retry_rounds, retry_wait=args.retry_wait,
+                        request_interval=args.request_interval)
     print(f"送信 {result.sent}件 / 上限で省略 {result.skipped}件 / 取得エラー {len(result.errors)}件 / 送信失敗 {len(result.send_failures)}件")
     for line in result.send_failures:
         print(f"[送信失敗] {line}")

@@ -321,6 +321,8 @@ def fetch_feed(request_url: str, *, timeout: int = 30, opener: Callable | None =
     except urllib.error.HTTPError as e:
         raise FeedFetchError(f"HTTP {e.code}") from None
     except urllib.error.URLError as e:
+        if isinstance(e.reason, TimeoutError):
+            raise FeedFetchError("タイムアウト") from None
         raise FeedFetchError(f"接続できません: {e.reason}") from None
     except TimeoutError:
         raise FeedFetchError("タイムアウト") from None

@@ -129,6 +129,7 @@ class MockRSSHub(_Server):
         self.feeds: dict[str, list[dict]] = {}
         self.requested: list[str] = []
         self.require_key: str | None = None
+        self.fail_first: dict[str, int] = {}  # {パス: 最初の何回を503にするか}
         server = self
 
         def factory(_):
@@ -141,6 +142,11 @@ class MockRSSHub(_Server):
                     parts = urlsplit(self.path)
                     if server.require_key and f"key={server.require_key}" not in parts.query:
                         self.send_response(403)
+                        self.end_headers()
+                        return
+                    if server.fail_first.get(parts.path, 0) > 0:
+                        server.fail_first[parts.path] -= 1
+                        self.send_response(503)
                         self.end_headers()
                         return
                     items = server.feeds.get(parts.path)

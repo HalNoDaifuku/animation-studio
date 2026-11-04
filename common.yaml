@@ -186,6 +186,18 @@ job_roles:
 # 2. SNS
 # -----------------------------------------------------------------------------
 sns:
+  # フィードの取得方法。
+  #   失敗したものは、全フィードの取得が終わってから retry_wait_seconds 秒待って取り直す(retry_rounds 回まで)。
+  #   すぐに取り直さないのは、同じ相手へ続けて要求してブロック(bot判定)されにくくするため。
+  #   request_interval_seconds: フィードとフィードのあいだに空ける秒数。
+  #   error_renotify_hours: 取り直しても失敗したフィードのエラーを、同じものについては何時間おきにしか通知しないか。
+  fetch:
+    timeout_seconds: 30
+    request_interval_seconds: 0.5
+    retry_rounds: 2
+    retry_wait_seconds: 120
+    error_renotify_hours: 24
+
   # RSSHubのルート定義。
   #   handle_prefix: ルートへ渡すときにアカウントIDの前へ付ける文字。
   #     会社ファイルのアカウントIDは @ なしで書く。YouTube のように @ が必要なものだけ
@@ -285,6 +297,13 @@ sns:
 # 3. Webサイト監視(urlwatch)
 # -----------------------------------------------------------------------------
 web:
+  # エラー(接続できないなど)になったジョブを、全部の確認が終わってから wait_seconds 秒待って取り直す(rounds 回まで)。
+  # 取り直してもエラーのままのものは、同じジョブについて error_renotify_hours 時間おきにしか通知しない。
+  retry:
+    rounds: 1
+    wait_seconds: 120
+  error_renotify_hours: 24
+
   # urlwatch ジョブの既定値(監視URL側で同じキーを書けばそちらが優先)。
   # 一時的な HTTP エラー(タイムアウト・メンテナンス中の 503 など)だけを通知しない。
   # 404 や 403 は含めていない(ページ消失・アクセス拒否は気づきたいため)。

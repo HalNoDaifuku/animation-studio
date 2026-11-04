@@ -40,6 +40,7 @@ jobs:
         with:
           path: |
             .urlwatch/cache-companies.db
+            .urlwatch/error-state.json
             .rsshub-state/state.json
             .urlwatch-last-good
           key: watch-state-${{ github.run_id }}
@@ -60,6 +61,7 @@ jobs:
         with:
           path: |
             .urlwatch/cache-companies.db
+            .urlwatch/error-state.json
             .rsshub-state/state.json
             .urlwatch-last-good
           key: watch-state-${{ github.run_id }}

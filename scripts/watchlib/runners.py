@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
@@ -78,67 +79,116 @@ def send_to_errors_channel(cfg: Config, bot, content: str, result: RunResult, *,
 
 # --- RSSHub ----------------------------------------------------------------------------------
 
-def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bool = False,
-               notify_on_first_run: bool = False, limit: int = 5,
-               fetch: Callable[[str], list] = fetch_feed, build_errors: list[tuple[str, str]] | None = None,
-               log: Callable[[str], None] = print) -> RunResult:
-    result = RunResult(errors=list(build_errors or []))
-    for feed in feeds:
-        company = cfg.company(feed.company_slug) or {}
-        try:
-            items = fetch(feed.request_url)
-        except FeedFetchError as e:
-            result.errors.append((feed.key, str(e)))
-            log(f"[取得失敗] {feed.key}: {e}")
-            continue
-        first_run = not state.initialized(feed.key)
-        if first_run and not notify_on_first_run:
+def _process_feed(cfg: Config, feed: Feed, items: list, state: State, bot, result: RunResult, company: dict, *,
+                  dry_run: bool, notify_on_first_run: bool, limit: int, log: Callable[[str], None]) -> None:
+    first_run = not state.initialized(feed.key)
+    if first_run and not notify_on_first_run:
+        if not dry_run:
+            state.mark(feed.key, [i.id for i in items])
+            state.save()
+        log(f"[初回] {feed.key}: {len(items)}件を既読にしました(通知なし)")
+        return
+    new = [i for i in items if not state.seen(feed.key, i.id)]
+    if cfg.sns.get("exclude_retweets", True):
+        retweets = [i for i in new if is_retweet(i.text)]
+        if retweets:
             if not dry_run:
-                state.mark(feed.key, [i.id for i in items])
-                state.save()
-            log(f"[初回] {feed.key}: {len(items)}件を既読にしました(通知なし)")
-            continue
-        new = [i for i in items if not state.seen(feed.key, i.id)]
-        if cfg.sns.get("exclude_retweets", True):
-            retweets = [i for i in new if is_retweet(i.text)]
-            if retweets:
-                if not dry_run:
-                    state.mark(feed.key, [i.id for i in retweets])  # 次回また判定しないよう既読にする
-                new = [i for i in new if not is_retweet(i.text)]
-        if not new:
-            if not dry_run:
-                state.save()
-            continue
-        new.reverse()  # 古い順に送る
-        if len(new) > limit:
-            result.skipped += len(new) - limit
-            log(f"[上限] {feed.key}: 新着{len(new)}件のうち、新しい{limit}件だけ通知します")
-            skipped_ids = [i.id for i in new[:-limit]]
-            new = new[-limit:]
-            if not dry_run:
-                state.mark(feed.key, skipped_ids)
-        for item in new:
-            text = build_sns_message(company_name=feed.company_name, platform_label=feed.platform_label,
-                                     account_label=feed.label, text=item.text, url=item.url,
-                                     published=item.published)
-            targets = _targets(cfg, company, feed.hint_roles, item.text, dry_run)
-            if not targets:
-                result.send_failures.append(f"{feed.key}: 送り先チャンネルがありません(config/discord.yaml を確認)")
-                continue
-            ok = True
-            for t in targets:
-                try:
-                    bot.send_message(t.channel_id, text, suppress_embeds=False)
-                    result.sent += 1
-                except DiscordError as e:
-                    ok = False
-                    result.send_failures.append(f"{feed.key} → {t.channel_id}: {e}")
-            if ok and not dry_run:
-                state.mark(feed.key, [item.id])  # 送れなかったものは既読にせず、次回また試す
+                state.mark(feed.key, [i.id for i in retweets])  # 次回また判定しないよう既読にする
+            new = [i for i in new if not is_retweet(i.text)]
+    if not new:
         if not dry_run:
             state.save()
-    if result.errors:
-        send_to_errors_channel(cfg, bot, build_feed_error_message(result.errors), result, dry_run=dry_run)
+        return
+    new.reverse()  # 古い順に送る
+    if len(new) > limit:
+        result.skipped += len(new) - limit
+        log(f"[上限] {feed.key}: 新着{len(new)}件のうち、新しい{limit}件だけ通知します")
+        skipped_ids = [i.id for i in new[:-limit]]
+        new = new[-limit:]
+        if not dry_run:
+            state.mark(feed.key, skipped_ids)
+    for item in new:
+        text = build_sns_message(company_name=feed.company_name, platform_label=feed.platform_label,
+                                 account_label=feed.label, text=item.text, url=item.url,
+                                 published=item.published)
+        targets = _targets(cfg, company, feed.hint_roles, item.text, dry_run)
+        if not targets:
+            result.send_failures.append(f"{feed.key}: 送り先チャンネルがありません(config/discord.yaml を確認)")
+            continue
+        ok = True
+        for t in targets:
+            try:
+                bot.send_message(t.channel_id, text, suppress_embeds=False)
+                result.sent += 1
+            except DiscordError as e:
+                ok = False
+                result.send_failures.append(f"{feed.key} → {t.channel_id}: {e}")
+        if ok and not dry_run:
+            state.mark(feed.key, [item.id])  # 送れなかったものは既読にせず、次回また試す
+    if not dry_run:
+        state.save()
+
+
+def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bool = False,
+               notify_on_first_run: bool = False, limit: int = 5,
+               fetch: Callable[[str], list] | None = None, build_errors: list[tuple[str, str]] | None = None,
+               retry_rounds: int | None = None, retry_wait: float | None = None,
+               request_interval: float | None = None, error_renotify_hours: float | None = None,
+               sleep: Callable[[float], None] = time.sleep, log: Callable[[str], None] = print) -> RunResult:
+    """全フィードを1回取得し、失敗したものだけを「全部が終わってから」待って再取得する(retry_rounds 回まで)。
+
+    すぐ再試行すると、同じ相手へ続けて要求することになるため、まとめて後回しにする。
+    それでも失敗したものだけをエラーとして通知し、同じエラーは error_renotify_hours 時間は繰り返さない。
+    """
+    opts = cfg.sns.get("fetch") or {}
+    rounds = int(opts.get("retry_rounds", 2) if retry_rounds is None else retry_rounds)
+    wait = float(opts.get("retry_wait_seconds", 120) if retry_wait is None else retry_wait)
+    interval = float(opts.get("request_interval_seconds", 0.5) if request_interval is None else request_interval)
+    renotify = float(opts.get("error_renotify_hours", 24) if error_renotify_hours is None else error_renotify_hours)
+    timeout = int(opts.get("timeout_seconds", 30))
+    if fetch is None:
+        fetch = lambda url: fetch_feed(url, timeout=timeout)  # noqa: E731
+
+    result = RunResult(errors=[])
+    last_error: dict[str, str] = {}
+    pending = list(feeds)
+    for attempt in range(rounds + 1):
+        if attempt:
+            if not pending:
+                break
+            log(f"[再試行 {attempt}/{rounds}] 取得に失敗した{len(pending)}件を、{wait:g}秒待ってから取得し直します")
+            sleep(wait)
+        failed: list[Feed] = []
+        for n, feed in enumerate(pending):
+            if n and interval > 0:
+                sleep(interval)  # 続けざまに要求しない
+            try:
+                items = fetch(feed.request_url)
+            except FeedFetchError as e:
+                last_error[feed.key] = str(e)
+                failed.append(feed)
+                log(f"[取得失敗] {feed.key}: {e}" + (f"(試行{attempt + 1}回目)" if rounds else ""))
+                continue
+            if not dry_run:
+                state.clear_error(feed.key)
+            _process_feed(cfg, feed, items, state, bot, result, cfg.company(feed.company_slug) or {},
+                          dry_run=dry_run, notify_on_first_run=notify_on_first_run, limit=limit, log=log)
+        pending = failed
+
+    unresolved = [(f.key, last_error[f.key]) for f in pending] + list(build_errors or [])
+    to_report = []
+    for key, reason in unresolved:
+        if dry_run or state.error_due(key, renotify):
+            to_report.append((key, reason))
+            if not dry_run:
+                state.mark_error(key)
+        else:
+            log(f"[エラー通知を省略] {key}: {reason}(前回の通知から{renotify:g}時間以内)")
+    result.errors = unresolved  # 終了時の件数表示には、省略した分も含める
+    if not dry_run:
+        state.save()
+    if to_report:
+        send_to_errors_channel(cfg, bot, build_feed_error_message(to_report), result, dry_run=dry_run)
     return result
 
 
@@ -161,10 +211,19 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
                         skip_new: bool = False, use_wayback: bool = False,
                         capture: Callable[[str], tuple[str, str]] | None = None,
                         probe: Callable[[str], str] | None = probe_url,
+                        entries: list[ReportEntry] | None = None, state: State | None = None,
+                        error_renotify_hours: float = 24,
                         log: Callable[[str], None] = print) -> RunResult:
+    """entries を渡すと、report_text を読み直さずそれを使う(再取得で差し替えた結果を渡すため)。
+    state を渡すと、同じジョブのエラーは error_renotify_hours 時間は繰り返し通知しない(エラーが直ったら記録を消す)。"""
     result = RunResult()
     by_name = {i.name: i for i in infos}
-    entries = parse_report(report_text, set(by_name))
+    if entries is None:
+        entries = parse_report(report_text, set(by_name))
+    if state is not None and not dry_run:
+        for name in by_name:
+            if not any(e.name == name and e.status == "ERROR" for e in entries):
+                state.clear_error(name)
     # どのジョブがどう報告されたかを必ず出す(「0件」の理由が分かるように)
     counts: dict[str, int] = {}
     for e in entries:
@@ -184,6 +243,11 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
         company = cfg.company(info.company_slug) or {}
         shown_url = info.url if info.is_command else (entry.url or info.url)  # command ジョブは、報告にコマンドが出るので表示用URLを使う
         if entry.status == "ERROR":
+            if state is not None and not dry_run:
+                if not state.error_due(entry.name, error_renotify_hours):
+                    log(f"[エラー通知を省略] {entry.name}: 前回の通知から{error_renotify_hours:g}時間以内です")
+                    continue
+                state.mark_error(entry.name)
             msg = build_error_message(name=entry.name, url=shown_url, body=entry.body)
             ch = cfg.discord_channels
             if ch.get("errors"):
@@ -217,4 +281,6 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
                 except DiscordError as e:
                     result.send_failures.append(f"{entry.name} → {t.channel_id}: {e}")
                     break  # このチャンネルの残りは送らない(順序が崩れるため)
+    if state is not None and not dry_run:
+        state.save()
     return result

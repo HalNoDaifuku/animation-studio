@@ -90,3 +90,12 @@ Actions → **watch-test** → Run workflow。最初は `job=check` と `dry_run
 - **確認済み**: 偽サーバーによる自動テスト(Discordの429再試行・2000文字制限・User-Agent・Bot認証ヘッダー、ルーティング、RSSHub URL生成と既読管理、本物の urlwatch 2.29 の実行→差分→送信、設定の誤りの検出)。
 - **未確認**(開発環境から外部サイトへ接続できないため): 本物の Discord への送信、本物の RSSHub・X のルート(`/twitter/user/…`、`/twitter/keyword/…`、`filter`/`filterout`)の挙動、検索クエリで `(A -"B")` の括弧が効くか、500字前後のクエリ上限。
   実際のRSSHubでは、まず `--list` のURLをブラウザで開いて確かめてください。ルートが違えば `common.yaml` の `sns.platforms` だけ直せば済みます。
+
+## 取得エラーの再試行と、同じエラーの通知間隔
+
+- SNS(RSSHub)とサイト(urlwatch)のどちらも、取得に失敗したものは「全部の確認が終わってから」待って、取り直します(すぐには取り直しません)。
+  回数と待ち時間は `common.yaml` の `sns.fetch`(`retry_rounds` / `retry_wait_seconds`)と `web.retry`(`rounds` / `wait_seconds`)で変えられます。
+- 取り直しても失敗したものだけを errors チャンネルへ通知し、同じものは `error_renotify_hours`(既定24時間)のあいだ繰り返し通知しません。直ると記録は消えます。
+  記録は `.rsshub-state/state.json` と `.urlwatch/error-state.json` に入り、GitHub Actions のキャッシュで引き継ぎます。
+- 接続タイムアウトが同じサイトで続く場合は、そのサイトが GitHub Actions のIP(海外・クラウド)からの接続を落としている可能性があります。
+  再試行では直らないので、そのURLは `enabled: false` にして手動確認にするか、別の取得手段を検討してください。

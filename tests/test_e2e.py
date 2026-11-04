@@ -41,7 +41,7 @@ class RsshubE2E(unittest.TestCase):
         self.path = "/twitter/user/CloverWorks"
 
     def go(self, *extra):
-        return run(rsshub_notify.main, "--root", str(self.root), "--state", str(self.state), *extra, env=self.env)
+        return run(rsshub_notify.main, "--root", str(self.root), "--state", str(self.state), "--retry-wait", "0", "--request-interval", "0", *extra, env=self.env)
 
     def item(self, i, text):
         return {"id": str(i), "url": f"https://x.com/CloverWorks/status/{i}", "content_text": text, "date_published": "2026-10-29T12:00:00Z"}
@@ -124,6 +124,24 @@ class RsshubE2E(unittest.TestCase):
         self.assertEqual(len(errs), 1)
         self.assertIn("RSSHub取得エラー", errs[0]["content"])
 
+    def test_failed_feed_is_retried_after_all_feeds_and_recovers(self):
+        self.hub.feeds[self.path] = [self.item(1, "既存")]
+        self.assertEqual(self.go(), 0)                            # 初回(既読にするだけ)
+        self.hub.feeds[self.path] = [self.item(2, "原画マン募集"), self.item(1, "既存")]
+        self.hub.fail_first[self.path] = 2                        # 最初の2回は失敗、3回目(再試行2回目)で成功
+        self.hub.requested.clear()
+        self.assertEqual(self.go(), 0)
+        self.assertEqual(len(self.hub.requested), 3)
+        self.assertEqual(self.discord.messages(CH_ERR), [])       # 再試行で取れたので、エラー通知なし
+        self.assertEqual(len(self.discord.messages(CH_A)), 1)     # 新着は通常どおり通知される
+
+    def test_retry_gives_up_and_same_error_is_not_repeated_within_a_day(self):
+        self.assertEqual(self.go(), 0)                            # 404 のまま
+        self.assertEqual(len(self.hub.requested), 3)              # 1回 + 再試行2回
+        self.assertEqual(len(self.discord.messages(CH_ERR)), 1)
+        self.assertEqual(self.go(), 0)                            # 直後にもう一度
+        self.assertEqual(len(self.discord.messages(CH_ERR)), 1)   # 同じエラーは、24時間は繰り返さない
+
     def test_access_key_sent_but_never_printed(self):
         self.hub.require_key = "SECRETKEY"
         self.hub.feeds[self.path] = [self.item(1, "x")]
@@ -166,7 +184,7 @@ class UrlwatchE2E(unittest.TestCase):
         self.env = {"DISCORD_BOT_TOKEN": "TOK"}
 
     def go(self, *extra):
-        return run(urlwatch_notify.main, "--root", str(self.root), "--urlwatch-cmd", URLWATCH, *extra, env=self.env)
+        return run(urlwatch_notify.main, "--root", str(self.root), "--urlwatch-cmd", URLWATCH, "--retry-wait", "0", *extra, env=self.env)
 
     def test_full_cycle(self):
         self.assertEqual(self.go("--skip-new"), 0)
@@ -191,6 +209,18 @@ class UrlwatchE2E(unittest.TestCase):
         self.assertTrue(all("```diff" in m["content"] and len(m["content"]) <= 2000 for m in changed))
         self.assertTrue(all(m["flags"] == 4 for m in changed))
         self.assertEqual({m["channel"] for m in changed}, {CH_A, CH_B})          # 増えた行にある職種(原画・制作進行)だけ。他の職種や fallback には送らない
+
+    def test_error_is_retried_then_not_repeated_within_a_day(self):
+        import io, contextlib
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            self.assertEqual(self.go("--skip-new"), 0)
+        self.assertIn("[再試行 1/1]", buf.getvalue())              # エラーのジョブだけ、全部終わってから取り直す
+        self.assertEqual(len(self.discord.messages(CH_ERR)), 1)
+        self.go("--skip-new")
+        self.assertEqual(len(self.discord.messages(CH_ERR)), 1)    # 同じエラーは24時間は繰り返さない
+        self.go("--skip-new", "--retry-rounds", "0")
+        self.assertEqual(len(self.discord.messages(CH_ERR)), 1)
 
     def test_dry_run_does_not_advance_cache(self):
         self.go("--skip-new")
