@@ -44,7 +44,8 @@ sns:
       - handle: null
         monitor: false
     instagram:
-      - handle: null
+      # 出典: animeco.link(2026-11-04 調査)
+      - handle: sciencesaru
         monitor: false
     bluesky:
       - handle: null

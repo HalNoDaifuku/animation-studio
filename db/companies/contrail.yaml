@@ -30,16 +30,18 @@ roles:
 
 related_companies: []
 
-website: null
-
+website: https://contrail.tokyo/
 sns:
   accounts:
     x:
-      - handle: null
-        monitor: false
+      # 出典: animeco.link(2026-11-04 調査)
+      - handle: CONTRAIL_info
+        label: メイン
+        monitor: true
     youtube:
       - handle: null
         monitor: false
+      # YouTube(animeco.link(2026-11-04 調査)): https://www.youtube.com/channel/UC1AyZZk4om839jYxD-yi05w
     instagram:
       - handle: null
         monitor: false
@@ -54,4 +56,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 公式サイトの採用リンクから作成(2026-11-04 調査)。
+  - id: recruit
+    name: 採用情報
+    url: https://contrail.tokyo/recruit/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

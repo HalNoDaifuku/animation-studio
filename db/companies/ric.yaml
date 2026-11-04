@@ -36,8 +36,10 @@ website: https://ric-japan.com/
 sns:
   accounts:
     x:
-      - handle: null
-        monitor: false
+      # 出典: animeco.link(2026-11-04 調査)
+      - handle: ric_japan
+        label: メイン
+        monitor: true
     youtube:
       - handle: null
         monitor: false

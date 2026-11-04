@@ -30,13 +30,14 @@ roles:
 
 related_companies: []
 
-website: null
-
+website: http://www.triplea-2002.com/
 sns:
   accounts:
     x:
-      - handle: null
-        monitor: false
+      # 出典: animeco.link(2026-11-04 調査)
+      - handle: triplea_anime
+        label: メイン
+        monitor: true
     youtube:
       - handle: null
         monitor: false
@@ -54,4 +55,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用が外部サイトのため無効。
+  - id: recruit
+    name: 採用情報
+    url: https://arwrk.net/recruit/enwn0dcqnfdelsw
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

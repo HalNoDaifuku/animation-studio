@@ -4,6 +4,9 @@
 # 2026-11-03 に Hal の Excel(撮影職情報・3DCG職情報・エフェクト職情報)から自動生成した初期版です。
 #   確認済み: 会社名・勤務場所(都道府県・市区町村まで)・職種の分類(どのシートに載っていたか)
 #   未確認: 設立年・SNSアカウント・公式サイトのURL(Excelの出典欄から抽出したもの。要確認)
+#   調査メモ: 2025-04-01付で「トムス・ジーニーズ」「トムス・フォト」「トゥーンアディショナルピクチャーズ」が社名を「トゥーンハーバーワークス」に統合・変更(https://www.harborworks.co.jp/)。
+#     トムス・フォトは先に「トゥーンアディショナルピクチャーズ」へ社名変更済み(https://www.tms-e.co.jp/company/ir/tmsphoto/)。設立1988年5月、本社は中野区中野。
+#     公式サイトにSNSの記載なし(TMSの公式SNSは親会社トムス・エンタテインメントのもの)。
 #   roles は「Excelのどのシートに載っていたか」から付けた分類です(撮影=compositing、3DCG=cg_3d、エフェクト=cg_effects)。
 #   通知は本文から職種を判定して振り分けます(roles は、その会社だけ除外語を調整したいときに使います)。
 
@@ -12,12 +15,14 @@ schema_version: 1
 id: e3f7833e-9299-4352-92e8-c48982464424
 slug: toms-photo
 
-name: トムス・フォト
-display_name: トムス・フォト
+name: 株式会社トゥーン ハーバー ワークス
+display_name: トゥーンハーバーワークス(トムス・フォト)
 name_en: null
-name_history: []
+name_history:
+  - トムス・フォト
+  - トゥーンアディショナルピクチャーズ
 
-founded_year: null
+founded_year: 1988
 
 location:
   prefecture: 東京都
@@ -30,8 +35,7 @@ roles:
 
 related_companies: []
 
-website: null
-
+website: https://www.harborworks.co.jp/
 sns:
   accounts:
     x:
@@ -54,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 公式サイトのメニュー上は「BLOG」表記のリンクのため、内容確認まで無効。
+  - id: recruit
+    name: 採用情報
+    url: https://www.harborworks.co.jp/recruit
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

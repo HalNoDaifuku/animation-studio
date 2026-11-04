@@ -30,8 +30,7 @@ roles:
 
 related_companies: []
 
-website: null
-
+website: https://v-sign.co.jp/
 sns:
   accounts:
     x:
@@ -54,4 +53,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用が外部サイト(en-gage)のため無効。
+  - id: recruit
+    name: 採用情報
+    url: https://en-gage.net/v-sign_saiyo/
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

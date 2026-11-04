@@ -37,7 +37,7 @@ sns:
   accounts:
     x:
       # 出典: https://sola-digital.com/(2026-11-04 調査)
-      - handle: SolaDigitalArts
+      - handle: SolaGroup1022
         label: メイン
         monitor: true
     youtube:

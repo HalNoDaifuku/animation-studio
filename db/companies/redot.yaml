@@ -36,7 +36,7 @@ sns:
   accounts:
     x:
       # 出典: https://redot.jp/(2026-11-04 調査)
-      - handle: studioREDOT
+      - handle: studioDOT201
         label: メイン
         monitor: true
     youtube:

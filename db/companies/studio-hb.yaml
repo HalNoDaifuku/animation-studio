@@ -30,16 +30,18 @@ roles:
 
 related_companies: []
 
-website: null
-
+website: https://www.st-hb.jp/
 sns:
   accounts:
     x:
-      - handle: null
-        monitor: false
+      # 出典: animeco.link(2026-11-04 調査)
+      - handle: studiohbYoutub1
+        label: メイン
+        monitor: true
     youtube:
       - handle: null
         monitor: false
+      # YouTube(animeco.link(2026-11-04 調査)): https://www.youtube.com/@studiohb1214
     instagram:
       - handle: null
         monitor: false
