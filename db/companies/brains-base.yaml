@@ -17,7 +17,7 @@ display_name: ブレインズ・ベース
 name_en: null
 name_history: []
 
-founded_year: null
+founded_year: 1996
 
 location:
   prefecture: 東京都
@@ -30,13 +30,15 @@ roles:
 
 related_companies: []
 
-website: null
+website: http://www.brainsbase.co.jp/
 
 sns:
   accounts:
     x:
-      - handle: null
-        monitor: false
+      # 出典: https://ja.wikipedia.org/wiki/ブレインズ・ベース(2026-11-04 調査)
+      - handle: brains_base
+        label: メイン
+        monitor: true
     youtube:
       - handle: null
         monitor: false
