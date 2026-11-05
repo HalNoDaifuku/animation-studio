@@ -212,7 +212,7 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
                         skip_new: bool = False, use_wayback: bool = False,
                         capture: Callable[[str], tuple[str, str]] | None = None,
                         probe: Callable[[str], str] | None = probe_url,
-                        entries: list[ReportEntry] | None = None, state: State | None = None,
+                        entries: list[ReportEntry] | None = None, state: State | None = None, explain_unreported: bool = False,
                         error_renotify_hours: float = 24,
                         log: Callable[[str], None] = print) -> RunResult:
     """entries を渡すと、report_text を読み直さずそれを使う(再取得で差し替えた結果を渡すため)。
@@ -231,11 +231,14 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
         counts[e.status] = counts.get(e.status, 0) + 1
     log("urlwatch の結果: " + (", ".join(f"{k} {v}件" for k, v in sorted(counts.items())) or "報告なし")
         + f"(ジョブ {len(by_name)}件)")
-    for name in sorted(set(by_name) - {e.name for e in entries}):
+    unreported = sorted(set(by_name) - {e.name for e in entries})
+    if unreported and not explain_unreported:
+        log(f"[報告なし] {len(unreported)}件(変更なし、または無視する一時エラー408/429/5xx)。1件ずつ調べるには --explain-unreported")
+    for name in unreported if explain_unreported else []:
         probe_timeout = int(cfg.network.get("probe_timeout_seconds", 20))
         note = (f" / 今のURLの状態: {probe(by_name[name].url, timeout=probe_timeout) if probe is probe_url else probe(by_name[name].url)}"
                 if probe else "")
-        log(f"[報告なし] {name}: 変更なし、または無視する一時エラー(408/429/5xx)のためレポートに載りませんでした。フィルターの失敗は max_tries 回続くまで報告されません{note}")
+        log(f"[報告なし] {name}: 変更なし、または無視する一時エラー(408/429/5xx)のためレポートに載りませんでした{note}")
     for entry in entries:
         info = by_name.get(entry.name)
         if entry.status == "UNCHANGED" or not info:

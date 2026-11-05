@@ -217,8 +217,14 @@ class UrlwatchE2E(unittest.TestCase):
             self.assertEqual(self.go("--skip-new"), 0)
         self.assertIn("[再試行 1/3]", buf.getvalue())              # エラーのジョブだけ、全部終わってから取り直す
         self.assertEqual(len(self.discord.messages(CH_ERR)), 1)
-        self.go("--skip-new")
+        buf2 = io.StringIO()
+        with contextlib.redirect_stdout(buf2):
+            self.go("--skip-new")
         self.assertEqual(len(self.discord.messages(CH_ERR)), 1)    # 同じエラーは24時間は繰り返さない
+        self.assertIn("[再試行しない]", buf2.getvalue())            # 続けて失敗しているものは、毎回取り直さない
+        self.assertNotIn("[再試行 1/3]", buf2.getvalue())
+        self.assertIn("[報告なし]", buf2.getvalue())
+        self.assertNotIn("今のURLの状態", buf2.getvalue())          # 既定では1件ずつ取得しない
         self.go("--skip-new", "--retry-rounds", "0")
         self.assertEqual(len(self.discord.messages(CH_ERR)), 1)
 
@@ -277,7 +283,7 @@ class UrlwatchE2E(unittest.TestCase):
         report.write_text("-" * 75 + "\nNEW: 採用情報 - CloverWorks ( http://x/ )\n" + "-" * 75 + "\n", encoding="utf-8")
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
-            self.go("--report", str(report), "--skip-new", "--dry-run")
+            self.go("--report", str(report), "--skip-new", "--dry-run", "--explain-unreported")
         out = buf.getvalue()
         self.assertIn("NEW 1件", out)
         self.assertIn("[報告なし] 消えるページ - CloverWorks", out)

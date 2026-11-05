@@ -103,3 +103,5 @@ Actions → **watch-test** → Run workflow。最初は `job=check` と `dry_run
 - bot対策の確認ページ("One moment, please..." など)が返ってきたときは、変更とは扱わず「エラー」にして、全部の確認が終わってから取り直します(`common.yaml` の `web.bot_challenge`)。
   保存済みの内容は更新されないので、確認ページに変わった・元に戻った、という2回の誤検知も出ません。
 - タイムアウト・再試行回数など通信の設定は、`common.yaml` の `network`(Discord・Wayback・urlwatch の実行上限)、`sns.fetch`、`web.retry` にまとめてあります。
+- 前回から続けて失敗している(エラーを通知済みの)ジョブは、毎回取り直しません(待ち時間が無駄に延びるため)。直れば、次の回の最初の取得で通常どおり取れます。
+- 報告に載らなかったジョブ(変更なし)は、件数だけを表示します。1件ずつ今のURLの状態を調べたいときは `python scripts/urlwatch_notify.py --explain-unreported` を使います(通信が増えるため、既定ではやりません)。

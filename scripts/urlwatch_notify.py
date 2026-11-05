@@ -47,6 +47,8 @@ def main(argv=None) -> int:
     ap.add_argument("--retry-rounds", type=int, default=None, help="エラーになったジョブを、全部終わってから再取得する回数(既定: common.yaml の web.retry.rounds)")
     ap.add_argument("--retry-wait", type=float, default=None, help="再取得の前に待つ秒数(既定: common.yaml の web.retry.wait_seconds)")
     ap.add_argument("--error-state", type=Path, default=None, help="エラー通知の記録(既定: .urlwatch/error-state.json)")
+    ap.add_argument("--explain-unreported", action="store_true",
+                    help="報告に載らなかった各ジョブの、今のURLの状態を1件ずつ取得して表示する(通信が増えるため、調べたいときだけ)")
     ap.add_argument("--wayback", action="store_true", help="変更を Wayback Machine に保存してURLを付ける")
     args = ap.parse_args(argv)
 
@@ -112,6 +114,10 @@ def main(argv=None) -> int:
                 entries = parse_report(report_text, {i.name for i in infos})
                 for attempt in range(1, rounds + 1):
                     failed = {e.name for e in entries if e.status == "ERROR"}
+                    known = {n for n in failed if n in error_state.errors}   # すでにエラーを通知済み(続けて失敗している)
+                    if known and attempt == 1:
+                        print(f"[再試行しない] 前回から続けて失敗しているため: {', '.join(sorted(known))}")
+                    failed -= known
                     if not failed:
                         break
                     print(f"[再試行 {attempt}/{rounds}] エラーになった{len(failed)}件を、{wait:g}秒待ってから取得し直します: "
@@ -138,6 +144,7 @@ def main(argv=None) -> int:
 
     sent = run_urlwatch_report(cfg, report_text, infos, bot, dry_run=args.dry_run,
                                skip_new=args.skip_new, use_wayback=args.wayback, entries=entries,
+                               explain_unreported=args.explain_unreported,
                                state=None if args.report else error_state,
                                error_renotify_hours=float(cfg.web.get("error_renotify_hours", 24)))
     sent.sent += result.sent
