@@ -1,0 +1,79 @@
+# =============================================================================
+# db/companies/tms-entertainment.yaml — トムス・エンタテインメント
+# =============================================================================
+# 2026-11-05 に、テレコム・アニメーションフィルムの親会社として追加しました(Hal の指示)。
+#   調査メモ: テレコム・アニメーションフィルム、トゥーンハーバーワークス(旧トムス・フォト)などの親会社。
+#     採用ページ(https://www.tms-e.co.jp/company/recruit/)はグループ全体の募集が載ります。
+#     公式Xは TMSent_jp(Hal から教わった)。TikTok・Bluesky は未登録です。
+#   未確認: 設立年・SNSアカウント
+#   roles は空です。通知は本文から職種を判定して振り分けます。
+
+schema_version: 1
+
+id: ea32469d-1d5f-4ffd-9e59-15e586e09948
+slug: tms-entertainment
+
+name: 株式会社トムス・エンタテインメント
+display_name: トムス・エンタテインメント
+name_en: TMS Entertainment
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: 東京都
+  city: 中野区
+  area: null
+  address: 東京都中野区中野3丁目31番1号
+
+roles: []
+
+related_companies:
+  - name: テレコム・アニメーションフィルム
+    company_id: 0f8ff4b9-0eae-4db6-8891-dee97011b6dc
+    relation: 子会社
+  - name: 株式会社トゥーン ハーバー ワークス
+    company_id: null
+    relation: グループ会社(旧トムス・フォト)
+
+website: https://www.tms-e.co.jp/
+
+sns:
+  accounts:
+    x:
+      # 出典: Hal から教わったURL(https://x.com/TMSent_jp)(2026-11-05)
+      - handle: TMSent_jp
+        label: メイン
+        monitor: true
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      - handle: null
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [トムス・エンタテインメント]
+    use_presets: []
+    custom: {}
+
+monitors:
+  # 公式サイトの採用リンクから作成(2026-11-05)。グループ全体の募集が載ります。
+  - id: recruit
+    name: 採用情報
+    url: https://www.tms-e.co.jp/company/recruit/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

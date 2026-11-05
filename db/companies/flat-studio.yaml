@@ -1,0 +1,75 @@
+# =============================================================================
+# db/companies/flat-studio.yaml — フラットスタジオ(FLAT STUDIO)
+# =============================================================================
+# 2026-11-05 に Hal の指示で追加。出典: https://flatstudio.jp/ と https://flatstudio.jp/about
+#   確認済み: 設立年月(2019年1月)・公式X/YouTube/Instagram(サイト内リンク)
+#   未確認: 所在地
+#   調査メモ: 採用専用ページはなく、お知らせ(updates)に「JOIN US！」などの募集が載る。
+#     そのため updates ページを監視している。
+#   roles は空です。通知は本文から職種を判定して振り分けます。
+
+schema_version: 1
+
+id: fa39b602-f4e6-48be-b1d0-3143d626441d
+slug: flat-studio
+
+name: 株式会社フラットスタジオ
+display_name: フラットスタジオ
+name_en: FLAT STUDIO
+name_history: []
+
+founded_year: 2019
+
+location:
+  prefecture: null
+  city: null
+  area: null
+  address: null
+
+roles: []
+
+related_companies: []
+
+website: https://flatstudio.jp/
+
+sns:
+  accounts:
+    x:
+      # 出典: https://flatstudio.jp/ のリンク(2026-11-05)
+      - handle: flatstudio_jp
+        label: メイン
+        monitor: true
+    youtube:
+      # 出典: https://flatstudio.jp/ のリンク(2026-11-05)
+      - handle: FLATSTUDIOJP
+        monitor: false
+    instagram:
+      # 出典: https://flatstudio.jp/ のリンク(2026-11-05)
+      - handle: flatstudio_jp
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [フラットスタジオ, FLAT STUDIO]
+    use_presets: []
+    custom: {}
+
+monitors:
+  # 採用専用ページがないため、募集が載るお知らせ一覧を監視します(2026-11-05)。
+  - id: updates
+    name: お知らせ(募集含む)
+    url: https://flatstudio.jp/updates
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

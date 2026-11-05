@@ -35,10 +35,9 @@ website: https://nexus-sp.co.jp/
 sns:
   accounts:
     x:
-      # 出典: animeco.link(2026-11-04 調査)
-      - handle: Nexus_animation
-        label: メイン
-        monitor: true
+      # animeco.link に載っていたアカウントは存在しないことを確認済み(2026-11-05)
+      - handle: null
+        monitor: false
     youtube:
       - handle: null
         monitor: false

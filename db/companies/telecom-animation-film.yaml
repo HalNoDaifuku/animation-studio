@@ -29,7 +29,10 @@ location:
 roles: 
   - compositing
 
-related_companies: []
+related_companies:
+  - name: 株式会社トムス・エンタテインメント
+    company_id: null
+    relation: 親会社(採用情報は tms-entertainment で監視)
 
 website: http://www.telecom-anime.com/
 
@@ -58,12 +61,12 @@ sns:
     custom: {}
 
 monitors:
-  # 公式サイトの採用リンクから作成(2026-11-04 調査)。
+  # 自社サイトの採用URL(?page_id=24)が404のため無効にしてあります。親会社トムス・エンタテインメント(tms-entertainment)の採用ページを別会社として監視しています。
   - id: recruit
     name: 採用情報
-    url: https://www.telecom-anime.com?page_id=24
+    url: https://www.telecom-anime.com/?page_id=24
     category: recruit
-    enabled: true
+    enabled: false
     roles: []
     snippets: []
     skip_common_excludes: []
