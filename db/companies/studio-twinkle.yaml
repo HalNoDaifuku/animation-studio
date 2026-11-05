@@ -56,7 +56,7 @@ sns:
 monitors:
   - id: site
     name: 公式サイト
-    url: https://twinkle-anime.work/
+    url: https://twinkle-anime.work/%e5%8b%9f%e9%9b%86%e8%a6%81%e9%a0%85%ef%bc%88%e5%8b%9f%e9%9b%86%e7%b5%82%e4%ba%86%ef%bc%89/
     category: other
     enabled: true
     roles: []

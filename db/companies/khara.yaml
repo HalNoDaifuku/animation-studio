@@ -59,7 +59,33 @@ sns:
 
 monitors:
   - id: recruit
-    name: 採用情報
+    name: 採用情報(デジタル部)
+    url: https://www.khara.co.jp/recruiting/digital/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - beautify
+      - strip
+  # 2026-11-05 内容確認の結果、/recruiting/ は見出しリンクだけだったため、部門別ページを監視
+  - id: recruit-pm
+    name: 採用情報(制作部)
+    url: https://www.khara.co.jp/recruiting/pm/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - beautify
+      - strip
+  # 2026-11-05 Hal の指示: 採用ページのトップも監視
+  - id: recruit-top
+    name: 採用情報(トップ)
     url: https://www.khara.co.jp/recruiting/
     category: recruit
     enabled: true

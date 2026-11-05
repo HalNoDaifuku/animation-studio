@@ -60,8 +60,62 @@ sns:
 monitors:
   # 公式サイトの採用リンクから作成(2026-11-04 調査)。
   - id: recruit
-    name: 採用情報
-    url: https://tatsunoko.co.jp/recruit
+    name: 採用情報(新卒)
+    url: https://tatsunoko.co.jp/recruit/newgraduate/newgraduate1
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-05 内容確認の結果、/recruit はリンク集だけだったため、新卒・キャリアの各ページを監視
+  - id: recruit-career
+    name: 採用情報(キャリア)
+    url: https://tatsunoko.co.jp/recruit/career/career1
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-05 Hal の指示: キャリア採用の各ページも監視
+  - id: recruit-career2
+    name: 採用情報(キャリア2)
+    url: https://tatsunoko.co.jp/recruit/career/career2
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  - id: recruit-career3
+    name: 採用情報(キャリア3)
+    url: https://tatsunoko.co.jp/recruit/career/career3
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  - id: recruit-career4
+    name: 採用情報(キャリア4)
+    url: https://tatsunoko.co.jp/recruit/career/career4
     category: recruit
     enabled: true
     roles: []

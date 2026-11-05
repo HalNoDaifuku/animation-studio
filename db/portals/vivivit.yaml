@@ -58,6 +58,7 @@ sns:
     custom: {}
 
 monitors:
+  # 本文が取れない(JavaScript描画の疑い)が、有効にしておく(2026-11-05 Hal の指示)
   - id: internship
     name: インターン特集
     url: https://www.vivivit.com/lps/internship

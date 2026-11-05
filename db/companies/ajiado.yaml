@@ -57,9 +57,10 @@ sns:
     custom: {}
 
 monitors:
+  # 2026-11-05 Hal の指示: お知らせ欄(#whatsnew)を見るURLに変更。ページ全体を比べます
   - id: recruit
-    name: 採用情報
-    url: https://ajiado.co.jp/recruit/job
+    name: 採用情報(お知らせ)
+    url: https://ajiado.co.jp/recruit#whatsnew
     category: recruit
     enabled: true
     roles: []
@@ -68,6 +69,5 @@ monitors:
     urlwatch:
       filter:
       - html2text
-      - re.findall: JOB\s*募集一覧[\s\S]*?亜細亜堂コーポレートサイト
       - strip
       - striplines

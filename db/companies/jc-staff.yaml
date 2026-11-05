@@ -56,9 +56,10 @@ sns:
     custom: {}
 
 monitors:
+  # 2026-11-05 Hal の指示: 求人ページに変更
   - id: recruit
     name: 採用情報
-    url: http://www.jcstaff.co.jp/
+    url: https://ssl.jcstaff.co.jp/kyujin/index.htm
     category: recruit
     enabled: true
     roles: []
@@ -67,6 +68,5 @@ monitors:
     urlwatch:
       filter:
       - html2text
-      - re.findall: 2027年4月入社新卒・既卒採用募集[\s\S]*?中途採用募集\s*募集職種：制作進行
       - strip
       - striplines

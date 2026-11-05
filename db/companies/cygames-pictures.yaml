@@ -57,9 +57,10 @@ sns:
     custom: {}
 
 monitors:
-  - id: recruit
-    name: 採用情報
-    url: https://cypic.co.jp/recruit/
+  # 2026-11-05 Hal の指示: 新卒採用サイト(snar.jp)を監視
+  - id: recruit-newgrad
+    name: 採用情報(新卒)
+    url: https://cypic-newgraduate.snar.jp/index.aspx
     category: recruit
     enabled: true
     roles: []
@@ -67,7 +68,19 @@ monitors:
     skip_common_excludes: []
     urlwatch:
       filter:
-      # 旧サイトの「Recruit〜© CygamesPictures」の切り出しは新サイトで使えないため、ページ全体を比べる
+      - html2text
+      - strip
+      - striplines
+  - id: recruit-jobboard
+    name: 募集職種(新卒)
+    url: https://cypic-newgraduate.snar.jp/jobboard/detail.aspx
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
       - html2text
       - strip
       - striplines

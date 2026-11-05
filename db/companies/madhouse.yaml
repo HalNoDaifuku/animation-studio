@@ -58,8 +58,8 @@ sns:
 
 monitors:
   - id: recruit
-    name: 採用情報
-    url: https://madhouse.co.jp/recruit/
+    name: 採用情報(キャリア)
+    url: https://madhouse.co.jp/recruit/career/
     category: recruit
     enabled: true
     roles: []
@@ -68,6 +68,19 @@ monitors:
     urlwatch:
       filter:
       - html2text
-      - re.findall: ・お知らせ[\s\S]*?ABOUT|・募集中の職種[\s\S]*?WORKS
+      - strip
+      - striplines
+  # 2026-11-05 Hal の指示: 子ページ(募集要項)も監視
+  - id: recruit-requirements
+    name: 募集要項
+    url: https://madhouse.co.jp/recruit/requirements
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
       - strip
       - striplines

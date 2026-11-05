@@ -74,6 +74,7 @@ monitors:
       - css: div.btn_requirements
       - beautify
       - strip
+  # 採用情報が解禁されたら出る可能性があるため有効にしておく(2026-11-05 Hal の指示。現在は本文なし)
   - id: recruit-midcareer
     name: 採用情報(中途)
     url: https://engi-st.net/recruit_mid/
