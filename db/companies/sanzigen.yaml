@@ -43,7 +43,7 @@ sns:
       # 出典: https://www.sanzigen.co.jp/
       - handle: sanzigenchannel
         label: SANZIGEN CHANNEL
-        monitor: false
+        monitor: true
     instagram:
       - handle: null
         monitor: false

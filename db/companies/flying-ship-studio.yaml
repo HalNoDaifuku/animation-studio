@@ -41,9 +41,10 @@ sns:
         label: メイン
         monitor: true
     youtube:
-      - handle: null
-        monitor: false
-      # YouTube(animeco.link(2026-11-04 調査)): https://www.youtube.com/user/neftfilm
+      # 出典: 公式サイト等のリンク(2026-11-05 反映。旧形式URLから@IDを調べたもの)
+      - handle: neftfilm
+        label: メイン
+        monitor: true
     instagram:
       - handle: null
         monitor: false

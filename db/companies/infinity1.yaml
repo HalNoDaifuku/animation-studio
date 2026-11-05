@@ -46,7 +46,7 @@ sns:
     instagram:
       # 出典: 公式サイト(2026-11-04 調査)
       - handle: sdl2055
-        monitor: false
+        monitor: true
     bluesky:
       - handle: null
         monitor: false

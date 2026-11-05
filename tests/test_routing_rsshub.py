@@ -13,10 +13,26 @@ from watchlib.state import State
 
 def cfg_with(company_edit=None, slug="cloverworks"):
     company = load_sample(slug)
+    for platform in ("youtube", "instagram", "bluesky"):   # 既定は X だけを対象にする(他は company_edit で足す)
+        for acc in (company["sns"]["accounts"].get(platform) or []):
+            acc["monitor"] = False
     if company_edit:
         company_edit(company)
     root = make_root(companies={slug: company})
     return load_config(root), root
+
+
+class PlatformRouteTest(unittest.TestCase):
+    def test_youtube_channel_id_uses_channel_route_and_handle_uses_user_route(self):
+        cfg, _ = cfg_with()
+        _, ch = rsshub.build_user_feed(cfg, "youtube", "UC1AyZZk4om839jYxD-yi05w", [], [], "https://hub.example", None)
+        self.assertIn("/youtube/channel/UC1AyZZk4om839jYxD-yi05w", ch)
+        _, us = rsshub.build_user_feed(cfg, "youtube", "gekkou_official", [], [], "https://hub.example", None)
+        self.assertIn("/youtube/user/@gekkou_official", us)
+        _, ig = rsshub.build_user_feed(cfg, "instagram", "sciencesaru", [], [], "https://hub.example", None)
+        self.assertIn("/instagram/user/sciencesaru", ig)
+        _, bs = rsshub.build_user_feed(cfg, "bluesky", "someone.bsky.social", [], [], "https://hub.example", None)
+        self.assertIn("/bsky/posts/someone.bsky.social", bs)
 
 
 class RoutingTest(unittest.TestCase):
@@ -176,7 +192,8 @@ class RsshubUrlTest(unittest.TestCase):
         root = make_root(companies={"cloverworks": load_sample("cloverworks"), "bones": load_sample("bones")})
         cfg = load_config(root)
         self.assertEqual(len(rsshub.build_feeds(cfg, "https://h", only="bones")[0]), 0)
-        self.assertEqual(len(rsshub.build_feeds(cfg, "https://h", only="cloverworks")[0]), 1)
+        feeds = rsshub.build_feeds(cfg, "https://h", only="cloverworks")[0]
+        self.assertTrue(feeds and all(f.company_slug == "cloverworks" for f in feeds))
 
 
 class RsshubFetchTest(unittest.TestCase):

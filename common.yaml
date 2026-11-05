@@ -232,6 +232,9 @@ sns:
       label: YouTube
       handle_prefix: "@"
       user_feed: "{base}/youtube/user/{handle}"
+      # チャンネルID(UC + 22文字)で書かれたアカウントは、こちらのルートを使う(@ID が分からないチャンネル用)。
+      channel_feed: "{base}/youtube/channel/{handle}"
+      channel_id_pattern: 'UC[0-9A-Za-z_-]{22}'
       search_feed: null
     instagram:
       label: Instagram

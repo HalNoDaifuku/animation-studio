@@ -105,3 +105,12 @@ Actions → **watch-test** → Run workflow。最初は `job=check` と `dry_run
 - タイムアウト・再試行回数など通信の設定は、`common.yaml` の `network`(Discord・Wayback・urlwatch の実行上限)、`sns.fetch`、`web.retry` にまとめてあります。
 - 前回から続けて失敗している(エラーを通知済みの)ジョブは、毎回取り直しません(待ち時間が無駄に延びるため)。直れば、次の回の最初の取得で通常どおり取れます。
 - 報告に載らなかったジョブ(変更なし)は、件数だけを表示します。1件ずつ今のURLの状態を調べたいときは `python scripts/urlwatch_notify.py --explain-unreported` を使います(通信が増えるため、既定ではやりません)。
+
+## X 以外のSNS(YouTube / Instagram / Bluesky)
+
+- 会社ファイルの `sns.accounts` に `handle` を書いて `monitor: true` にすると、X と同じ仕組み(RSSHub)で監視されます。
+  Bluesky は `bsky/posts/{handle}`(例: `someone.bsky.social`)です。
+- YouTube は `@ID` を `handle` に書きます(@は不要)。`@ID` が分からないチャンネルは、チャンネルID(`UC` で始まる24文字)をそのまま `handle` に書けば、専用のルートで取得します。
+- Instagram は、RSSHub 側の設定(ログイン情報など)が無いと取得できないことがあります。
+  取得できない場合は errors チャンネルに出ます(同じエラーは24時間に1回まで)。使えないときは `monitor: false` に戻してください。
+- 通知の絞り込み(募集/応募/採用…)は X と同じです。

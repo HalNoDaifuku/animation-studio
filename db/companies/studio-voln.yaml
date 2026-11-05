@@ -41,9 +41,10 @@ sns:
         label: メイン
         monitor: true
     youtube:
-      - handle: null
-        monitor: false
-      # YouTube(公式サイト記載): https://www.youtube.com/channel/UCuhQnXHvGgpw6a5YE-O0lOQ
+      # 出典: 公式サイト等のリンク(2026-11-05 反映。URLのとおり)
+      - handle: UCuhQnXHvGgpw6a5YE-O0lOQ
+        label: メイン
+        monitor: true
     instagram:
       - handle: null
         monitor: false

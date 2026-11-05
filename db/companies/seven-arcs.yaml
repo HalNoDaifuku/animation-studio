@@ -44,7 +44,7 @@ sns:
       # 出典: https://7arcs.co.jp/recruit/requirements/
       - handle: 7arcs_saiyo
         label: 採用
-        monitor: false
+        monitor: true
     bluesky:
       - handle: null
         monitor: false

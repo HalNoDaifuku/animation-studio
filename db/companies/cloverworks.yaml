@@ -79,7 +79,7 @@ sns:
     instagram:
       - handle: cloverworks_en
         label: 英語版
-        monitor: false
+        monitor: true
     bluesky:
       - handle: null
         monitor: false

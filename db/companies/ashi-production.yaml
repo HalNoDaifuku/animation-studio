@@ -43,7 +43,7 @@ sns:
       # 出典: https://ja.wikipedia.org/wiki/葦プロダクション(外部リンク)
       - handle: ashipro1224
         label: 葦プロダクション チャンネル
-        monitor: false
+        monitor: true
     instagram:
       - handle: null
         monitor: false

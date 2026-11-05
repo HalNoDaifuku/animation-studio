@@ -41,9 +41,10 @@ sns:
         label: メイン
         monitor: true
     youtube:
-      - handle: null
-        monitor: false
-      # YouTube(公式サイト記載): https://www.youtube.com/user/portstudio4c
+      # 出典: 公式サイト等のリンク(2026-11-05 反映。旧形式URLから@IDを調べたもの)
+      - handle: portstudio4c
+        label: メイン
+        monitor: true
     instagram:
       - handle: null
         monitor: false

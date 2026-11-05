@@ -42,11 +42,11 @@ sns:
     youtube:
       # 出典: https://flatstudio.jp/ のリンク(2026-11-05)
       - handle: FLATSTUDIOJP
-        monitor: false
+        monitor: true
     instagram:
       # 出典: https://flatstudio.jp/ のリンク(2026-11-05)
       - handle: flatstudio_jp
-        monitor: false
+        monitor: true
     bluesky:
       - handle: null
         monitor: false

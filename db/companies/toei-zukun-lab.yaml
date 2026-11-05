@@ -42,7 +42,7 @@ sns:
     youtube:
       # 出典: 公式サイト(2026-11-04 調査)
       - handle: ToeiZukunLab
-        monitor: false
+        monitor: true
     instagram:
       - handle: null
         monitor: false

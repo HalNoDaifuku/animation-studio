@@ -99,9 +99,13 @@ def build_user_feed(cfg: Config, platform: str, handle: str, include: list[str],
     if not clean:
         raise FeedBuildError("アカウントIDが空です")
     template = p.get("user_feed")
+    prefix = p.get("handle_prefix") or ""
+    channel_tpl, channel_pat = p.get("channel_feed"), p.get("channel_id_pattern")
+    if channel_tpl and channel_pat and re.fullmatch(channel_pat, clean):  # YouTube のチャンネルID(UC…)は専用のルートを使う
+        template, prefix = channel_tpl, ""
     if not template:
         raise FeedBuildError(f"{platform}: user_feed が未定義です")
-    url = template.format(base=base.rstrip("/"), handle=urllib.parse.quote((p.get("handle_prefix") or "") + clean, safe="@"))
+    url = template.format(base=base.rstrip("/"), handle=urllib.parse.quote(prefix + clean, safe="@"))
     extra = (p.get("user_params") or "") if cfg.sns.get("exclude_retweets", True) else ""
     return _finish(_with_query(url, extra, filter_query(cfg, include, exclude)), access_key)
 

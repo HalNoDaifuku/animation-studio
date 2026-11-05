@@ -40,14 +40,15 @@ sns:
         label: メイン
         monitor: true
     youtube:
-      - handle: null
-        monitor: false
-      # YouTube は @ID 形式ではないため未記入(分かったら handle に書く): https://www.youtube.com/user/C2Ccorporation2009
+      # 出典: 公式サイト等のリンク(2026-11-05 反映。旧形式URLから@IDを調べたもの)
+      - handle: C2Ccorporation2009
+        label: メイン
+        monitor: true
     instagram:
       # 出典: https://ja.wikipedia.org/wiki/C2C_(アニメ制作会社)(外部リンク)
       - handle: c2c_official_2009
         label: メイン
-        monitor: false
+        monitor: true
     bluesky:
       - handle: null
         monitor: false

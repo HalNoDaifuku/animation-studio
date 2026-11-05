@@ -37,9 +37,10 @@ sns:
       - handle: null
         monitor: false
     youtube:
-      - handle: null
-        monitor: false
-      # YouTube(animeco.link(2026-11-04 調査)): https://www.youtube.com/channel/UC01kcYpT2NKrrJWkC-h90YQ
+      # 出典: 公式サイト等のリンク(2026-11-05 反映。URLのとおり)
+      - handle: UC01kcYpT2NKrrJWkC-h90YQ
+        label: メイン
+        monitor: true
     instagram:
       - handle: null
         monitor: false

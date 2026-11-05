@@ -43,12 +43,12 @@ sns:
       # 出典: https://www.bnfw.co.jp/
       - handle: bandainamcofilmworks
         label: メイン
-        monitor: false
+        monitor: true
     instagram:
       # 出典: https://www.bnfw.co.jp/
       - handle: bandainamcofilmworks_info
         label: メイン
-        monitor: false
+        monitor: true
     bluesky:
       - handle: null
         monitor: false

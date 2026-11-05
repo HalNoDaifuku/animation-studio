@@ -40,9 +40,10 @@ sns:
         label: メイン
         monitor: true
     youtube:
-      - handle: null
-        monitor: false
-      # YouTube は @ID 形式ではないため未記入(分かったら handle に書く): https://www.youtube.com/c/StudioDEEN
+      # 出典: 公式サイト等のリンク(2026-11-05 反映。旧形式URLから@IDを調べたもの)
+      - handle: StudioDEEN
+        label: メイン
+        monitor: true
     instagram:
       - handle: null
         monitor: false

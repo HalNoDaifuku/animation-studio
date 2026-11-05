@@ -34,8 +34,12 @@ class RsshubE2E(unittest.TestCase):
         self.discord, self.hub = MockDiscord(), MockRSSHub()
         self.addCleanup(self.discord.close)
         self.addCleanup(self.hub.close)
+        company = load_sample("cloverworks")
+        for platform in ("youtube", "instagram", "bluesky"):   # このクラスのテストは X のフィード1本だけを対象にする
+            for acc in (company["sns"]["accounts"].get(platform) or []):
+                acc["monitor"] = False
         self.root = make_root(self.discord.base, roles_to_channels={"key_animator": CH_A, "in_between": CH_B},
-                              fallback=CH_FB, errors=CH_ERR, companies={"cloverworks": load_sample("cloverworks")})
+                              fallback=CH_FB, errors=CH_ERR, companies={"cloverworks": company})
         self.env = {"DISCORD_BOT_TOKEN": "TOK", "RSSHUB_BASE_URL": self.hub.base}
         self.state = self.root / "state.json"
         self.path = "/twitter/user/CloverWorks"

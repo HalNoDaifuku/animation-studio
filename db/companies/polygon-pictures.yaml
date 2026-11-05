@@ -41,13 +41,14 @@ sns:
         label: メイン
         monitor: true
     youtube:
-      - handle: null
-        monitor: false
-      # YouTube(公式サイト記載): https://www.youtube.com/user/polygonpictures
+      # 出典: 公式サイト等のリンク(2026-11-05 反映。旧形式URLから@IDを調べたもの)
+      - handle: polygonpictures
+        label: メイン
+        monitor: true
     instagram:
       # 出典: 公式サイト(2026-11-04 調査)
       - handle: polygonpicturesinc
-        monitor: false
+        monitor: true
     bluesky:
       - handle: null
         monitor: false
