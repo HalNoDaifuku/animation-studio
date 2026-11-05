@@ -3,10 +3,6 @@
 name: watch
 
 on:
-  schedule:
-    # 毎時17分(UTC)に実行。毎時0分は GitHub が混み合って遅れやすいので、ずらしている。
-    # GitHub の定期実行は、混雑時に数分〜十数分遅れることがある。
-    - cron: "17 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -19,7 +15,7 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 55
     env:
       DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
       RSSHUB_BASE_URL: ${{ secrets.RSSHUB_BASE_URL }}
