@@ -114,3 +114,9 @@ Actions → **watch-test** → Run workflow。最初は `job=check` と `dry_run
 - Instagram は、RSSHub 側の設定(ログイン情報など)が無いと取得できないことがあります。
   取得できない場合は errors チャンネルに出ます(同じエラーは24時間に1回まで)。使えないときは `monitor: false` に戻してください。
 - 通知の絞り込み(募集/応募/採用…)は X と同じです。
+
+## 実行のしかた(定期実行について)
+
+- `watch.yml` に `schedule`(GitHub の定期実行)は付けていません。cron-job.org などから、1時間おきに workflow_dispatch(GitHub API)で起動してください。
+- 1回の実行の上限は55分です(`timeout-minutes: 55`)。1時間おきに起動しても、前の実行が終わるまで次は待つので、重なりません。
+- 実行が長くなりすぎないよう、SNS の再試行は「最初の取得に10分以上かかったとき」と「前回から続けて失敗しているフィード」では行いません(`common.yaml` の `sns.fetch.retry_time_budget_seconds`)。

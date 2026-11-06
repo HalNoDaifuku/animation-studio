@@ -143,8 +143,10 @@ class RsshubE2E(unittest.TestCase):
         self.assertEqual(self.go(), 0)                            # 404 のまま
         self.assertEqual(len(self.hub.requested), 3)              # 1回 + 再試行2回
         self.assertEqual(len(self.discord.messages(CH_ERR)), 1)
+        self.hub.requested.clear()
         self.assertEqual(self.go(), 0)                            # 直後にもう一度
         self.assertEqual(len(self.discord.messages(CH_ERR)), 1)   # 同じエラーは、24時間は繰り返さない
+        self.assertEqual(len(self.hub.requested), 1)              # 続けて失敗しているフィードは、取り直さない(1回だけ確認)
 
     def test_access_key_sent_but_never_printed(self):
         self.hub.require_key = "SECRETKEY"

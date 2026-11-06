@@ -211,6 +211,9 @@ sns:
     request_interval_seconds: 0.5
     retry_rounds: 2
     retry_wait_seconds: 120
+    # 最初の取得にこの秒数以上かかったときは、再試行をしない(実行時間が延びすぎないように)。
+    # また、前回から続けて失敗している(エラー通知済みの)フィードは、再試行をしない。
+    retry_time_budget_seconds: 600
     error_renotify_hours: 24
 
   # RSSHubのルート定義。

@@ -1,4 +1,5 @@
-# 本番の定期実行: 1時間おきに、SNS監視(RSSHub)とサイト監視(urlwatch)を行い、Discord(Bot)へ通知する。
+# 本番の実行: SNS監視(RSSHub)とサイト監視(urlwatch)を行い、Discord(Bot)へ通知する。
+# 定期実行(schedule)は付けていない。cron-job.org などから workflow_dispatch(GitHub API)で1時間おきに起動する。
 # 手動実行のテストは watch-test.yml。状態(既読・キャッシュ)は、そちらと共有する。
 name: watch
 

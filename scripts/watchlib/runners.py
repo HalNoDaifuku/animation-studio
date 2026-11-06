@@ -134,7 +134,8 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
                fetch: Callable[[str], list] | None = None, build_errors: list[tuple[str, str]] | None = None,
                retry_rounds: int | None = None, retry_wait: float | None = None,
                request_interval: float | None = None, error_renotify_hours: float | None = None,
-               sleep: Callable[[float], None] = time.sleep, log: Callable[[str], None] = print) -> RunResult:
+               sleep: Callable[[float], None] = time.sleep, clock: Callable[[], float] = time.monotonic,
+               log: Callable[[str], None] = print) -> RunResult:
     """全フィードを1回取得し、失敗したものだけを「全部が終わってから」待って再取得する(retry_rounds 回まで)。
 
     すぐ再試行すると、同じ相手へ続けて要求することになるため、まとめて後回しにする。
@@ -146,15 +147,27 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
     interval = float(opts.get("request_interval_seconds", 0.5) if request_interval is None else request_interval)
     renotify = float(opts.get("error_renotify_hours", 24) if error_renotify_hours is None else error_renotify_hours)
     timeout = int(opts.get("timeout_seconds", 30))
+    budget = float(opts.get("retry_time_budget_seconds", 600))
     if fetch is None:
         fetch = lambda url: fetch_feed(url, timeout=timeout)  # noqa: E731
 
     result = RunResult(errors=[])
     last_error: dict[str, str] = {}
     pending = list(feeds)
+    still_failed: list[Feed] = []
+    started = clock()
     for attempt in range(rounds + 1):
         if attempt:
+            if attempt == 1:  # 前回から続けて失敗している(エラー通知済みの)ものは、取り直さない
+                known = [f for f in pending if f.key in state.errors]
+                if known:
+                    log(f"[再試行しない] 前回から続けて失敗しているため: {len(known)}件")
+                    pending = [f for f in pending if f.key not in state.errors]
+                    still_failed.extend(known)
             if not pending:
+                break
+            if clock() - started + wait > budget:
+                log(f"[再試行を打ち切り] 取得にかかった時間が {budget:g}秒(sns.fetch.retry_time_budget_seconds)を超えるため、残り{len(pending)}件は取り直しません")
                 break
             log(f"[再試行 {attempt}/{rounds}] 取得に失敗した{len(pending)}件を、{wait:g}秒待ってから取得し直します")
             sleep(wait)
@@ -175,7 +188,7 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
                           dry_run=dry_run, notify_on_first_run=notify_on_first_run, limit=limit, log=log)
         pending = failed
 
-    unresolved = [(f.key, last_error[f.key]) for f in pending] + list(build_errors or [])
+    unresolved = [(f.key, last_error[f.key]) for f in pending + still_failed] + list(build_errors or [])
     to_report = []
     for key, reason in unresolved:
         if dry_run or state.error_due(key, renotify):
