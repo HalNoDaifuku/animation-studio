@@ -57,6 +57,25 @@ def added_text(body: str) -> str:
     return "\n".join(added) if added else body
 
 
+def _safe(text, limit: int = 160) -> str:
+    """ログ用に1行へ縮める。"::" は GitHub Actions のコマンドと解釈されるので変える(外部ページの本文が混ざるため)。"""
+    one = " ".join(str(text or "").split()).replace("::", ": :")
+    return one if len(one) <= limit else one[:limit] + "…"
+
+
+def _mask(channel_id: str) -> str:
+    """ログにチャンネルIDをそのまま出さない(末尾4桁だけ)。"""
+    cid = str(channel_id)
+    return "ch…" + cid[-4:] if cid.isdigit() else cid
+
+
+def _where(targets: list) -> str:
+    names = []
+    for t in targets:
+        names.append("fallback" if getattr(t, "is_fallback", False) else (",".join(t.roles) or _mask(t.channel_id)))
+    return " / ".join(names) or "(送り先なし)"
+
+
 def _targets(cfg: Config, company: dict, hint_roles, text, dry_run: bool) -> list[Target]:
     roles = pick_roles(cfg, company, hint_roles=hint_roles, text=text)
     targets = resolve_channels(roles, cfg.discord_channels, company.get("type"))
@@ -142,13 +161,15 @@ def _process_feed(cfg: Config, feed: Feed, items: list, state: State, bot, resul
             result.send_failures.append(f"{feed.key}: 送り先チャンネルがありません(config/discord.yaml を確認)")
             continue
         ok = True
+        log(f"[通知] {feed.company_name} / {feed.platform_label} / {feed.label} → {_where(targets)}"
+            f"\n    {item.published or '日時不明'} {item.url}\n    {_safe(item.text, 200)}")
         for t in targets:
             try:
                 bot.send_message(t.channel_id, text, suppress_embeds=False)
                 result.sent += 1
             except DiscordError as e:
                 ok = False
-                result.send_failures.append(f"{feed.key} → {t.channel_id}: {e}")
+                result.send_failures.append(f"{feed.key} → {_mask(t.channel_id)}: {e}")
         if ok and not dry_run:
             state.mark(feed.key, [item.id])  # 送れなかったものは既読にせず、次回また試す
     if not dry_run:
@@ -210,6 +231,7 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
                 continue
             if not dry_run:
                 state.clear_error(feed.key)
+            log(f"[取得] {feed.key}: {len(items)}件")
             _process_feed(cfg, feed, items, state, bot, result, cfg.company(feed.company_slug) or {},
                           dry_run=dry_run, notify_on_first_run=notify_on_first_run, limit=limit, log=log)
         pending = failed
@@ -227,6 +249,8 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
     if not dry_run:
         state.save()
     if to_report:
+        for key, reason in to_report:
+            log(f"[エラー通知] {key}: {_safe(reason)}")
         send_to_errors_channel(cfg, bot, build_feed_error_message(to_report), result, dry_run=dry_run)
     return result
 
@@ -271,6 +295,9 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
     log("urlwatch の結果: " + (", ".join(f"{k} {v}件" for k, v in sorted(counts.items())) or "報告なし")
         + f"(ジョブ {len(by_name)}件)")
     unreported = sorted(set(by_name) - {e.name for e in entries})
+    unchanged = sorted({e.name for e in entries if e.status == "UNCHANGED"})
+    if unchanged:
+        log(f"[変更なし] {len(unchanged)}件: " + _safe(", ".join(unchanged), 3000))
     if unreported and not explain_unreported:
         log(f"[報告なし] {len(unreported)}件(変更なし、または無視する一時エラー408/429/5xx)。1件ずつ調べるには --explain-unreported")
     for name in unreported if explain_unreported else []:
@@ -318,6 +345,10 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
                         for n, c in enumerate(chunks[:MAX_DIFF_MESSAGES], 1)]
             if len(chunks) > MAX_DIFF_MESSAGES:
                 messages.append(f"(ほか{len(chunks) - MAX_DIFF_MESSAGES}分割は省略しました。URL: {shown_url})")
+        if entry.status == "ERROR":
+            log(f"[エラー通知] {entry.name} {shown_url}: {_safe(entry.body, 200)}")
+        else:
+            log(f"[{entry.status}] {entry.name} → {_where(targets)}\n    {shown_url}\n    {_safe(added_text(entry.body), 300)}")
         if not targets:
             result.send_failures.append(f"{entry.name}: 送り先チャンネルがありません(config/discord.yaml を確認)")
             continue
@@ -327,7 +358,7 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
                     bot.send_message(t.channel_id, m, suppress_embeds=True)
                     result.sent += 1
                 except DiscordError as e:
-                    result.send_failures.append(f"{entry.name} → {t.channel_id}: {e}")
+                    result.send_failures.append(f"{entry.name} → {_mask(t.channel_id)}: {e}")
                     break  # このチャンネルの残りは送らない(順序が崩れるため)
     if state is not None and not dry_run:
         state.save()

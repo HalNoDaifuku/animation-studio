@@ -150,13 +150,13 @@ class RsshubE2E(unittest.TestCase):
         self.assertEqual(self.discord.messages(CH_ERR), [])       # 再試行で取れたので、エラー通知なし
         self.assertEqual(len(self.discord.messages(CH_A)), 1)     # 新着は通常どおり通知される
 
-    def test_retry_gives_up_and_same_error_is_not_repeated_within_a_day(self):
+    def test_retry_gives_up_and_error_is_notified_every_run(self):
         self.assertEqual(self.go(), 0)                            # 404 のまま
         self.assertEqual(len(self.hub.requested), 3)              # 1回 + 再試行2回
         self.assertEqual(len(self.discord.messages(CH_ERR)), 1)
         self.hub.requested.clear()
         self.assertEqual(self.go(), 0)                            # 直後にもう一度
-        self.assertEqual(len(self.discord.messages(CH_ERR)), 1)   # 同じエラーは、24時間は繰り返さない
+        self.assertEqual(len(self.discord.messages(CH_ERR)), 2)   # error_renotify_hours が0なので、毎回通知する
         self.assertEqual(len(self.hub.requested), 1)              # 続けて失敗しているフィードは、取り直さない(1回だけ確認)
 
     def test_access_key_sent_but_never_printed(self):
@@ -227,7 +227,7 @@ class UrlwatchE2E(unittest.TestCase):
         self.assertTrue(all(m["flags"] == 4 for m in changed))
         self.assertEqual({m["channel"] for m in changed}, {CH_A, CH_B})          # 増えた行にある職種(原画・制作進行)だけ。他の職種や fallback には送らない
 
-    def test_error_is_retried_then_not_repeated_within_a_day(self):
+    def test_error_is_retried_and_notified_every_run(self):
         import io, contextlib
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
@@ -237,13 +237,13 @@ class UrlwatchE2E(unittest.TestCase):
         buf2 = io.StringIO()
         with contextlib.redirect_stdout(buf2):
             self.go("--skip-new")
-        self.assertEqual(len(self.discord.messages(CH_ERR)), 1)    # 同じエラーは24時間は繰り返さない
+        self.assertEqual(len(self.discord.messages(CH_ERR)), 2)    # error_renotify_hours が0なので、毎回通知する
         self.assertIn("[再試行しない]", buf2.getvalue())            # 続けて失敗しているものは、毎回取り直さない
         self.assertNotIn("[再試行 1/3]", buf2.getvalue())
         self.assertIn("[報告なし]", buf2.getvalue())
         self.assertNotIn("今のURLの状態", buf2.getvalue())          # 既定では1件ずつ取得しない
         self.go("--skip-new", "--retry-rounds", "0")
-        self.assertEqual(len(self.discord.messages(CH_ERR)), 1)
+        self.assertEqual(len(self.discord.messages(CH_ERR)), 3)    # 3回の実行で、毎回1件ずつ
 
     def test_bot_challenge_page_is_an_error_not_a_change(self):
         challenge = "<html><body><p>One moment, please...</p><p>Please wait while your request is being verified...</p></body></html>"
@@ -411,3 +411,37 @@ class CheckScript(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LogContentTest(unittest.TestCase):
+    """Actions のログに内容が出ること、機密(トークン・RSSHubのURL・チャンネルID)が出ないこと。"""
+
+    def test_notification_logged_without_secrets(self):
+        import io, contextlib
+        discord, hub = MockDiscord(), MockRSSHub()
+        self.addCleanup(discord.close)
+        self.addCleanup(hub.close)
+        company = load_sample("cloverworks")
+        for platform in ("youtube", "instagram", "bluesky"):
+            for acc in (company["sns"]["accounts"].get(platform) or []):
+                acc["monitor"] = False
+        root = make_root(discord.base, roles_to_channels={"key_animator": CH_A}, fallback=CH_FB, errors=CH_ERR,
+                         companies={"cloverworks": company})
+        env = {"DISCORD_BOT_TOKEN": "SECRETTOKEN", "RSSHUB_BASE_URL": hub.base, "RSSHUB_ACCESS_KEY": "SECRETKEY"}
+        hub.require_key = "SECRETKEY"
+        path = "/twitter/user/CloverWorks"
+        now = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        hub.feeds[path] = []
+        args = ("--root", str(root), "--state", str(root / "s.json"), "--retry-wait", "0", "--request-interval", "0")
+        run(rsshub_notify.main, *args, env=env)
+        hub.feeds[path] = [{"id": "9", "url": "https://x.com/CloverWorks/status/9", "content_text": "原画マン募集 ::set-output x", "date_published": now}]
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            run(rsshub_notify.main, *args, env=env)
+        out = buf.getvalue()
+        self.assertIn("[通知]", out)
+        self.assertIn("原画マン募集", out)
+        self.assertIn("https://x.com/CloverWorks/status/9", out)
+        self.assertNotIn("::set-output", out)
+        for secret in ("SECRETTOKEN", "SECRETKEY", hub.base, CH_A, CH_FB, CH_ERR):
+            self.assertNotIn(secret, out)

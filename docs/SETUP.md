@@ -95,7 +95,7 @@ Actions → **watch-test** → Run workflow。最初は `job=check` と `dry_run
 
 - SNS(RSSHub)とサイト(urlwatch)のどちらも、取得に失敗したものは「全部の確認が終わってから」待って、取り直します(すぐには取り直しません)。
   回数と待ち時間は `common.yaml` の `sns.fetch`(`retry_rounds` / `retry_wait_seconds`)と `web.retry`(`rounds` / `wait_seconds`)で変えられます。
-- 取り直しても失敗したものだけを errors チャンネルへ通知し、同じものは `error_renotify_hours`(既定24時間)のあいだ繰り返し通知しません。直ると記録は消えます。
+- 取り直しても失敗したものだけを errors チャンネルへ通知し、エラーは省略せず、実行のたびにすべて通知します(`error_renotify_hours` が0のため。時間数を入れると、同じエラーをその時間は繰り返さなくなります)。
   記録は `.rsshub-state/state.json` と `.urlwatch/error-state.json` に入り、GitHub Actions のキャッシュで引き継ぎます。
 - 接続タイムアウトが同じサイトで続く場合は、そのサイトが GitHub Actions のIP(海外・クラウド)からの接続を落としている可能性があります。
   再試行では直らないので、そのURLは `enabled: false` にして手動確認にするか、別の取得手段を検討してください。
@@ -112,7 +112,7 @@ Actions → **watch-test** → Run workflow。最初は `job=check` と `dry_run
   Bluesky は `bsky/posts/{handle}`(例: `someone.bsky.social`)です。
 - YouTube は `@ID` を `handle` に書きます(@は不要)。`@ID` が分からないチャンネルは、チャンネルID(`UC` で始まる24文字)をそのまま `handle` に書けば、専用のルートで取得します。
 - Instagram は、RSSHub 側の設定(ログイン情報など)が無いと取得できないことがあります。
-  取得できない場合は errors チャンネルに出ます(同じエラーは24時間に1回まで)。使えないときは `monitor: false` に戻してください。
+  取得できない場合は errors チャンネルに出ます(エラーは毎回通知されます)。使えないときは `monitor: false` に戻してください。
 - 通知の絞り込み(募集/応募/採用…)は X と同じです。
 
 ## 実行のしかた(定期実行について)
@@ -121,3 +121,11 @@ Actions → **watch-test** → Run workflow。最初は `job=check` と `dry_run
 - 1回の実行の上限は55分です(`timeout-minutes: 55`)。1時間おきに起動しても、前の実行が終わるまで次は待つので、重なりません。
 - 公開から30日より前の投稿は通知せず既読にします(`common.yaml` の `sns.fetch.max_age_days`、0で無効)。YouTube のように古い動画が一覧に出るフィードで、過去分が届くのを防ぎます。
 - 実行が長くなりすぎないよう、SNS の再試行は「最初の取得に10分以上かかったとき」と「前回から続けて失敗しているフィード」では行いません(`common.yaml` の `sns.fetch.retry_time_budget_seconds`)。
+
+## Actions のログ
+
+ログには、何を確認して何を通知したかが分かる内容を出します。
+- SNS: フィードごとの取得件数、通知した投稿(会社・アカウント・送り先の職種・公開日時・URL・本文の冒頭)、除外した古い投稿、取得エラー。
+- サイト: 変更のあったページ(送り先の職種・URL・増えた行の冒頭)、エラー、変更のなかったページ名の一覧。
+- 出さないもの: Discord の Bot トークン、RSSHub のURL・アクセスキー(フィードはキー名だけを出します)、Discord のチャンネルID(職種名、または末尾4桁だけ)。
+- 外部ページの本文に含まれる `::` は、GitHub Actions のコマンドと解釈されないよう `: :` に変えて出します。

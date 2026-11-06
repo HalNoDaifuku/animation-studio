@@ -205,7 +205,7 @@ sns:
   #   失敗したものは、全フィードの取得が終わってから retry_wait_seconds 秒待って取り直す(retry_rounds 回まで)。
   #   すぐに取り直さないのは、同じ相手へ続けて要求してブロック(bot判定)されにくくするため。
   #   request_interval_seconds: フィードとフィードのあいだに空ける秒数。
-  #   error_renotify_hours: 取り直しても失敗したフィードのエラーを、同じものについては何時間おきにしか通知しないか。
+  #   error_renotify_hours: 取り直しても失敗したフィードのエラーを、同じものについては何時間おきにしか通知しないか(0なら省略せず毎回通知)。
   fetch:
     timeout_seconds: 30
     request_interval_seconds: 0.5
@@ -216,7 +216,7 @@ sns:
     retry_time_budget_seconds: 600
     # 公開から何日より前の投稿は通知しない(0で無効)。YouTube のように古い動画が一覧に出るフィードで、過去分が一度に届くのを防ぐ。
     max_age_days: 30
-    error_renotify_hours: 24
+    error_renotify_hours: 0   # 0 = 毎回すべて通知する(省略しない)
 
   # RSSHubのルート定義。
   #   handle_prefix: ルートへ渡すときにアカウントIDの前へ付ける文字。
@@ -321,12 +321,12 @@ sns:
 # -----------------------------------------------------------------------------
 web:
   # エラー(接続できないなど)になったジョブを、全部の確認が終わってから wait_seconds 秒待って取り直す(rounds 回まで)。
-  # 取り直してもエラーのままのものは、同じジョブについて error_renotify_hours 時間おきにしか通知しない。
+  # 取り直してもエラーのままのものは、同じジョブについて error_renotify_hours 時間おきにしか通知しない(0なら省略せず毎回通知)。
   #   rounds を増やすほど、bot対策で一時的に弾かれたサイトが取れる可能性が上がる(そのぶん実行時間が延びる)。
   retry:
     rounds: 3
     wait_seconds: 120
-  error_renotify_hours: 24
+  error_renotify_hours: 0   # 0 = 毎回すべて通知する(省略しない)
 
   # bot対策の確認ページ("One moment, please..." など)が返ってきたら、変更とは扱わず「エラー」にして取り直す。
   # markers は正規表現(大文字小文字は区別する)。確認ページに出る文言を足せば、対象が増える。
