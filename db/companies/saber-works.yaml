@@ -37,10 +37,9 @@ sns:
       - handle: null
         monitor: false
     youtube:
-      # 出典: 公式サイト等のリンク(2026-11-05 反映。URLのとおり)
-      - handle: UC01kcYpT2NKrrJWkC-h90YQ
-        label: メイン
-        monitor: true
+      # 2026-11-07: UC01kcYpT2NKrrJWkC-h90YQ は DeNA のスタートアップ向けチャンネルで、セイバーワークスのものではなかったため削除
+      - handle: null
+        monitor: false
     instagram:
       - handle: null
         monitor: false
