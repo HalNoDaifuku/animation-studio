@@ -216,6 +216,8 @@ sns:
     retry_time_budget_seconds: 600
     # 公開から何日より前の投稿は通知しない(0で無効)。YouTube のように古い動画が一覧に出るフィードで、過去分が一度に届くのを防ぐ。
     max_age_days: 30
+    youtube:
+      timeout_seconds: 30   # YouTube 公式フィードの待ち時間(秒)
     error_renotify_hours: 0   # 0 = 毎回すべて通知する(省略しない)
 
   # RSSHubのルート定義。
@@ -236,6 +238,12 @@ sns:
     youtube:
       label: YouTube
       handle_prefix: "@"
+      # direct: youtube にすると、RSSHub を通さず YouTube の公式フィード(videos.xml)を直接読む(RSSHub が遅い・キーが要るため)。
+      #   採用ワードの絞り込みはこちらで行う。@ID のチャンネルは、ページから一度だけチャンネルIDを調べて控える。
+      #   RSSHub に戻すときは、この行を消す(下の user_feed / channel_feed が使われる)。
+      direct: youtube
+      direct_feed: "https://www.youtube.com/feeds/videos.xml?channel_id={id}"
+      handle_page: "https://www.youtube.com/@{handle}"
       user_feed: "{base}/youtube/user/{handle}"
       # チャンネルID(UC + 22文字)で書かれたアカウントは、こちらのルートを使う(@ID が分からないチャンネル用)。
       channel_feed: "{base}/youtube/channel/{handle}"

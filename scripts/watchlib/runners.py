@@ -16,7 +16,7 @@ from .messages import (build_diff_message, build_error_message, build_feed_error
                        split_long_text, CHUNK_LIMIT)
 from .report import ReportEntry, parse_report
 from .routing import Target, pick_roles, resolve_channels
-from .rsshub import Feed, FeedFetchError, fetch_feed, is_retweet
+from .rsshub import Feed, FeedFetchError, fetch_feed, fetch_youtube, is_retweet
 from .state import State
 from .urlwatch_jobs import JobInfo
 from . import wayback as wayback_mod
@@ -182,6 +182,7 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
                retry_rounds: int | None = None, retry_wait: float | None = None,
                request_interval: float | None = None, error_renotify_hours: float | None = None,
                sleep: Callable[[float], None] = time.sleep, clock: Callable[[], float] = time.monotonic,
+               youtube_opener: Callable | None = None,
                log: Callable[[str], None] = print) -> RunResult:
     """全フィードを1回取得し、失敗したものだけを「全部が終わってから」待って再取得する(retry_rounds 回まで)。
 
@@ -197,6 +198,12 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
     budget = float(opts.get("retry_time_budget_seconds", 600))
     if fetch is None:
         fetch = lambda url: fetch_feed(url, timeout=timeout)  # noqa: E731
+    yt_timeout = int((opts.get("youtube") or {}).get("timeout_seconds", timeout))
+
+    def fetch_one(feed: Feed) -> list:
+        if feed.direct == "youtube":   # RSSHub を通さず、YouTube の公式フィードを直接読む
+            return fetch_youtube(feed, resolved=state.channels, timeout=yt_timeout, opener=youtube_opener)
+        return fetch(feed.request_url)
 
     result = RunResult(errors=[])
     last_error: dict[str, str] = {}
@@ -223,7 +230,7 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
             if n and interval > 0:
                 sleep(interval)  # 続けざまに要求しない
             try:
-                items = fetch(feed.request_url)
+                items = fetch_one(feed)
             except FeedFetchError as e:
                 last_error[feed.key] = str(e)
                 failed.append(feed)

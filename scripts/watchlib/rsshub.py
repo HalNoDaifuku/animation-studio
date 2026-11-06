@@ -39,6 +39,10 @@ class Feed:
     url: str                    # 表示用のURL(アクセスキーなし)
     request_url: str            # 実際に取得するURL(アクセスキー付き)。ログに出さない
     hint_roles: list[str] = field(default_factory=list)
+    direct: str = ""            # "youtube": RSSHub を通さず、YouTube の公式フィードを直接読む
+    handle: str = ""
+    include: list[str] = field(default_factory=list)   # direct のとき、こちらで絞る語(RSSHub の filter の代わり)
+    exclude: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -108,6 +112,102 @@ def build_user_feed(cfg: Config, platform: str, handle: str, include: list[str],
     url = template.format(base=base.rstrip("/"), handle=urllib.parse.quote(prefix + clean, safe="@"))
     extra = (p.get("user_params") or "") if cfg.sns.get("exclude_retweets", True) else ""
     return _finish(_with_query(url, extra, filter_query(cfg, include, exclude)), access_key)
+
+
+# --- YouTube を直接読む(RSSHub を通さない) ---------------------------------------------------
+
+YT_CHANNEL_ID = re.compile(r"UC[0-9A-Za-z_-]{22}")
+_YT_BROWSER_HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; website-checker/1.0)",
+                       "Accept-Language": "ja,en;q=0.8", "Cookie": "CONSENT=YES+1; SOCS=CAI"}
+
+
+def build_direct_youtube(p: dict, handle: str) -> tuple[str, str]:
+    """(表示用URL, 取得用URL)。チャンネルID(UC…)なら公式フィードのURL、@ID ならチャンネルのページ(IDを調べる用)。"""
+    clean = normalize_handle(handle)
+    if YT_CHANNEL_ID.fullmatch(clean):
+        feed = (p.get("direct_feed") or "https://www.youtube.com/feeds/videos.xml?channel_id={id}").format(id=clean)
+        return f"https://www.youtube.com/channel/{clean}", feed
+    page = (p.get("handle_page") or "https://www.youtube.com/@{handle}").format(handle=urllib.parse.quote(clean, safe=""))
+    return page, page
+
+
+def _http_get(url: str, headers: dict, timeout: int, opener: Callable | None = None) -> str:
+    request = urllib.request.Request(url, headers=headers)
+    try:
+        with (opener or urllib.request.urlopen)(request, timeout=timeout) as response:
+            return response.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        raise FeedFetchError(f"HTTP {e.code}") from None
+    except urllib.error.URLError as e:
+        if isinstance(e.reason, TimeoutError):
+            raise FeedFetchError("タイムアウト") from None
+        raise FeedFetchError(f"接続できません: {e.reason}") from None
+    except TimeoutError:
+        raise FeedFetchError("タイムアウト") from None
+
+
+_YT_ID_IN_PAGE = (re.compile(r'channel_id=(UC[0-9A-Za-z_-]{22})'),
+                  re.compile(r'"(?:channelId|externalId|browseId)"\s*:\s*"(UC[0-9A-Za-z_-]{22})"'),
+                  re.compile(r'youtube\.com/channel/(UC[0-9A-Za-z_-]{22})'))
+
+
+def resolve_youtube_channel_id(page_url: str, *, timeout: int = 30, opener: Callable | None = None) -> str:
+    html_text = _http_get(page_url, _YT_BROWSER_HEADERS, timeout, opener)
+    for pattern in _YT_ID_IN_PAGE:
+        m = pattern.search(html_text)
+        if m:
+            return m.group(1)
+    raise FeedFetchError("チャンネルIDを調べられません(@IDが違うか、YouTube側の表示が変わった可能性)")
+
+
+_ATOM = "{http://www.w3.org/2005/Atom}"
+_MEDIA = "{http://search.yahoo.com/mrss/}"
+_YT = "{http://www.youtube.com/xml/schemas/2015}"
+
+
+def parse_youtube_atom(raw: str) -> list[Item]:
+    import xml.etree.ElementTree as ET
+    try:
+        root = ET.fromstring(raw)
+    except ET.ParseError:
+        raise FeedFetchError("YouTube のフィードとして読めません") from None
+    items: list[Item] = []
+    for entry in root.findall(f"{_ATOM}entry"):
+        vid = (entry.findtext(f"{_YT}videoId") or "").strip()
+        link = entry.find(f"{_ATOM}link")
+        url = (link.get("href") if link is not None else "") or (f"https://www.youtube.com/watch?v={vid}" if vid else "")
+        title = (entry.findtext(f"{_ATOM}title") or "").strip()
+        desc = ""
+        group = entry.find(f"{_MEDIA}group")
+        if group is not None:
+            desc = (group.findtext(f"{_MEDIA}description") or "").strip()
+        iid = (entry.findtext(f"{_ATOM}id") or vid or url).strip()
+        if not iid:
+            continue
+        text = title + ("\n" + desc if desc else "")
+        items.append(Item(iid, url, text.strip(), entry.findtext(f"{_ATOM}published") or entry.findtext(f"{_ATOM}updated")))
+    return items
+
+
+def filter_items(items: list[Item], include: list[str], exclude: list[str]) -> list[Item]:
+    """RSSHub の filter / filterout と同じ考え方で、本文(題名+説明)に include のどれかを含み、exclude のどれも含まないものだけ残す。"""
+    inc = re.compile(_alternation(include)) if include else None
+    exc = re.compile(_alternation(exclude)) if exclude else None
+    return [i for i in items if (not inc or inc.search(i.text)) and not (exc and exc.search(i.text))]
+
+
+def fetch_youtube(feed: Feed, *, resolved: dict | None = None, timeout: int = 30, opener: Callable | None = None) -> list[Item]:
+    """YouTube の公式フィード(videos.xml)を直接取得して、採用ワードで絞る。resolved は {ハンドル: チャンネルID} の控え。"""
+    resolved = resolved if resolved is not None else {}
+    feed_url = feed.request_url
+    if "channel_id=" not in feed_url:   # @ID のとき: チャンネルIDを調べる(1度調べたら控えを使う)
+        cid = resolved.get(feed.handle)
+        if not cid:
+            cid = resolve_youtube_channel_id(feed.request_url, timeout=timeout, opener=opener)
+            resolved[feed.handle] = cid
+        feed_url = f"https://www.youtube.com/feeds/videos.xml?channel_id={cid}"
+    raw = _http_get(feed_url, _YT_BROWSER_HEADERS, timeout, opener)
+    return filter_items(parse_youtube_atom(raw), feed.include, feed.exclude)
 
 
 # --- 検索クエリ ---------------------------------------------------------------------------
@@ -214,6 +314,12 @@ def company_feeds(cfg: Config, company: dict, base: str, access_key: str | None 
             if not handle or not (acc or {}).get("monitor"):
                 continue
             label = (acc.get("label") or "").strip() or f"@{handle}"
+            if p.get("direct") == "youtube":
+                shown, req = build_direct_youtube(p, handle)
+                feeds.append(Feed(f"{slug}:{platform}:user:{handle}", cid, slug, name, platform,
+                                  p.get("label", platform), "user", label, shown, req,
+                                  direct="youtube", handle=handle, include=list(include), exclude=list(exclude)))
+                continue
             try:
                 shown, req = build_user_feed(cfg, platform, handle, include, exclude, base, access_key)
             except (FeedBuildError, KeyError, IndexError) as e:

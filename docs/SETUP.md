@@ -129,3 +129,13 @@ Actions → **watch-test** → Run workflow。最初は `job=check` と `dry_run
 - サイト: 変更のあったページ(送り先の職種・URL・増えた行の冒頭)、エラー、変更のなかったページ名の一覧。
 - 出さないもの: Discord の Bot トークン、RSSHub のURL・アクセスキー(フィードはキー名だけを出します)、Discord のチャンネルID(職種名、または末尾4桁だけ)。
 - 外部ページの本文に含まれる `::` は、GitHub Actions のコマンドと解釈されないよう `: :` に変えて出します。
+
+## YouTube は RSSHub を通さず直接読む
+
+RSSHub 経由だと YouTube の取得が遅くタイムアウトしやすいため、`common.yaml` の `sns.platforms.youtube.direct: youtube` で、YouTube の公式フィード(`youtube.com/feeds/videos.xml`)を直接読みます。
+- RSSHub の `YOUTUBE_KEY` は不要です。採用ワードによる絞り込み・除外語は、こちらで同じ語を使って行います。
+- `@ID` で書かれたチャンネルは、ページから一度だけチャンネルIDを調べ、状態ファイルに控えます(次回からは調べません)。
+- 待ち時間は `sns.fetch.youtube.timeout_seconds`(既定30秒)。
+- 取れないときのエラーは「チャンネルIDを調べられません」(@IDの間違いなど)や HTTP 番号で出ます。
+- 元に戻すときは `direct: youtube` の行を消してください(RSSHub 経由になります)。
+- 公式フィードには直近15本ほどしか載りません。1時間ごとの確認なら十分です。

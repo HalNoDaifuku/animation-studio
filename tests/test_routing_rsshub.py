@@ -119,7 +119,7 @@ class RsshubUrlTest(unittest.TestCase):
         feeds, _ = rsshub.build_feeds(cfg, "https://hub.example", None)
         urls = {f.platform: f.url for f in feeds}
         self.assertTrue(urls["x"].startswith("https://hub.example/twitter/user/CloverWorks?"))
-        self.assertTrue(urls["youtube"].startswith("https://hub.example/youtube/user/@clover?"))
+        self.assertEqual(urls["youtube"], "https://www.youtube.com/@clover")   # YouTube は RSSHub を通さず直接読む(common.yaml の direct)
 
     def test_filter_add_remove(self):
         def edit(c):
@@ -313,3 +313,77 @@ urlwatch 2.29, Copyright 2008-2023 Thomas Perl
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class YoutubeDirectTest(unittest.TestCase):
+    ATOM = """<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+ <entry><id>yt:video:AAA</id><yt:videoId>AAA</yt:videoId><title>原画マン募集のお知らせ</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=AAA"/><published>2026-11-01T03:00:00+00:00</published>
+  <media:group><media:description>応募はこちら</media:description></media:group></entry>
+ <entry><id>yt:video:BBB</id><yt:videoId>BBB</yt:videoId><title>新作PV公開</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=BBB"/><published>2026-11-02T03:00:00+00:00</published>
+  <media:group><media:description>PVです</media:description></media:group></entry>
+ <entry><id>yt:video:CCC</id><yt:videoId>CCC</yt:videoId><title>グッズ抽選のお知らせ</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=CCC"/><published>2026-11-03T03:00:00+00:00</published>
+  <media:group><media:description>採用ではありません 募集</media:description></media:group></entry>
+</feed>"""
+
+    class Resp:
+        def __init__(self, text):
+            self.text = text
+
+        def read(self):
+            return self.text.encode()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def make_feed(self, handle):
+        cfg, _ = cfg_with()
+        company = cfg.company("cloverworks")
+        include, exclude = rsshub.effective_filter(cfg, company)
+        p = cfg.sns["platforms"]["youtube"]
+        shown, req = rsshub.build_direct_youtube(p, handle)
+        return rsshub.Feed("k", "id", "cloverworks", "C", "youtube", "YouTube", "user", "L", shown, req,
+                           direct="youtube", handle=handle, include=include, exclude=exclude)
+
+    def test_channel_id_reads_official_feed_and_filters_locally(self):
+        feed = self.make_feed("UC1AyZZk4om839jYxD-yi05w")
+        self.assertEqual(feed.request_url, "https://www.youtube.com/feeds/videos.xml?channel_id=UC1AyZZk4om839jYxD-yi05w")
+        seen = []
+        def opener(req, timeout):
+            seen.append(req.full_url)
+            return self.Resp(self.ATOM)
+        items = rsshub.fetch_youtube(feed, opener=opener)
+        self.assertEqual([i.id for i in items], ["yt:video:AAA"])      # 採用ワードのある動画だけ。「抽選」は除外
+        self.assertIn("応募はこちら", items[0].text)
+        self.assertEqual(items[0].url, "https://www.youtube.com/watch?v=AAA")
+        self.assertEqual(items[0].published, "2026-11-01T03:00:00+00:00")
+        self.assertEqual(len(seen), 1)
+
+    def test_handle_resolves_channel_id_once(self):
+        feed = self.make_feed("gekkou_official")
+        calls, resolved = [], {}
+        page = '<html><link rel="alternate" type="application/rss+xml" href="https://www.youtube.com/feeds/videos.xml?channel_id=UC1AyZZk4om839jYxD-yi05w"></html>'
+        def opener(req, timeout):
+            calls.append(req.full_url)
+            return self.Resp(page if "/@gekkou_official" in req.full_url else self.ATOM)
+        rsshub.fetch_youtube(feed, resolved=resolved, opener=opener)
+        self.assertEqual(resolved, {"gekkou_official": "UC1AyZZk4om839jYxD-yi05w"})
+        rsshub.fetch_youtube(feed, resolved=resolved, opener=opener)
+        self.assertEqual(sum("/@gekkou_official" in c for c in calls), 1)   # 2回目はページを取り直さない
+
+    def test_errors_are_readable(self):
+        feed = self.make_feed("nosuchchannel")
+        with self.assertRaises(rsshub.FeedFetchError) as cm:
+            rsshub.fetch_youtube(feed, opener=lambda req, timeout: self.Resp("<html>nothing</html>"))
+        self.assertIn("チャンネルID", str(cm.exception))
+        def boom(req, timeout):
+            raise TimeoutError()
+        with self.assertRaises(rsshub.FeedFetchError) as cm:
+            rsshub.fetch_youtube(self.make_feed("UC1AyZZk4om839jYxD-yi05w"), opener=boom)
+        self.assertEqual(str(cm.exception), "タイムアウト")
