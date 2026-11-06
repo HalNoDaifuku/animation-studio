@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import sys
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import helpers
@@ -47,8 +48,8 @@ class RsshubE2E(unittest.TestCase):
     def go(self, *extra):
         return run(rsshub_notify.main, "--root", str(self.root), "--state", str(self.state), "--retry-wait", "0", "--request-interval", "0", *extra, env=self.env)
 
-    def item(self, i, text):
-        return {"id": str(i), "url": f"https://x.com/CloverWorks/status/{i}", "content_text": text, "date_published": "2026-10-29T12:00:00Z"}
+    def item(self, i, text, date=None):
+        return {"id": str(i), "url": f"https://x.com/CloverWorks/status/{i}", "content_text": text, "date_published": date or (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")}
 
     def test_baseline_then_notify_once_and_route_by_role(self):
         self.hub.feeds[self.path] = [self.item(1, "既存の採用投稿")]
@@ -102,6 +103,16 @@ class RsshubE2E(unittest.TestCase):
         self.assertEqual(len(self.discord.messages(CH_A)), 3)
         self.go("--limit", "3")
         self.assertEqual(len(self.discord.messages(CH_A)), 3)     # 省略分は既読になり、洪水にならない
+
+    def test_old_posts_are_marked_seen_not_notified(self):
+        self.hub.feeds[self.path] = []
+        self.go()
+        self.hub.feeds[self.path] = [self.item(2, "原画マン募集(新卒)"), self.item(1, "原画マン募集", date="2012-10-26T02:43:00Z")]
+        self.go()
+        self.assertEqual(len(self.discord.messages(CH_A)), 1)      # 2012年の投稿は届かない
+        self.assertIn("新卒", self.discord.messages(CH_A)[0]["content"])
+        self.go()
+        self.assertEqual(len(self.discord.messages(CH_A)), 1)
 
     def test_retweets_are_not_notified(self):
         self.hub.feeds[self.path] = []

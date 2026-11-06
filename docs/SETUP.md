@@ -119,4 +119,5 @@ Actions → **watch-test** → Run workflow。最初は `job=check` と `dry_run
 
 - `watch.yml` に `schedule`(GitHub の定期実行)は付けていません。cron-job.org などから、1時間おきに workflow_dispatch(GitHub API)で起動してください。
 - 1回の実行の上限は55分です(`timeout-minutes: 55`)。1時間おきに起動しても、前の実行が終わるまで次は待つので、重なりません。
+- 公開から30日より前の投稿は通知せず既読にします(`common.yaml` の `sns.fetch.max_age_days`、0で無効)。YouTube のように古い動画が一覧に出るフィードで、過去分が届くのを防ぎます。
 - 実行が長くなりすぎないよう、SNS の再試行は「最初の取得に10分以上かかったとき」と「前回から続けて失敗しているフィード」では行いません(`common.yaml` の `sns.fetch.retry_time_budget_seconds`)。

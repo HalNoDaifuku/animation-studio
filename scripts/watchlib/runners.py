@@ -4,6 +4,8 @@ from __future__ import annotations
 import re
 import subprocess
 import time
+from datetime import datetime, timedelta, timezone
+from email.utils import parsedate_to_datetime
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
@@ -79,6 +81,21 @@ def send_to_errors_channel(cfg: Config, bot, content: str, result: RunResult, *,
 
 # --- RSSHub ----------------------------------------------------------------------------------
 
+def _parse_published(value: str | None):
+    """date_published を UTC の datetime にする。読めなければ None(その場合は古さで除外しない)。"""
+    if not value:
+        return None
+    text = str(value).strip()
+    try:
+        dt = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        try:
+            dt = parsedate_to_datetime(text)
+        except (TypeError, ValueError):
+            return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
 def _process_feed(cfg: Config, feed: Feed, items: list, state: State, bot, result: RunResult, company: dict, *,
                   dry_run: bool, notify_on_first_run: bool, limit: int, log: Callable[[str], None]) -> None:
     first_run = not state.initialized(feed.key)
@@ -89,6 +106,15 @@ def _process_feed(cfg: Config, feed: Feed, items: list, state: State, bot, resul
         log(f"[初回] {feed.key}: {len(items)}件を既読にしました(通知なし)")
         return
     new = [i for i in items if not state.seen(feed.key, i.id)]
+    max_age = float((cfg.sns.get("fetch") or {}).get("max_age_days", 30) or 0)
+    if max_age > 0 and new:
+        cutoff = datetime.now(timezone.utc) - timedelta(days=max_age)
+        old = [i for i in new if (_parse_published(i.published) or datetime.max.replace(tzinfo=timezone.utc)) < cutoff]
+        if old:
+            if not dry_run:
+                state.mark(feed.key, [i.id for i in old])  # 古い投稿は通知せず既読にする
+            new = [i for i in new if i not in old]
+            log(f"[古い投稿を除外] {feed.key}: {len(old)}件(公開から{max_age:g}日より前)")
     if cfg.sns.get("exclude_retweets", True):
         retweets = [i for i in new if is_retweet(i.text)]
         if retweets:
