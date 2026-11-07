@@ -238,8 +238,13 @@ def fetch_youtube_api(feed: Feed, api_key: str | None, *, resolved: dict | None 
             raise FeedFetchError("チャンネルが見つかりません(@IDの間違いの可能性)")
         cid = resolved[clean] = found[0]
     playlist = "UU" + cid[2:]   # アップロード一覧のプレイリストID
-    data = _api_json("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails"
-                     f"&maxResults={max_results}&playlistId={q(playlist, safe='')}&key={q(api_key, safe='')}", timeout, opener)
+    try:
+        data = _api_json("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails"
+                         f"&maxResults={max_results}&playlistId={q(playlist, safe='')}&key={q(api_key, safe='')}", timeout, opener)
+    except FeedFetchError as e:
+        if str(e) == "HTTP 404":   # 動画が1本もないチャンネルは、アップロード一覧が無く 404 になる。エラーにせず「新着なし」とする
+            return []
+        raise
     items: list[Item] = []
     for raw in data.get("items") or []:
         sn = (raw or {}).get("snippet") or {}

@@ -431,6 +431,12 @@ class YoutubeApiTest(unittest.TestCase):
         rsshub.fetch_youtube_api(self.make_feed("UC1AyZZk4om839jYxD-yi05w"), "K", opener=self.opener(calls))
         self.assertEqual(len(calls), 1)
 
+    def test_channel_without_videos_is_empty_not_error(self):
+        import urllib.error
+        def not_found(req, timeout):
+            raise urllib.error.HTTPError(req.full_url, 404, "nf", {}, None)
+        self.assertEqual(rsshub.fetch_youtube_api(self.make_feed("UC1AyZZk4om839jYxD-yi05w"), "K", opener=not_found), [])
+
     def test_missing_key_and_errors_do_not_leak_key(self):
         with self.assertRaises(rsshub.FeedFetchError) as cm:
             rsshub.fetch_youtube_api(self.make_feed("x"), None)
