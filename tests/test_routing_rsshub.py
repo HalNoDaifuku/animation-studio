@@ -405,7 +405,7 @@ class YoutubeApiTest(unittest.TestCase):
             def __enter__(self): return self
             def __exit__(self, *a): return False
         def pl(vid, title, desc, date):
-            return {"snippet": {"title": title, "description": desc, "publishedAt": date, "resourceId": {"videoId": vid}},
+            return {"snippet": {"title": title, "description": desc, "publishedAt": date, "resourceId": {"videoId": vid}, "videoOwnerChannelTitle": "クローバーワークス公式"},
                     "contentDetails": {"videoId": vid, "videoPublishedAt": date}}
         def op(req, timeout):
             calls.append(req.full_url)
@@ -421,6 +421,7 @@ class YoutubeApiTest(unittest.TestCase):
         items = rsshub.fetch_youtube_api(feed, "KEY123", resolved=resolved, opener=self.opener(calls))
         self.assertEqual([i.id for i in items], ["yt:video:AAA"])
         self.assertEqual(items[0].published, "2026-11-01T03:00:00Z")
+        self.assertEqual(feed.channel_title, "クローバーワークス公式")
         self.assertIn("forHandle=%40gekkou_official", calls[0])
         self.assertIn("playlistId=UU1AyZZk4om839jYxD-yi05w", calls[1])
         rsshub.fetch_youtube_api(feed, "KEY123", resolved=resolved, opener=self.opener(calls))

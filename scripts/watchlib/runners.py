@@ -240,7 +240,8 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
                 continue
             if not dry_run:
                 state.clear_error(feed.key)
-            log(f"[取得] {feed.key}: {len(items)}件")
+            who = f" / チャンネル名「{_safe(feed.channel_title, 60)}」(会社: {feed.company_name})" if feed.channel_title else ""
+            log(f"[取得] {feed.key}: {len(items)}件{who}")
             _process_feed(cfg, feed, items, state, bot, result, cfg.company(feed.company_slug) or {},
                           dry_run=dry_run, notify_on_first_run=notify_on_first_run, limit=limit, log=log)
         pending = failed

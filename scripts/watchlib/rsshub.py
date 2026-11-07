@@ -43,6 +43,7 @@ class Feed:
     handle: str = ""
     include: list[str] = field(default_factory=list)   # direct のとき、こちらで絞る語(RSSHub の filter の代わり)
     exclude: list[str] = field(default_factory=list)
+    channel_title: str = ""     # YouTube のチャンネル名(取得できたときだけ。会社と合っているかをログで確かめる用)
 
 
 @dataclass
@@ -231,12 +232,13 @@ def fetch_youtube_api(feed: Feed, api_key: str | None, *, resolved: dict | None 
     clean = normalize_handle(feed.handle) or ""
     cid = clean if YT_CHANNEL_ID.fullmatch(clean) else resolved.get(clean)
     if not cid:
-        data = _api_json(f"https://www.googleapis.com/youtube/v3/channels?part=id&forHandle={q('@' + clean, safe='')}&key={q(api_key, safe='')}",
+        data = _api_json(f"https://www.googleapis.com/youtube/v3/channels?part=id,snippet&forHandle={q('@' + clean, safe='')}&key={q(api_key, safe='')}",
                          timeout, opener)
         found = [i.get("id") for i in data.get("items") or [] if isinstance(i, dict) and i.get("id")]
         if not found:
             raise FeedFetchError("チャンネルが見つかりません(@IDの間違いの可能性)")
         cid = resolved[clean] = found[0]
+        feed.channel_title = str((((data.get("items") or [{}])[0].get("snippet")) or {}).get("title") or "")
     playlist = "UU" + cid[2:]   # アップロード一覧のプレイリストID
     try:
         data = _api_json("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails"
@@ -252,6 +254,7 @@ def fetch_youtube_api(feed: Feed, api_key: str | None, *, resolved: dict | None 
         title = (sn.get("title") or "").strip()
         if not vid or title in ("Private video", "Deleted video"):
             continue
+        feed.channel_title = feed.channel_title or str(sn.get("videoOwnerChannelTitle") or "")
         desc = (sn.get("description") or "").strip()
         published = (raw.get("contentDetails") or {}).get("videoPublishedAt") or sn.get("publishedAt")
         items.append(Item(f"yt:video:{vid}", f"https://www.youtube.com/watch?v={vid}",
