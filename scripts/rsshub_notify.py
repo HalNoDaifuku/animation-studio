@@ -10,6 +10,7 @@
 環境変数:
   RSSHUB_BASE_URL     RSSHub のURL(--base でも指定可)
   RSSHUB_ACCESS_KEY   RSSHub のアクセスキー(使っている場合)
+  YOUTUBE_API_KEY     YouTube Data API のキー(YouTube の監視に使う)
   DISCORD_BOT_TOKEN   Discord Bot のトークン(--dry-run / --list では不要)
 
 初回(状態ファイルに無いフィード)は、通知せず既読にするだけです(過去分の洪水を防ぐため)。
@@ -87,7 +88,8 @@ def main(argv=None) -> int:
     result = run_rsshub(cfg, feeds, state, bot, dry_run=args.dry_run, build_errors=errors,
                         notify_on_first_run=args.notify_on_first_run, limit=args.limit,
                         retry_rounds=args.retry_rounds, retry_wait=args.retry_wait,
-                        request_interval=args.request_interval)
+                        request_interval=args.request_interval,
+                        youtube_api_key=os.environ.get("YOUTUBE_API_KEY") or None)
     print(f"送信 {result.sent}件 / 上限で省略 {result.skipped}件 / 取得エラー {len(result.errors)}件 / 送信失敗 {len(result.send_failures)}件")
     for line in result.send_failures:
         print(f"[送信失敗] {line}")

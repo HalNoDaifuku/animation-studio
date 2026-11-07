@@ -72,7 +72,7 @@ python scripts/urlwatch_notify.py --skip-new --wayback
 
 ## 4. GitHub Actions で試す
 
-Secrets に `DISCORD_BOT_TOKEN`、(RSSHubを使うなら)`RSSHUB_BASE_URL` と `RSSHUB_ACCESS_KEY` を登録 →
+Secrets に `DISCORD_BOT_TOKEN`、`YOUTUBE_API_KEY`、(RSSHubを使うなら)`RSSHUB_BASE_URL` と `RSSHUB_ACCESS_KEY` を登録 →
 Actions → **watch-test** → Run workflow。最初は `job=check` と `dry_run=true` から。
 状態(`.urlwatch/cache-companies.db`、`.rsshub-state/state.json`)は Actions のキャッシュに保存されます。
 
@@ -130,12 +130,15 @@ Actions → **watch-test** → Run workflow。最初は `job=check` と `dry_run
 - 出さないもの: Discord の Bot トークン、RSSHub のURL・アクセスキー(フィードはキー名だけを出します)、Discord のチャンネルID(職種名、または末尾4桁だけ)。
 - 外部ページの本文に含まれる `::` は、GitHub Actions のコマンドと解釈されないよう `: :` に変えて出します。
 
-## YouTube は RSSHub を通さず直接読む
+## YouTube は YouTube Data API で直接読む
 
-RSSHub 経由だと YouTube の取得が遅くタイムアウトしやすいため、`common.yaml` の `sns.platforms.youtube.direct: youtube` で、YouTube の公式フィード(`youtube.com/feeds/videos.xml`)を直接読みます。
-- RSSHub の `YOUTUBE_KEY` は不要です。採用ワードによる絞り込み・除外語は、こちらで同じ語を使って行います。
-- `@ID` で書かれたチャンネルは、ページから一度だけチャンネルIDを調べ、状態ファイルに控えます(次回からは調べません)。
-- 待ち時間は `sns.fetch.youtube.timeout_seconds`(既定30秒)。
-- 取れないときのエラーは「チャンネルIDを調べられません」(@IDの間違いなど)や HTTP 番号で出ます。
-- 元に戻すときは `direct: youtube` の行を消してください(RSSHub 経由になります)。
-- 公式フィードには直近15本ほどしか載りません。1時間ごとの確認なら十分です。
+RSSHub 経由だと YouTube の取得が遅くタイムアウトし、公式フィード(videos.xml)は GitHub Actions からだと 404 になったため、`common.yaml` の `sns.platforms.youtube.direct: youtube_api` で YouTube Data API(公式)を直接使います。
+- GitHub の Secrets に **`YOUTUBE_API_KEY`**(Vercel に入れたものと同じキーでよい)を登録してください。未登録だと、YouTube は「YOUTUBE_API_KEY が未設定です」というエラーになります。
+- 採用ワード・除外語での絞り込みは、これまでと同じ語をこちらで使います。
+- `@ID` のチャンネルは、`channels.list(forHandle)` で一度だけチャンネルIDにして状態ファイルに控えます。1フィードあたり1〜2ユニットで、1日の無料枠(10,000)に対して十分小さい量です。
+- エラーは HTTP 番号で出ます(403 はキーの制限・割当、404 はチャンネル違い)。キーはログに出しません。
+- 待ち時間は `sns.fetch.youtube.timeout_seconds`。`direct` の行を消すと RSSHub 経由に戻ります。
+
+## Instagram
+
+RSSHub 経由の Instagram は bot 判定で 503 になりやすく、取得用のアカウントも制限される危険があるため、`common.yaml` の `sns.platforms.instagram.enabled: false` で全社まとめて止めています。再開するときは `true` にしてください(会社ごとの `monitor` 設定はそのまま残してあります)。

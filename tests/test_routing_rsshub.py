@@ -387,3 +387,70 @@ class YoutubeDirectTest(unittest.TestCase):
         with self.assertRaises(rsshub.FeedFetchError) as cm:
             rsshub.fetch_youtube(self.make_feed("UC1AyZZk4om839jYxD-yi05w"), opener=boom)
         self.assertEqual(str(cm.exception), "タイムアウト")
+
+
+class YoutubeApiTest(unittest.TestCase):
+    def make_feed(self, handle):
+        cfg, _ = cfg_with()
+        include, exclude = rsshub.effective_filter(cfg, cfg.company("cloverworks"))
+        shown, req = rsshub.build_direct_youtube(cfg.sns["platforms"]["youtube"], handle)
+        return rsshub.Feed("k", "id", "cloverworks", "C", "youtube", "YouTube", "user", "L", shown, req,
+                           direct="youtube_api", handle=handle, include=include, exclude=exclude)
+
+    def opener(self, calls):
+        import json as _json
+        class R:
+            def __init__(self, d): self.d = d
+            def read(self): return _json.dumps(self.d).encode()
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+        def pl(vid, title, desc, date):
+            return {"snippet": {"title": title, "description": desc, "publishedAt": date, "resourceId": {"videoId": vid}},
+                    "contentDetails": {"videoId": vid, "videoPublishedAt": date}}
+        def op(req, timeout):
+            calls.append(req.full_url)
+            if "/channels?" in req.full_url:
+                return R({"items": [{"id": "UC1AyZZk4om839jYxD-yi05w"}]})
+            return R({"items": [pl("AAA", "原画マン募集", "応募はこちら", "2026-11-01T03:00:00Z"),
+                                pl("BBB", "新作PV", "PVです", "2026-11-02T03:00:00Z"),
+                                pl("CCC", "Private video", "", "2026-11-03T03:00:00Z")]})
+        return op
+
+    def test_handle_resolved_once_and_filtered(self):
+        feed, calls, resolved = self.make_feed("gekkou_official"), [], {}
+        items = rsshub.fetch_youtube_api(feed, "KEY123", resolved=resolved, opener=self.opener(calls))
+        self.assertEqual([i.id for i in items], ["yt:video:AAA"])
+        self.assertEqual(items[0].published, "2026-11-01T03:00:00Z")
+        self.assertIn("forHandle=%40gekkou_official", calls[0])
+        self.assertIn("playlistId=UU1AyZZk4om839jYxD-yi05w", calls[1])
+        rsshub.fetch_youtube_api(feed, "KEY123", resolved=resolved, opener=self.opener(calls))
+        self.assertEqual(sum("/channels?" in c for c in calls), 1)
+
+    def test_channel_id_skips_lookup(self):
+        calls = []
+        rsshub.fetch_youtube_api(self.make_feed("UC1AyZZk4om839jYxD-yi05w"), "K", opener=self.opener(calls))
+        self.assertEqual(len(calls), 1)
+
+    def test_missing_key_and_errors_do_not_leak_key(self):
+        with self.assertRaises(rsshub.FeedFetchError) as cm:
+            rsshub.fetch_youtube_api(self.make_feed("x"), None)
+        self.assertIn("YOUTUBE_API_KEY", str(cm.exception))
+        import urllib.error
+        def forbidden(req, timeout):
+            raise urllib.error.HTTPError(req.full_url, 403, "no", {}, None)
+        with self.assertRaises(rsshub.FeedFetchError) as cm:
+            rsshub.fetch_youtube_api(self.make_feed("UC1AyZZk4om839jYxD-yi05w"), "SECRETKEY", opener=forbidden)
+        self.assertEqual(str(cm.exception), "HTTP 403")
+
+
+class PlatformEnabledTest(unittest.TestCase):
+    def test_disabled_platform_makes_no_feeds(self):
+        def edit(c):
+            c["sns"]["accounts"]["instagram"] = [{"handle": "clover", "monitor": True}]
+        cfg, _ = cfg_with(edit)
+        cfg.sns["platforms"]["instagram"]["enabled"] = False
+        feeds, _ = rsshub.build_feeds(cfg, "https://hub.example", None)
+        self.assertFalse([f for f in feeds if f.platform == "instagram"])
+        cfg.sns["platforms"]["instagram"]["enabled"] = True
+        feeds, _ = rsshub.build_feeds(cfg, "https://hub.example", None)
+        self.assertTrue([f for f in feeds if f.platform == "instagram"])

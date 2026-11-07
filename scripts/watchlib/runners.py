@@ -16,7 +16,7 @@ from .messages import (build_diff_message, build_error_message, build_feed_error
                        split_long_text, CHUNK_LIMIT)
 from .report import ReportEntry, parse_report
 from .routing import Target, pick_roles, resolve_channels
-from .rsshub import Feed, FeedFetchError, fetch_feed, fetch_youtube, is_retweet
+from .rsshub import Feed, FeedFetchError, fetch_feed, fetch_youtube, fetch_youtube_api, is_retweet
 from .state import State
 from .urlwatch_jobs import JobInfo
 from . import wayback as wayback_mod
@@ -182,7 +182,7 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
                retry_rounds: int | None = None, retry_wait: float | None = None,
                request_interval: float | None = None, error_renotify_hours: float | None = None,
                sleep: Callable[[float], None] = time.sleep, clock: Callable[[], float] = time.monotonic,
-               youtube_opener: Callable | None = None,
+               youtube_opener: Callable | None = None, youtube_api_key: str | None = None,
                log: Callable[[str], None] = print) -> RunResult:
     """全フィードを1回取得し、失敗したものだけを「全部が終わってから」待って再取得する(retry_rounds 回まで)。
 
@@ -201,6 +201,8 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
     yt_timeout = int((opts.get("youtube") or {}).get("timeout_seconds", timeout))
 
     def fetch_one(feed: Feed) -> list:
+        if feed.direct == "youtube_api":   # RSSHub を通さず、YouTube Data API(公式)で取得
+            return fetch_youtube_api(feed, youtube_api_key, resolved=state.channels, timeout=yt_timeout, opener=youtube_opener)
         if feed.direct == "youtube":   # RSSHub を通さず、YouTube の公式フィードを直接読む
             return fetch_youtube(feed, resolved=state.channels, timeout=yt_timeout, opener=youtube_opener)
         return fetch(feed.request_url)

@@ -238,10 +238,12 @@ sns:
     youtube:
       label: YouTube
       handle_prefix: "@"
-      # direct: youtube にすると、RSSHub を通さず YouTube の公式フィード(videos.xml)を直接読む(RSSHub が遅い・キーが要るため)。
-      #   採用ワードの絞り込みはこちらで行う。@ID のチャンネルは、ページから一度だけチャンネルIDを調べて控える。
-      #   RSSHub に戻すときは、この行を消す(下の user_feed / channel_feed が使われる)。
-      direct: youtube
+      # direct: RSSHub を通さず取得する方式。
+      #   youtube_api … YouTube Data API(公式)。GitHub の Secrets に YOUTUBE_API_KEY が必要。速くて確実(推奨)。
+      #   youtube     … 公式フィード(videos.xml)を直接。GitHub Actions からは 404 になることがあるため非推奨。
+      #   行を消す    … RSSHub 経由(下の user_feed / channel_feed)。RSSHub 側が遅いと取得できない。
+      #   絞り込みは、どの方式でも採用ワード・除外語を同じように使う。@ID は一度だけチャンネルIDに直して控える。
+      direct: youtube_api
       direct_feed: "https://www.youtube.com/feeds/videos.xml?channel_id={id}"
       handle_page: "https://www.youtube.com/@{handle}"
       user_feed: "{base}/youtube/user/{handle}"
@@ -251,6 +253,8 @@ sns:
       search_feed: null
     instagram:
       label: Instagram
+      # false にすると、Instagram の監視を全社まとめて止める。(2026-11-07: RSSHub 経由は bot 判定で 503 になり、アカウントも危険なため停止)
+      enabled: false
       handle_prefix: ""
       user_feed: "{base}/instagram/user/{handle}"
       search_feed: null

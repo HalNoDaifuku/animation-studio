@@ -210,6 +210,50 @@ def fetch_youtube(feed: Feed, *, resolved: dict | None = None, timeout: int = 30
     return filter_items(parse_youtube_atom(raw), feed.include, feed.exclude)
 
 
+def _api_json(url: str, timeout: int, opener: Callable | None) -> dict:
+    raw = _http_get(url, {"User-Agent": "website-checker/1.0", "Accept": "application/json"}, timeout, opener)
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        raise FeedFetchError("YouTube API の応答が読めません") from None
+    return data if isinstance(data, dict) else {}
+
+
+def fetch_youtube_api(feed: Feed, api_key: str | None, *, resolved: dict | None = None, timeout: int = 30,
+                      opener: Callable | None = None, max_results: int = 15) -> list[Item]:
+    """YouTube Data API(公式)で、チャンネルの最新のアップロードを取得し、採用ワードで絞る。
+    @ID は channels.list(forHandle)で一度だけチャンネルIDにして控える。1フィード=1〜2ユニット(1日の無料枠は10,000)。
+    エラー文にAPIキー(URL)は含めない。"""
+    if not api_key:
+        raise FeedFetchError("YOUTUBE_API_KEY が未設定です(GitHub の Secrets に登録)")
+    resolved = resolved if resolved is not None else {}
+    q = urllib.parse.quote
+    clean = normalize_handle(feed.handle) or ""
+    cid = clean if YT_CHANNEL_ID.fullmatch(clean) else resolved.get(clean)
+    if not cid:
+        data = _api_json(f"https://www.googleapis.com/youtube/v3/channels?part=id&forHandle={q('@' + clean, safe='')}&key={q(api_key, safe='')}",
+                         timeout, opener)
+        found = [i.get("id") for i in data.get("items") or [] if isinstance(i, dict) and i.get("id")]
+        if not found:
+            raise FeedFetchError("チャンネルが見つかりません(@IDの間違いの可能性)")
+        cid = resolved[clean] = found[0]
+    playlist = "UU" + cid[2:]   # アップロード一覧のプレイリストID
+    data = _api_json("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails"
+                     f"&maxResults={max_results}&playlistId={q(playlist, safe='')}&key={q(api_key, safe='')}", timeout, opener)
+    items: list[Item] = []
+    for raw in data.get("items") or []:
+        sn = (raw or {}).get("snippet") or {}
+        vid = ((raw.get("contentDetails") or {}).get("videoId")) or ((sn.get("resourceId") or {}).get("videoId")) or ""
+        title = (sn.get("title") or "").strip()
+        if not vid or title in ("Private video", "Deleted video"):
+            continue
+        desc = (sn.get("description") or "").strip()
+        published = (raw.get("contentDetails") or {}).get("videoPublishedAt") or sn.get("publishedAt")
+        items.append(Item(f"yt:video:{vid}", f"https://www.youtube.com/watch?v={vid}",
+                          (title + ("\n" + desc if desc else "")).strip(), published))
+    return filter_items(items, feed.include, feed.exclude)
+
+
 # --- 検索クエリ ---------------------------------------------------------------------------
 
 def _term(word: str) -> str:
@@ -314,11 +358,13 @@ def company_feeds(cfg: Config, company: dict, base: str, access_key: str | None 
             if not handle or not (acc or {}).get("monitor"):
                 continue
             label = (acc.get("label") or "").strip() or f"@{handle}"
-            if p.get("direct") == "youtube":
+            if p.get("enabled") is False:   # common.yaml でプラットフォームごと止めている
+                continue
+            if p.get("direct") in ("youtube", "youtube_api"):
                 shown, req = build_direct_youtube(p, handle)
                 feeds.append(Feed(f"{slug}:{platform}:user:{handle}", cid, slug, name, platform,
                                   p.get("label", platform), "user", label, shown, req,
-                                  direct="youtube", handle=handle, include=list(include), exclude=list(exclude)))
+                                  direct=p["direct"], handle=handle, include=list(include), exclude=list(exclude)))
                 continue
             try:
                 shown, req = build_user_feed(cfg, platform, handle, include, exclude, base, access_key)
