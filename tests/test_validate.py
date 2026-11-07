@@ -136,18 +136,18 @@ class ValidateTest(unittest.TestCase):
         self.assertHasError(validate_config(root), "YAMLとして読めません")
         (root / "db" / "companies" / "broken.yaml").write_text("- ただのリスト\n", encoding="utf-8")
         self.assertHasError(validate_config(root), "辞書ではありません")
-        (root / "common.yaml").unlink()
+        (root / "config" / "common.yaml").unlink()
         self.assertHasError(validate_config(root), "見つかりません")
 
     def test_common_yaml_mistakes(self):
         import yaml
-        base = yaml.safe_load((helpers.REPO / "common.yaml").read_text(encoding="utf-8"))
+        base = yaml.safe_load((helpers.REPO / "config" / "common.yaml").read_text(encoding="utf-8"))
 
         def run(mutate):
             data = copy.deepcopy(base)
             mutate(data)
             root = make_root(companies={"cloverworks": load_sample("cloverworks")})
-            (root / "common.yaml").write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
+            (root / "config" / "common.yaml").write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
             return validate_config(root)
 
         self.assertHasError(run(lambda d: d["job_roles"]["storyboard"].update(exclude_words=["コンテ"])), "自分で消して")

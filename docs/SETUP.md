@@ -8,7 +8,7 @@
 
 | パス | 役割 |
 |---|---|
-| `common.yaml` | 職種・SNSフィルター・Web誤検知対策の共通設定 |
+| `config/common.yaml` | 職種・SNSフィルター・Web誤検知対策の共通設定 |
 | `db/companies/*.yaml` | アニメ会社ごとの設定(アニメ会社だけを置く) |
 | `db/portals/*.yaml` | アニメ会社ではない就活・求人サイト、SNSだけの窓口などの設定(同じ形式) |
 | `scripts/verify_files.py` | 展開したファイルが、渡したZIPと一致するかの照合(`docs/FILES.sha256` と比較) |

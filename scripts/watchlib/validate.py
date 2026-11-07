@@ -97,7 +97,9 @@ def check_filter_list(c: _Collector, where: str, filters) -> None:
 # --- common.yaml ------------------------------------------------------------------------------
 
 def check_common(c: _Collector, cfg: Config) -> None:
-    f = "common.yaml"
+    f = "config/common.yaml"
+    if (cfg.root / "common.yaml").exists():
+        c.warn("common.yaml", "古い場所の common.yaml が残っています。設定は config/common.yaml に移したので、リポジトリ直下の common.yaml は削除してください")
     roles = cfg.job_roles
     if not isinstance(roles, dict) or not roles:
         c.error(f"{f}: job_roles", "職種が1つもありません")

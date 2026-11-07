@@ -1,4 +1,4 @@
-"""設定ファイル(common.yaml / config/discord.yaml / db/companies/*.yaml / db/portals/*.yaml)の読み込みと共通ヘルパー。"""
+"""設定ファイル(config/common.yaml / config/discord.yaml / db/companies/*.yaml / db/portals/*.yaml)の読み込みと共通ヘルパー。"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -101,7 +101,7 @@ def load_config(
     require_discord: bool = False,
 ) -> Config:
     root = Path(root) if root else ROOT
-    common_path = Path(common_path) if common_path else root / "common.yaml"
+    common_path = Path(common_path) if common_path else root / "config" / "common.yaml"
     companies_dir = Path(companies_dir) if companies_dir else root / "db" / "companies"
     portals_dir = Path(portals_dir) if portals_dir else root / "db" / "portals"
     discord_path = Path(discord_path) if discord_path else root / "config" / "discord.yaml"

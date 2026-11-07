@@ -167,12 +167,12 @@ class MockRSSHub(_Server):
 
 def make_root(discord_base: str | None = None, *, roles_to_channels: dict | None = None, fallback: str | None = None,
               errors: str | None = None, companies: dict[str, dict] | None = None) -> Path:
-    """一時フォルダに common.yaml と設定を作る。companies は {ファイル名(拡張子なし): 会社の辞書}。"""
+    """一時フォルダに config/common.yaml と設定を作る。companies は {ファイル名(拡張子なし): 会社の辞書}。"""
     root = Path(tempfile.mkdtemp(prefix="wc-test-"))
-    shutil.copy(REPO / "common.yaml", root / "common.yaml")
+    (root / "config").mkdir()
+    shutil.copy(REPO / "config" / "common.yaml", root / "config" / "common.yaml")
     (root / "db" / "companies").mkdir(parents=True)
     (root / "db" / "portals").mkdir()
-    (root / "config").mkdir()
     for stem, data in (companies or {}).items():
         write_company(root, stem, data)
     discord = {"discord": {"api_base": discord_base or "https://discord.com/api/v10",
