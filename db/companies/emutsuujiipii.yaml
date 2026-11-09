@@ -1,0 +1,62 @@
+# =============================================================================
+# db/companies/emutsuujiipii.yaml — エムツージーピー
+# =============================================================================
+# 2026-11-08 に animeco.link から自動生成した初期版です。
+#   確認済み: 会社名・所在地(都道府県・市区まで)・作業種別(animeco.link の表示)
+#   未確認: 設立年・公式サイトのURL・SNSのアカウント(animeco.link のリンクからそのまま取得。要確認)
+#   roles は animeco.link の「作業種別」から付けた目安です(作画=key_animator/in_between、仕上げ=finishing、背景=background_art、CG・VFX=cg_3d、撮影=compositing。元請け・編集・2Dワークスなどは対応する通知先が無いので付けていません)。
+#   通知は本文から職種を判定して振り分けます(roles は、その会社だけ除外語を調整したいときに使います)。
+#   採用ページの監視(monitors)は、採用ページを確認してから追加してください。
+
+schema_version: 1
+
+id: 85876901-56fe-4754-aae4-5d3e24202abf
+slug: emutsuujiipii
+
+name: エムツージーピー(MMDGP)
+display_name: エムツージーピー
+name_en: MMDGP
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: 千葉県
+  city: null
+  area: null
+  address: null
+
+roles: []
+
+related_companies:
+  - name: 勝鬨スタジオ
+    company_id: null
+    relation: 子会社・サブスタジオ(animeco.link の備考より)
+
+website: http://kachista.com
+
+sns:
+  accounts:
+    x:
+      # 出典: animeco.link(2026-11-08 調査)
+      - handle: kachista
+        label: メイン
+        monitor: true
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      - handle: null
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [エムツージーピー, MMDGP]
+    use_presets: []
+    custom: {}
+
+monitors: []

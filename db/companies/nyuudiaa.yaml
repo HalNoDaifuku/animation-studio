@@ -1,0 +1,63 @@
+# =============================================================================
+# db/companies/nyuudiaa.yaml — ニューディアー
+# =============================================================================
+# 2026-11-08 に animeco.link から自動生成した初期版です。
+#   確認済み: 会社名・所在地(都道府県・市区まで)・作業種別(animeco.link の表示)
+#   未確認: 設立年・公式サイトのURL・SNSのアカウント(animeco.link のリンクからそのまま取得。要確認)
+#   roles は animeco.link の「作業種別」から付けた目安です(作画=key_animator/in_between、仕上げ=finishing、背景=background_art、CG・VFX=cg_3d、撮影=compositing。元請け・編集・2Dワークスなどは対応する通知先が無いので付けていません)。
+#   通知は本文から職種を判定して振り分けます(roles は、その会社だけ除外語を調整したいときに使います)。
+#   採用ページの監視(monitors)は、採用ページを確認してから追加してください。
+
+schema_version: 1
+
+id: 2c9f8106-5555-4022-913c-dafdab67ad83
+slug: nyuudiaa
+
+name: ニューディアー
+display_name: ニューディアー
+name_en: null
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: 東京都
+  city: 中野区
+  area: null
+  address: null
+
+roles: []
+
+related_companies: []
+
+website: https://www.newdeer.net/
+
+sns:
+  accounts:
+    x:
+      # 出典: animeco.link(2026-11-08 調査)
+      - handle: _NEW_DEER
+        label: メイン
+        monitor: true
+    youtube:
+      # 出典: animeco.link(2026-11-08 調査)
+      - handle: UC-h1YxlD5f3joF4XinXbb-Q
+        label: メイン
+        monitor: true
+    instagram:
+      # 出典: animeco.link(2026-11-08 調査)
+      - handle: _new_deer
+        label: メイン
+        monitor: true
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [ニューディアー]
+    use_presets: []
+    custom: {}
+
+monitors: []

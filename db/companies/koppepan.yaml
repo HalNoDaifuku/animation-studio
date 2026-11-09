@@ -1,0 +1,59 @@
+# =============================================================================
+# db/companies/koppepan.yaml — コッペパン
+# =============================================================================
+# 2026-11-08 に animeco.link から自動生成した初期版です。
+#   確認済み: 会社名・所在地(都道府県・市区まで)・作業種別(animeco.link の表示)
+#   未確認: 設立年・公式サイトのURL・SNSのアカウント(animeco.link のリンクからそのまま取得。要確認)
+#   roles は animeco.link の「作業種別」から付けた目安です(作画=key_animator/in_between、仕上げ=finishing、背景=background_art、CG・VFX=cg_3d、撮影=compositing。元請け・編集・2Dワークスなどは対応する通知先が無いので付けていません)。
+#   通知は本文から職種を判定して振り分けます(roles は、その会社だけ除外語を調整したいときに使います)。
+#   採用ページの監視(monitors)は、採用ページを確認してから追加してください。
+
+schema_version: 1
+
+id: 3ed3c62d-168f-45dc-a04f-c833041ba816
+slug: koppepan
+
+name: コッペパン
+display_name: コッペパン
+name_en: null
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: 東京都
+  city: 中野区
+  area: null
+  address: null
+
+roles: 
+  - key_animator
+  - in_between
+
+related_companies: []
+
+website: https://www.coppepan.com/
+
+sns:
+  accounts:
+    x:
+      - handle: null
+        monitor: false
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      - handle: null
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [コッペパン]
+    use_presets: []
+    custom: {}
+
+monitors: []
