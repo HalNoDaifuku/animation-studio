@@ -57,4 +57,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用情報がトップページ内のアンカーのため無効(ページ全体の変化を拾ってしまう)。メモ: トップ内のRecruitセクション。3職種と応募フォームあり。
+  - id: recruit
+    name: 採用情報
+    url: https://www.geyeg-pictures.co.jp/#recruit
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

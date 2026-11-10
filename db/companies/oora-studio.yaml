@@ -57,4 +57,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: トップ内アンカー(#recruit)のみ。個別求人は外部媒体arwrkのため不採用。
+  - id: recruit
+    name: 採用情報
+    url: https://www.aura-studio.co.jp/#recruit
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

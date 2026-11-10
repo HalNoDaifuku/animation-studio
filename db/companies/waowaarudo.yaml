@@ -60,4 +60,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: 新卒・中途採用情報の更新告知とリンクあり。中身は未確認。
+  - id: recruit
+    name: 採用情報
+    url: https://waoworld.com/recruit/
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

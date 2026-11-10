@@ -60,4 +60,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: ナビにRECRUITリンクあり、中身未確認。
+  - id: recruit
+    name: 採用情報
+    url: https://www.zexcs.co.jp/recruit/
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

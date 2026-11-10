@@ -59,4 +59,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 公式サイトの採用リンクから作成(2026-11-09 調査・内容確認済)。
+  - id: recruit
+    name: 採用情報
+    url: https://www.edgeware.co.jp/contact.html
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

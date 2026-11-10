@@ -58,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用情報がトップページ内にあるため無効(トップ全体の変化を拾ってしまう)。メモ: 映像クリエイター(新卒・中途・業務委託)掲載。応募詳細は各項目の先。
+  - id: recruit
+    name: 採用情報
+    url: https://pieinthesky.jp/?post_type=recruit
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

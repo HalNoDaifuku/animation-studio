@@ -61,4 +61,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: トップのRECRUITリンク。ページ取得時にサーバーエラー。
+  - id: recruit
+    name: 採用情報
+    url: https://www.studio-kafka.jp/recruit/
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

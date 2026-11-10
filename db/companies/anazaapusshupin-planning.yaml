@@ -58,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: 募集終了表記の旧募集ページ(アニメーター動画)。制作進行は http://appp.web.fc2.com/seisaku.html。恒常的な採用ページかは不明。
+  - id: recruit
+    name: 採用情報
+    url: http://appp.web.fc2.com/douga.html
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

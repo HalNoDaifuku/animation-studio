@@ -56,4 +56,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用情報がトップページ内にあるため無効(トップ全体の変化を拾ってしまう)。メモ: 制作進行の募集・応募方法・選考フローあり。
+  - id: recruit
+    name: 採用情報
+    url: https://www.st-grass.work/?page_id=275
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

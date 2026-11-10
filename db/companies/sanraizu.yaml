@@ -94,4 +94,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: トップに「採用情報」リンク。リンク先は未取得(利用上限のため)。リンク先ドメインがbnfw.co.jpでトップURLと異なる点に注意。
+  - id: recruit
+    name: 採用情報
+    url: https://www.bnfw.co.jp/recruit/
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

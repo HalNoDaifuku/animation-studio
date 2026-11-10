@@ -70,4 +70,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: RECRUITメニューから採用サイトへ。中身は未確認。
+  - id: recruit
+    name: 採用情報
+    url: https://recruit.witstudio.co.jp/
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

@@ -57,4 +57,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用情報がトップページ内のアンカーのため無効(ページ全体の変化を拾ってしまう)。メモ: トップ内のRecruitセクション(職種2種・選考流れ・郵送応募)。
+  - id: recruit
+    name: 採用情報
+    url: https://www.fr-en.co.jp/#recruit
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

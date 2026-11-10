@@ -63,4 +63,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: Recruit見出しと問い合わせフォームのみ、募集職種・案内の記載なし。
+  - id: recruit
+    name: 採用情報
+    url: https://namuanimation.com?act=event.form_application&pcode=5e7c320fdd65b502865329ffa
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

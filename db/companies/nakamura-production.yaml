@@ -56,4 +56,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: トップ内アンカー(#requirements 募集要項)のみ。別ページなし、内容は未精査。
+  - id: recruit
+    name: 採用情報
+    url: https://www.nakamura-pro.com/index.html#requirements
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

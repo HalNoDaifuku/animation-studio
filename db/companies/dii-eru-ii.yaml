@@ -58,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: フッターRECRUITのリンク先。robots_disallowedで開けず、求人媒体の可能性もあり。ヘッダーのarwrk.netは求人媒体のため不採用。
+  - id: recruit
+    name: 採用情報
+    url: https://dle.jbplt.jp/
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

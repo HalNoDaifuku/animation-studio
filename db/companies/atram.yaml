@@ -55,4 +55,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用情報がトップページ内のアンカーのため無効(ページ全体の変化を拾ってしまう)。メモ: トップ内RECRUITセクション(美術背景・設定・ボード募集、応募案内あり)。
+  - id: recruit
+    name: 採用情報
+    url: https://atram.co.jp/#recruit
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

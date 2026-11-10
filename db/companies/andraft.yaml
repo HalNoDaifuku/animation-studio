@@ -58,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用情報がトップページ内のアンカーのため無効(ページ全体の変化を拾ってしまう)。メモ: トップ内RECRUITに中途・新卒の職種/応募書類/メール応募あり。新卒案内ニュース https://andraft.com/news/820/。
+  - id: recruit
+    name: 採用情報
+    url: https://andraft.com/#recruit
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

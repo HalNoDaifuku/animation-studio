@@ -57,4 +57,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: 求人情報(作画)。仕上げは複製-お問い合わせ-2。中身未確認。
+  - id: recruit
+    name: 採用情報
+    url: https://www.neo-zone.online/複製-お問い合わせ-3
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

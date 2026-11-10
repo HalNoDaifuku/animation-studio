@@ -58,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用情報がトップページ内にあるため無効(トップ全体の変化を拾ってしまう)。メモ: 職種紹介・ENTRY・新卒秋選考の案内あり。
+  - id: recruit
+    name: 採用情報
+    url: https://recruit.g-angle.co.jp/
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

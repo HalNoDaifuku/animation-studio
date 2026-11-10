@@ -56,4 +56,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用情報がトップページ内にあるため無効(トップ全体の変化を拾ってしまう)。メモ: 制作進行・アニメーターの募集要項あり(応募方法の記述は簡素)。
+  - id: recruit
+    name: 採用情報
+    url: https://d-6.co.jp/?page_id=52
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
