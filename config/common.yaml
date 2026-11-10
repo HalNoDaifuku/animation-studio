@@ -209,6 +209,9 @@ sns:
   fetch:
     timeout_seconds: 30
     request_interval_seconds: 0.5
+    # 同時に取得するフィード数。1なら1件ずつ。タイムアウトが多いと1件30秒かかるため、並行して取得すると実行時間が大きく縮む。
+    # 取得を始める間隔は、並行していても request_interval_seconds 以上あける。RSSHub 側で制限を受けて失敗が増えるなら下げる。
+    concurrency: 4
     retry_rounds: 2
     retry_wait_seconds: 120
     # 最初の取得にこの秒数以上かかったときは、再試行をしない(実行時間が延びすぎないように)。

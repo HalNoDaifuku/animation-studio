@@ -59,7 +59,11 @@ def added_text(body: str) -> str:
 
 def _safe(text, limit: int = 160) -> str:
     """ログ用に1行へ縮める。"::" は GitHub Actions のコマンドと解釈されるので変える(外部ページの本文が混ざるため)。"""
-    one = " ".join(str(text or "").split()).replace("::", ": :")
+    raw = str(text or "")
+    if "Traceback (most recent call last)" in raw:   # 長いスタックトレースは、原因が書いてある最後の行だけ残す
+        last = [ln.strip() for ln in raw.splitlines() if ln.strip()][-1]
+        raw = f"例外: {last}"
+    one = " ".join(raw.split()).replace("::", ": :")
     return one if len(one) <= limit else one[:limit] + "…"
 
 
@@ -176,6 +180,41 @@ def _process_feed(cfg: Config, feed: Feed, items: list, state: State, bot, resul
         state.save()
 
 
+def _fetch_all(feeds: list, fetch_one, workers: int, interval: float, sleep, clock):
+    """feeds を取得し、(feed, items, error, 秒数) を feeds と同じ順番で返す。
+
+    取得(通信)だけを workers 本で並行して行い、結果の処理(状態の更新・通知)は呼び出し側が順番に行う。
+    要求を始める間隔は、並行していても interval 秒以上あける(相手に一斉に要求しないため)。
+    """
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+
+    gate = threading.Lock()
+    last_start = [None]
+
+    def one(feed):
+        with gate:  # 要求の開始間隔をあける
+            if last_start[0] is not None and interval > 0:
+                wait = last_start[0] + interval - clock()
+                if wait > 0:
+                    sleep(wait)
+            last_start[0] = clock()
+        began = clock()
+        try:
+            return feed, fetch_one(feed), None, clock() - began
+        except FeedFetchError as e:
+            return feed, None, e, clock() - began
+
+    if workers <= 1:
+        for feed in feeds:
+            yield one(feed)
+        return
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = [pool.submit(one, f) for f in feeds]
+        for fut in futures:
+            yield fut.result()
+
+
 def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bool = False,
                notify_on_first_run: bool = False, limit: int = 5,
                fetch: Callable[[str], list] | None = None, build_errors: list[tuple[str, str]] | None = None,
@@ -198,6 +237,7 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
     budget = float(opts.get("retry_time_budget_seconds", 600))
     if fetch is None:
         fetch = lambda url: fetch_feed(url, timeout=timeout)  # noqa: E731
+    workers = max(1, int(opts.get("concurrency", 1)))
     yt_timeout = int((opts.get("youtube") or {}).get("timeout_seconds", timeout))
 
     def fetch_one(feed: Feed) -> list:
@@ -228,20 +268,16 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
             log(f"[再試行 {attempt}/{rounds}] 取得に失敗した{len(pending)}件を、{wait:g}秒待ってから取得し直します")
             sleep(wait)
         failed: list[Feed] = []
-        for n, feed in enumerate(pending):
-            if n and interval > 0:
-                sleep(interval)  # 続けざまに要求しない
-            try:
-                items = fetch_one(feed)
-            except FeedFetchError as e:
-                last_error[feed.key] = str(e)
+        for feed, items, err, took in _fetch_all(pending, fetch_one, workers, interval, sleep, clock):
+            if err is not None:
+                last_error[feed.key] = str(err)
                 failed.append(feed)
-                log(f"[取得失敗] {feed.key}: {e}" + (f"(試行{attempt + 1}回目)" if rounds else ""))
+                log(f"[取得失敗] {feed.key}: {err}" + (f"(試行{attempt + 1}回目)" if rounds else "") + f" / {took:.1f}秒")
                 continue
             if not dry_run:
                 state.clear_error(feed.key)
             who = f" / チャンネル名「{_safe(feed.channel_title, 60)}」(会社: {feed.company_name})" if feed.channel_title else ""
-            log(f"[取得] {feed.key}: {len(items)}件{who}")
+            log(f"[取得] {feed.key}: {len(items)}件{who} / {took:.1f}秒")
             _process_feed(cfg, feed, items, state, bot, result, cfg.company(feed.company_slug) or {},
                           dry_run=dry_run, notify_on_first_run=notify_on_first_run, limit=limit, log=log)
         pending = failed

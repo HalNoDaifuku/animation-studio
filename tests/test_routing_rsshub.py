@@ -461,3 +461,43 @@ class PlatformEnabledTest(unittest.TestCase):
         cfg.sns["platforms"]["instagram"]["enabled"] = True
         feeds, _ = rsshub.build_feeds(cfg, "https://hub.example", None)
         self.assertTrue([f for f in feeds if f.platform == "instagram"])
+
+
+class FetchAllTest(unittest.TestCase):
+    """並行取得: 結果は渡した順で返り、失敗は他のフィードに影響せず、開始間隔は守られる。"""
+
+    def _run(self, workers, interval=0.0):
+        import threading, time
+        from watchlib.runners import _fetch_all
+        from watchlib.rsshub import FeedFetchError
+
+        class F:
+            def __init__(self, k): self.key = k
+        feeds = [F(f"f{i}") for i in range(8)]
+        starts, lock = [], threading.Lock()
+
+        def fetch_one(feed):
+            with lock:
+                starts.append(time.monotonic())
+            time.sleep(0.05)
+            if feed.key == "f3":
+                raise FeedFetchError("タイムアウト")
+            return [feed.key]
+        out = list(_fetch_all(feeds, fetch_one, workers, interval, time.sleep, time.monotonic))
+        return feeds, out, starts
+
+    def test_order_and_errors_kept(self):
+        for workers in (1, 4):
+            feeds, out, _ = self._run(workers)
+            self.assertEqual([o[0].key for o in out], [f.key for f in feeds])
+            self.assertEqual([o[2] is not None for o in out], [i == 3 for i in range(8)])
+            self.assertEqual(out[0][1], ["f0"])
+
+    def test_parallel_is_faster_and_interval_kept(self):
+        import time
+        t = time.monotonic(); self._run(1); serial = time.monotonic() - t
+        t = time.monotonic(); self._run(4); parallel = time.monotonic() - t
+        self.assertLess(parallel, serial * 0.6)
+        _, _, starts = self._run(4, interval=0.1)
+        gaps = [b - a for a, b in zip(sorted(starts), sorted(starts)[1:])]
+        self.assertGreaterEqual(min(gaps), 0.09)

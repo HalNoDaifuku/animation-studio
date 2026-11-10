@@ -72,7 +72,7 @@ jobs:
 
       - name: RSSHub
         if: inputs.job == 'rsshub' || inputs.job == 'all'
-        run: python scripts/rsshub_notify.py ${{ inputs.dry_run && '--dry-run' || '' }} ${{ inputs.only && format('--only {0}', inputs.only) || '' }} ${{ inputs.smoke_test && '--no-filter --notify-on-first-run --limit 2' || '' }}
+        run: python -u scripts/rsshub_notify.py ${{ inputs.dry_run && '--dry-run' || '' }} ${{ inputs.only && format('--only {0}', inputs.only) || '' }} ${{ inputs.smoke_test && '--no-filter --notify-on-first-run --limit 2' || '' }}
 
       - name: urlwatch
         if: inputs.job == 'urlwatch' || inputs.job == 'all'

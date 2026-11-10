@@ -45,7 +45,7 @@ jobs:
           restore-keys: watch-state-
 
       - name: RSSHub(SNS監視)
-        run: python scripts/rsshub_notify.py
+        run: python -u scripts/rsshub_notify.py
 
       # RSSHub の送信に失敗しても、サイト監視は続ける
       - name: urlwatch(サイト監視)
