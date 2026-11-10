@@ -72,3 +72,16 @@ monitors:
       - html2text
       - strip
       - striplines
+  - id: recruit-finishing
+    name: 採用情報(仕上げ)
+    url: https://www.neo-zone.online/複製-お問い合わせ-2
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

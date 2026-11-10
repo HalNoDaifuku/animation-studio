@@ -57,12 +57,12 @@ sns:
     custom: {}
 
 monitors:
-  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: ナビ/フッターにリンクあり。中身は未確認。
+  # 自社ページに求人がなく、外部求人サイト(エン転職)の求人一覧を監視(2026-11-10・依頼により)。
   - id: recruit
     name: 採用情報
-    url: https://vpcinc.jp/recruit/
+    url: https://employment.en-japan.com/comp-135765/list/
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []

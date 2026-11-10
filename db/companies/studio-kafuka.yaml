@@ -67,7 +67,7 @@ monitors:
     name: 採用情報
     url: https://www.studio-kafka.jp/recruit/
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []

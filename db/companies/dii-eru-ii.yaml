@@ -64,7 +64,7 @@ monitors:
     name: 採用情報
     url: https://dle.jbplt.jp/
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []

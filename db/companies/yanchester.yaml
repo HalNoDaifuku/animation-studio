@@ -62,7 +62,7 @@ monitors:
     name: 採用情報
     url: https://www.yanchester.co.jp/recruit/
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []

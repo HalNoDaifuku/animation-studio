@@ -1,5 +1,5 @@
 # =============================================================================
-# db/companies/shu-natsu.yaml — 朱夏
+# db/companies/shuka.yaml — 朱夏
 # =============================================================================
 # 2026-11-08 に animeco.link から自動生成した初期版です。
 #   確認済み: 会社名・所在地(都道府県・市区まで)・作業種別(animeco.link の表示)
@@ -11,7 +11,7 @@
 schema_version: 1
 
 id: 4ff203e2-17a4-4989-a411-713f63854587
-slug: shu-natsu
+slug: shuka
 
 name: 朱夏
 display_name: 朱夏
@@ -58,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # トップページのお知らせ欄に新卒採用の告知が載るため、トップを監視(採用ページのURLが取得できなかった。2026-11-10・依頼により)。
+  - id: recruit
+    name: 採用情報(トップのお知らせ)
+    url: http://shuka.co.jp
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
