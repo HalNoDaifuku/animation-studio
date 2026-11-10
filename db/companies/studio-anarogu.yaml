@@ -59,12 +59,12 @@ sns:
     custom: {}
 
 monitors:
-  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: メニュー「メンバー募集」。上限到達のためページ未取得。
+  # リンク先を開いて採用情報を確認済み(2026-11-10)。
   - id: recruit
     name: 採用情報
     url: https://st-analog.blogspot.com/p/blog-page_6802.html
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []

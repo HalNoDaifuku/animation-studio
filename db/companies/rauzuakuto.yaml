@@ -57,12 +57,12 @@ sns:
     custom: {}
 
 monitors:
-  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: トップ内アンカー(#recruit)のみ。独立した採用ページなし。外部リクルートサイトはengage(en-gage.net/rouseact_saiyo)で求。
+  # トップページ内アンカー/ページ全体を監視(誤通知あり得るが、依頼により有効化)(2026-11-10)。
   - id: recruit
     name: 採用情報
     url: https://rouseact.co.jp/#recruit
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []

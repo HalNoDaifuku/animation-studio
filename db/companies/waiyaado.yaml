@@ -56,12 +56,12 @@ sns:
     custom: {}
 
 monitors:
-  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: トップに求人募集の投稿リンクあり(2023年投稿)。中身は未確認。
+  # 現在は内容が乏しい/準備中だが、今後の掲載を拾うため有効化(2026-11-10)。
   - id: recruit
     name: 採用情報
     url: https://wiredfilm.co.jp/2023/07/04/%e6%b1%82%e4%ba%ba%e5%8b%9f%e9%9b%86/
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []

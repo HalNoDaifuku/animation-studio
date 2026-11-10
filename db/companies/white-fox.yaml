@@ -63,12 +63,12 @@ sns:
     custom: {}
 
 monitors:
-  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: ナビにリンクあり。制作プロデューサー/制作デスク中途等の個別ページもあるが中身は未確認。
+  # リンク先を開いて採用情報を確認済み(2026-11-10)。
   - id: recruit
     name: 採用情報
     url: https://w-fox.co.jp/recruit/
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []

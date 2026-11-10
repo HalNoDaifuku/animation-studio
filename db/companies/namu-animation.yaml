@@ -64,12 +64,12 @@ sns:
     custom: {}
 
 monitors:
-  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: Recruit見出しと問い合わせフォームのみ、募集職種・案内の記載なし。
+  # 現在は内容が乏しい/準備中だが、今後の掲載を拾うため有効化(2026-11-10)。
   - id: recruit
     name: 採用情報
     url: https://namuanimation.com?act=event.form_application&pcode=5e7c320fdd65b502865329ffa
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []

@@ -58,4 +58,17 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  - id: recruit
+    name: 採用情報
+    url: https://www.papercranes-ani.com/recruit
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

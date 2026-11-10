@@ -57,12 +57,12 @@ sns:
     custom: {}
 
 monitors:
-  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: コーポレートページにキャリアへのリンクあり。中身は未確認。
+  # 現在は内容が乏しい/準備中だが、今後の掲載を拾うため有効化(2026-11-10)。
   - id: recruit
     name: 採用情報
     url: https://www.disney.co.jp/career
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []
