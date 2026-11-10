@@ -15,7 +15,8 @@ slug: nintendo-pictures
 name: ニンテンドーピクチャーズ
 display_name: ニンテンドーピクチャーズ
 name_en: null
-name_history: []
+name_history:
+  - DYNAMO Pictures(ダイナモピクチャーズ。2022-10-03 に社名変更 https://dynapix.jp/news/%e7%a4%be%e5%90%8d%e5%a4%89%e6%9b%b4%e3%81%ae%e3%81%8a%e7%9f%a5%e3%82%89%e3%81%9b/)
 
 founded_year: null
 
@@ -58,6 +59,20 @@ monitors:
   - id: recruit
     name: 採用情報
     url: https://www.e2r.jp/fixurl/np_recruit_joblist/id/11/8
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 旧社名(DYNAMO Pictures)時代の採用ページ。現在も使われているか未確認のため無効。dynamo-pictures.yaml を統合(2026-11-11)。
+  - id: recruit-dynapix
+    name: 採用情報(旧サイト dynapix.jp)
+    url: https://dynapix.jp/recruit/
     category: recruit
     enabled: false
     roles: []

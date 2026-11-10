@@ -37,8 +37,8 @@ website: http://eggfirm.com/
 sns:
   accounts:
     x:
-      # 出典: animeco.link(2026-11-08 調査)
-      - handle: egg_firm_01
+      # ユーザー指定(2026-11-11)
+      - handle: egg_firm
         label: メイン
         monitor: true
     youtube:

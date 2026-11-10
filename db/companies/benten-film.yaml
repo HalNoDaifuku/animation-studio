@@ -35,13 +35,13 @@ related_companies:
     company_id: null
     relation: 親会社(animeco.link の備考より)
 
-website: http://studiogaina.com/
+website: https://bentenfilm.com/
 
 sns:
   accounts:
     x:
-      # 出典: animeco.link(2026-11-08 調査)
-      - handle: studio_gaina
+      # ユーザー指定(2026-11-11)。旧 studio_gaina は取得できなかった
+      - handle: BENTEN_Film
         label: メイン
         monitor: true
     youtube:
@@ -61,4 +61,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # ユーザー指定(2026-11-11)。採用ページとして監視する(内容は未確認)
+  - id: recruit
+    name: 採用情報
+    url: https://bentenfilm.com/recruit
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

@@ -40,10 +40,10 @@ website: null
 sns:
   accounts:
     x:
-      # 出典: animeco.link(2026-11-08 調査)
+      # ユーザー指示で停止(アカウントが不明。2026-11-11)
       - handle: FAIanimation
         label: メイン
-        monitor: true
+        monitor: false
     youtube:
       - handle: null
         monitor: false

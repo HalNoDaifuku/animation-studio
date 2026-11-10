@@ -59,10 +59,24 @@ sns:
     custom: {}
 
 monitors:
-  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: フッターRECRUITのリンク先。robots_disallowedで開けず、求人媒体の可能性もあり。ヘッダーのarwrk.netは求人媒体のため不採用。
+  # ユーザー指定(2026-11-11)。旧URL dle.jbplt.jp は名前解決に失敗したため、公式サイトの採用情報に差し替え。
   - id: recruit
     name: 採用情報
-    url: https://dle.jbplt.jp/
+    url: https://www.dle.jp/jp/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # ユーザー指定(2026-11-11)。求人媒体のページを別に監視する
+  - id: recruit-arwrk
+    name: 採用情報(求人媒体 arwrk)
+    url: https://arwrk.net/recruit/su41g1g9g9hxd32
     category: recruit
     enabled: true
     roles: []

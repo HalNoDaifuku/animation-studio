@@ -45,10 +45,10 @@ website: https://reboot62.jp/
 sns:
   accounts:
     x:
-      # 出典: animeco.link(2026-11-08 調査)
+      # アカウントが凍結されているため停止(2026-11-11 確認)
       - handle: reboot_home
         label: メイン
-        monitor: true
+        monitor: false
     youtube:
       - handle: null
         monitor: false

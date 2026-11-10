@@ -207,7 +207,8 @@ sns:
   #   request_interval_seconds: フィードとフィードのあいだに空ける秒数。
   #   error_renotify_hours: 取り直しても失敗したフィードのエラーを、同じものについては何時間おきにしか通知しないか(0なら省略せず毎回通知)。
   fetch:
-    timeout_seconds: 30
+    # 1フィードの待ち時間(秒)。2026-11 のログで、取得できたものは最長でも約6秒、失敗は30秒待ってもタイムアウトだったため 10 に短縮。
+    timeout_seconds: 10
     request_interval_seconds: 0.5
     # 同時に取得するフィード数。1なら1件ずつ。タイムアウトが多いと1件30秒かかるため、並行して取得すると実行時間が大きく縮む。
     # 取得を始める間隔は、並行していても request_interval_seconds 以上あける。RSSHub 側で制限を受けて失敗が増えるなら下げる。
@@ -299,6 +300,7 @@ sns:
       - プレゼント
       - "🎁"
       - キャンペーン
+      - 舞台挨拶
 
   # 追加の検索プリセット(既定ではない)。
   # 会社ファイルの sns.search.use_presets に名前を書いたときだけ生成される。
@@ -423,6 +425,19 @@ web:
         - re.sub:
             pattern: '(?i)(©|&copy;|&#169;|copyright)\s*(?:19|20)\d{2}(?:\s*[-–~〜]\s*(?:19|20)\d{2})?'
             repl: '\1'
+
+    strip_access_counter:
+      auto: true    # アクセスカウンター(Today : 226 / Yesterday / Total)と、毎日変わる日付表示
+      description: アクセスカウンター(Today / Yesterday / Total / 本日 / 昨日 / 累計 + 数字)と、
+        曜日つきの今日の日付(2026.11.10 Tuesday)を取り除く。表示のたびに値が変わり、毎回「変更あり」になるため。
+        &nbsp; が文字のまま入っているページにも対応する。
+      filter:
+        - re.sub:
+            pattern: '(?i)\b(?:today|yesterday|total)(?:&(?:amp;)?nbsp;|&#160;|[\s\u00a0])*[:：](?:&(?:amp;)?nbsp;|&#160;|[\s\u00a0])*[\d,]+|(?:本日|昨日|累計)(?:&(?:amp;)?nbsp;|&#160;|[\s\u00a0])*[:：](?:&(?:amp;)?nbsp;|&#160;|[\s\u00a0])*[\d,]+'
+            repl: ''
+        - re.sub:
+            pattern: '(?i)\b(?:19|20)\d{2}[./-]\d{1,2}[./-]\d{1,2}(?:&(?:amp;)?nbsp;|&#160;|[\s\u00a0])*(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day\b'
+            repl: ''
 
     strip_all_html_comments:
       auto: false

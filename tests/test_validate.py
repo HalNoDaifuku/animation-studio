@@ -210,3 +210,26 @@ class DiscordConfigTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AccessCounterExcludeTest(unittest.TestCase):
+    """アクセスカウンターと日付表示が、毎回の変更検知にならないこと。"""
+
+    def test_counter_and_date_removed(self):
+        import re
+        import yaml
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        c = yaml.safe_load((root / "config" / "common.yaml").read_text(encoding="utf-8"))
+        ex = c["web"]["excludes"]["strip_access_counter"]
+        self.assertTrue(ex["auto"])
+
+        def clean(s):
+            for f in ex["filter"]:
+                r = f["re.sub"]
+                s = re.sub(r["pattern"], r["repl"], s)
+            return s
+        a = clean("2026.11.10 Tuesday カウンター Today&nbsp;:&nbsp;226 Yesterday&nbsp;:&nbsp;229 Total&nbsp;:&nbsp;306427 採用")
+        b = clean("2026.11.11 Wednesday カウンター Today&nbsp;:&nbsp;2 Yesterday&nbsp;:&nbsp;255 Total&nbsp;:&nbsp;306458 採用")
+        self.assertEqual(a, b)
+        self.assertIn("採用", a)

@@ -33,15 +33,15 @@ roles:
 
 related_companies: []
 
-website: null
+website: https://clcorporation.co.jp/
 
 sns:
   accounts:
     x:
-      # 出典: animeco.link(2026-11-08 調査)
+      # ポストが非公開のため取得できず停止(2026-11-11 確認)
       - handle: cl_corporation
         label: メイン
-        monitor: true
+        monitor: false
     youtube:
       - handle: null
         monitor: false

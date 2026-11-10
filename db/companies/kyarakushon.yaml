@@ -35,8 +35,8 @@ website: http://charaction.biz/
 sns:
   accounts:
     x:
-      # 出典: animeco.link(2026-11-08 調査)
-      - handle: yuzoo_com
+      # ユーザー指定(2026-11-11)。旧 yuzoo_com は凍結されていた
+      - handle: charaction
         label: メイン
         monitor: true
     youtube:

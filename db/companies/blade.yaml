@@ -37,10 +37,10 @@ website: http://tap-blade.com
 sns:
   accounts:
     x:
-      # 出典: animeco.link(2026-11-08 調査)
+      # アカウントが存在しないため停止(2026-11-11 確認)
       - handle: tap_blade
         label: メイン
-        monitor: true
+        monitor: false
     youtube:
       - handle: null
         monitor: false

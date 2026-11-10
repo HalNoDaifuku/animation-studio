@@ -32,15 +32,15 @@ roles:
 
 related_companies: []
 
-website: null
+website: https://www.encouragefilms.com/
 
 sns:
   accounts:
     x:
-      # 出典: animeco.link(2026-11-08 調査)
+      # アカウントが存在しないため停止(2026-11-11 確認。公式サイトも閉鎖)
       - handle: encouragefilms
         label: メイン
-        monitor: true
+        monitor: false
     youtube:
       - handle: null
         monitor: false
