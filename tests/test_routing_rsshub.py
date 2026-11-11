@@ -87,7 +87,7 @@ class RsshubUrlTest(unittest.TestCase):
         self.assertEqual(parts.path, "/twitter/user/CloverWorks")
         q = parse_qs(parts.query)
         self.assertIn("採用", q["filter"][0].split("|"))
-        self.assertEqual(q["filterout"][0].split("|"), ["抽選", "発売", "プレゼント", "🎁", "キャンペーン", "舞台挨拶"])
+        self.assertEqual(q["filterout"][0].split("|"), ["抽選", "発売", "プレゼント", "🎁", "キャンペーン", "舞台挨拶", "お便り"])
         self.assertEqual(q["filter"][0].split("|"), ["募集", "応募", "採用", "求人", "新卒", "企業説明会", "会社説明会"])
         self.assertEqual(q["format"], ["json"])
         self.assertEqual(q["includeRts"], ["0"])                      # リポストを含めない
@@ -136,7 +136,7 @@ class RsshubUrlTest(unittest.TestCase):
 
     def test_no_exclude_means_no_filterout(self):
         def edit(c):
-            c["sns"]["search"]["default_filter"]["exclude"] = {"remove": ["抽選", "発売", "プレゼント", "🎁", "キャンペーン", "舞台挨拶"]}
+            c["sns"]["search"]["default_filter"]["exclude"] = {"remove": ["抽選", "発売", "プレゼント", "🎁", "キャンペーン", "舞台挨拶", "お便り"]}
         cfg, _ = cfg_with(edit)
         feeds, _ = rsshub.build_feeds(cfg, "https://hub.example")
         self.assertNotIn("filterout", feeds[0].url)
