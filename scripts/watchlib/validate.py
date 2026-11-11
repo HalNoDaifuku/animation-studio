@@ -215,6 +215,8 @@ def check_common(c: _Collector, cfg: Config) -> None:
         if not isinstance(spec, dict) or not isinstance(spec.get("auto"), bool):
             c.error(w, "auto: true/false が必要です")
             continue
+        if spec.get("stage") not in (None, "html", "text"):
+            c.error(w, "stage は html(既定。HTMLのまま処理)か text(html2text のあとの文字を処理)にしてください")
         if not spec.get("filter"):
             c.error(w, "filter(フィルター本体)が必要です")
         else:

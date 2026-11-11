@@ -249,3 +249,23 @@ class RightsNoticeRoutingTest(unittest.TestCase):
         text = "特定の美術作品、ポスター、看板のイラスト・写真など、他者の著作物が写り込んでいる作品は提出いただけません。"
         self.assertNotIn("background_art", pick_roles(cfg, {"type": "studio"}, text=text))
         self.assertIn("background_art", pick_roles(cfg, {"type": "studio"}, text="背景美術スタッフ募集"))
+
+
+class TextStageExcludeTest(unittest.TestCase):
+    """stage: text の共通除外は、html2text のあとに入り、会社ファイルに書かなくても効く。"""
+
+    def test_text_stage_placed_after_html2text(self):
+        import sys
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        sys.path.insert(0, str(root / "scripts"))
+        from watchlib.config import load_config
+        from watchlib.urlwatch_jobs import build_jobs
+        jobs, _ = build_jobs(load_config(root))
+        for slug_url in ("https://ramecahirim.com/recruit", "https://www.teddy-animation.com/recruit"):
+            job = next(j for j in jobs if j.get("url") == slug_url)
+            names = [f if isinstance(f, str) else next(iter(f)) for f in job["filter"]]
+            i = names.index("html2text")
+            patterns = [f["re.sub"]["pattern"] for f in job["filter"][i + 1:] if isinstance(f, dict)]
+            self.assertTrue(any("-->" in p for p in patterns), slug_url)
+            self.assertTrue(any("today" in p for p in patterns), slug_url)

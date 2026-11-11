@@ -28,8 +28,10 @@ def job_name(monitor: dict, company: dict) -> str:
     return f"{monitor.get('name')} - {company.get('display_name') or company.get('name')}"
 
 
-def common_excludes(cfg: Config, monitor: dict) -> list:
-    """監視URLに挿入する共通Web除外フィルター(auto: true のもの + snippets、skip を除く)。"""
+def common_excludes(cfg: Config, monitor: dict, stage: str = "html") -> list:
+    """監視URLに挿入する共通Web除外フィルター(auto: true のもの + snippets、skip を除く)。
+
+    stage: "html" は HTML のまま処理するもの(既定)、"text" は html2text のあとの文字を処理するもの。"""
     excludes = cfg.web.get("excludes") or {}
     skip = monitor.get("skip_common_excludes") or []
     skip_all = skip == "all" or "all" in (skip if isinstance(skip, list) else [])
@@ -37,6 +39,8 @@ def common_excludes(cfg: Config, monitor: dict) -> list:
     filters: list = []
     for name, spec in excludes.items():
         wanted = bool(spec.get("auto")) or name in (monitor.get("snippets") or [])
+        if (spec.get("stage") or "html") != stage:
+            continue
         if not wanted or (skip_all and spec.get("auto")) or name in skip_names:
             continue
         filters += copy.deepcopy(spec.get("filter") or [])
@@ -70,7 +74,12 @@ def build_jobs(cfg: Config, only: str | None = None) -> tuple[list[dict], list[J
             own = copy.deepcopy(monitor.get("urlwatch") or {})
             own_filter = own.pop("filter", None) or []
             job.update(own)
-            filters = common_excludes(cfg, monitor) + list(own_filter)
+            own_filter = list(own_filter)
+            text_filters = common_excludes(cfg, monitor, "text")   # html2text のあとに入れる共通除外
+            if text_filters:
+                at = next((i for i, f in enumerate(own_filter) if f == "html2text" or (isinstance(f, dict) and "html2text" in f)), None)
+                own_filter[(at + 1 if at is not None else len(own_filter)):(at + 1 if at is not None else len(own_filter))] = text_filters
+            filters = common_excludes(cfg, monitor) + own_filter
             guard = bot_guard_filter(cfg)
             if guard and not command:
                 filters.insert(0, guard)  # HTMLのまま、いちばん先に確認ページを検出する
