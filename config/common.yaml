@@ -448,14 +448,6 @@ web:
             pattern: '(?i)\b(?:19|20)\d{2}[./-]\d{1,2}[./-]\d{1,2}(?:&(?:amp;)?nbsp;|&#160;|[\s\u00a0]|<[^>]*>)*(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day\b'
             repl: ''
 
-    strip_stray_comment_end:
-      auto: true    # 行頭の単独の --> (コメントの閉じだけが残る形。出たり消えたりして毎回「変更あり」になる)
-      description: 行だけの --> を取り除く。ページの出力が揺れて、コメントの閉じだけが現れたり消えたりするサイト(Wix など)で、毎回の誤検知になるため。
-      filter:
-        - re.sub:
-            pattern: '(?m)^[ \t]*-->[ \t]*(?:\r?\n|$)'
-            repl: ''
-
     strip_access_counter_text:
       auto: true
       stage: text   # html2text のあとの文字を処理する(&nbsp; が文字のまま残る形や、タグで区切られた形に確実に効く)
@@ -463,15 +455,6 @@ web:
       filter:
         - re.sub:
             pattern: '(?i)(?:\b(?:today|yesterday|total)|本日|昨日|累計)(?:&nbsp;|&amp;nbsp;|\s)*[:：](?:&nbsp;|&amp;nbsp;|\s)*[\d,]+'
-            repl: ''
-
-    strip_stray_comment_end_text:
-      auto: true
-      stage: text
-      description: strip_stray_comment_end の、html2text のあとの文字版。行だけの --> を取り除く。
-      filter:
-        - re.sub:
-            pattern: '(?m)^\s*-->\s*$'
             repl: ''
 
     strip_all_html_comments:

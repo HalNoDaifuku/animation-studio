@@ -267,5 +267,4 @@ class TextStageExcludeTest(unittest.TestCase):
             names = [f if isinstance(f, str) else next(iter(f)) for f in job["filter"]]
             i = names.index("html2text")
             patterns = [f["re.sub"]["pattern"] for f in job["filter"][i + 1:] if isinstance(f, dict)]
-            self.assertTrue(any("-->" in p for p in patterns), slug_url)
             self.assertTrue(any("today" in p for p in patterns), slug_url)
