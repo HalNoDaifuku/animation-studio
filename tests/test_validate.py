@@ -233,3 +233,19 @@ class AccessCounterExcludeTest(unittest.TestCase):
         b = clean("2026.11.11 Wednesday カウンター Today&nbsp;:&nbsp;2 Yesterday&nbsp;:&nbsp;255 Total&nbsp;:&nbsp;306458 採用")
         self.assertEqual(a, b)
         self.assertIn("採用", a)
+
+
+class RightsNoticeRoutingTest(unittest.TestCase):
+    """権利関係の注意書き(「特定の美術作品」など)で、背景美術のチャンネルに送らない。"""
+
+    def test_art_work_notice_is_not_background_art(self):
+        import sys
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        sys.path.insert(0, str(root / "scripts"))
+        from watchlib.config import load_config
+        from watchlib.routing import pick_roles
+        cfg = load_config(root)
+        text = "特定の美術作品、ポスター、看板のイラスト・写真など、他者の著作物が写り込んでいる作品は提出いただけません。"
+        self.assertNotIn("background_art", pick_roles(cfg, {"type": "studio"}, text=text))
+        self.assertIn("background_art", pick_roles(cfg, {"type": "studio"}, text="背景美術スタッフ募集"))

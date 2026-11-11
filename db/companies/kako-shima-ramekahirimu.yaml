@@ -70,5 +70,8 @@ monitors:
     urlwatch:
       filter:
       - html2text
+      - re.sub:   # アクセスカウンター。html2text のあとの文字(&nbsp; が文字のまま残る形)でも確実に取り除く
+          pattern: '(?i)(?:today|yesterday|total)(?:&nbsp;|&amp;nbsp;|\s)*[:：](?:&nbsp;|&amp;nbsp;|\s)*[\d,]+'
+          repl: ''
       - strip
       - striplines

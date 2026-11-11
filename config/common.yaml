@@ -105,7 +105,7 @@ job_roles:
   background_art:
     name: 背景美術
     keywords: [背景, 美術, 背景美術]
-    exclude_words: [美術展, 背景透過, 壁紙]
+    exclude_words: [美術展, 美術作品, 美術館, 背景透過, 壁紙]
   art_direction:
     name: 美術設定・美術監督
     keywords: [美術設定, 美術監督]
@@ -441,10 +441,10 @@ web:
         &nbsp; が文字のまま入っているページにも対応する。
       filter:
         - re.sub:
-            pattern: '(?i)\b(?:today|yesterday|total)(?:&(?:amp;)?nbsp;|&#160;|[\s\u00a0])*[:：](?:&(?:amp;)?nbsp;|&#160;|[\s\u00a0])*[\d,]+|(?:本日|昨日|累計)(?:&(?:amp;)?nbsp;|&#160;|[\s\u00a0])*[:：](?:&(?:amp;)?nbsp;|&#160;|[\s\u00a0])*[\d,]+'
+            pattern: '(?i)\b(?:today|yesterday|total)(?:&(?:amp;)?nbsp;|&#160;|[\s\u00a0]|<[^>]*>)*[:：](?:&(?:amp;)?nbsp;|&#160;|[\s\u00a0]|<[^>]*>)*[\d,]+|(?:本日|昨日|累計)(?:&(?:amp;)?nbsp;|&#160;|[\s\u00a0]|<[^>]*>)*[:：](?:&(?:amp;)?nbsp;|&#160;|[\s\u00a0]|<[^>]*>)*[\d,]+'
             repl: ''
         - re.sub:
-            pattern: '(?i)\b(?:19|20)\d{2}[./-]\d{1,2}[./-]\d{1,2}(?:&(?:amp;)?nbsp;|&#160;|[\s\u00a0])*(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day\b'
+            pattern: '(?i)\b(?:19|20)\d{2}[./-]\d{1,2}[./-]\d{1,2}(?:&(?:amp;)?nbsp;|&#160;|[\s\u00a0]|<[^>]*>)*(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day\b'
             repl: ''
 
     strip_all_html_comments:
