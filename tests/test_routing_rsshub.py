@@ -501,3 +501,55 @@ class FetchAllTest(unittest.TestCase):
         _, _, starts = self._run(4, interval=0.1)
         gaps = [b - a for a, b in zip(sorted(starts), sorted(starts)[1:])]
         self.assertGreaterEqual(min(gaps), 0.09)
+
+
+class _Bot:
+    def __init__(self): self.sent = []
+    def send_message(self, ch, content, **kw): self.sent.append((ch, content))
+
+
+class RateLimitTest(unittest.TestCase):
+    """X(RSSHub)の要求制限: ほぼ全滅したら待ち、続くなら残りを次回に回して、まとめて1件で知らせる。古いものから先に取る。"""
+
+    def _feeds(self, n):
+        from watchlib.rsshub import Feed
+        return [Feed(key=f"c{i}:x:user:a{i}", company_id=str(i), company_slug=f"c{i}", company_name=f"c{i}", platform="x",
+                     platform_label="X", kind="user", label="x", url="u", request_url=f"http://hub/{i}") for i in range(n)]
+
+    def _run(self, fetch, feeds, state, **kw):
+        from types import SimpleNamespace
+        from watchlib.runners import run_rsshub
+        cfg = SimpleNamespace(sns={"fetch": {"retry_rounds": 0, "concurrency": 2, "rate_limit": {"chunk_size": 4, "wait_seconds": 5, "waits": 1}}},
+                              discord_channels={"errors": "E"}, company=lambda s: {})
+        sleeps, logs = [], []
+        res = run_rsshub(cfg, feeds, state, _Bot(), dry_run=True, fetch=fetch, request_interval=0, error_renotify_hours=0,
+                         sleep=sleeps.append, log=logs.append, **kw)
+        return res, sleeps, logs
+
+    def test_limited_run_waits_then_defers_rest(self):
+        from watchlib.rsshub import FeedFetchError
+        from watchlib.state import State
+        calls = []
+
+        def fetch(url):
+            calls.append(url)
+            raise FeedFetchError("タイムアウト")
+        res, sleeps, logs = self._run(fetch, self._feeds(12), State(None))
+        self.assertEqual(sleeps, [5])                                   # 1回だけ待つ
+        self.assertTrue(any("次回に回します" in l for l in logs))
+        self.assertLess(len(calls), 12 * 2)                             # 全部を何度も叩かない
+        self.assertEqual(len([e for e in res.errors if "要求制限" in e[0]]), 1)   # まとめて1件で知らせる
+
+    def test_oldest_fetched_first(self):
+        from watchlib.state import State
+        st = State(None)
+        feeds = self._feeds(5)
+        for i, f in enumerate(feeds):
+            st.fetched[f.key] = 1000.0 - i     # c4 がいちばん古い
+        order = []
+
+        def fetch(url):
+            order.append(url)
+            return []
+        self._run(fetch, feeds, st)
+        self.assertEqual(order[0], "http://hub/4")

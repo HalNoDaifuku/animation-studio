@@ -14,6 +14,7 @@ class State:
         self.path = Path(path) if path else None
         self.feeds: dict[str, list[str]] = {}
         self.channels: dict[str, str] = {}  # YouTube の @ID → チャンネルID(調べ直さないための控え)
+        self.fetched: dict[str, float] = {}  # キー → 最後に取得できた時刻(UNIX秒)。古いものから先に取得するため
         self.errors: dict[str, float] = {}  # キー → 最後にエラー通知を送った時刻(UNIX秒)
         if self.path and self.path.exists():
             try:
@@ -21,8 +22,9 @@ class State:
                 self.feeds = {k: list(v) for k, v in (data.get("feeds") or {}).items()}
                 self.errors = {k: float(v) for k, v in (data.get("errors") or {}).items()}
                 self.channels = {k: str(v) for k, v in (data.get("channels") or {}).items()}
+                self.fetched = {k: float(v) for k, v in (data.get("fetched") or {}).items()}
             except (ValueError, OSError, AttributeError):
-                self.feeds, self.errors, self.channels = {}, {}, {}  # 壊れていたら初回扱い(通知は出さず既読にする)
+                self.feeds, self.errors, self.channels, self.fetched = {}, {}, {}, {}  # 壊れていたら初回扱い(通知は出さず既読にする)
 
     def initialized(self, key: str) -> bool:
         return key in self.feeds
@@ -46,6 +48,9 @@ class State:
     def mark_error(self, key: str, now: float | None = None) -> None:
         self.errors[key] = now if now is not None else time.time()
 
+    def mark_fetched(self, key: str, now: float | None = None) -> None:
+        self.fetched[key] = now if now is not None else time.time()
+
     def clear_error(self, key: str) -> None:
         self.errors.pop(key, None)
 
@@ -54,5 +59,5 @@ class State:
             return
         self.path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.path.with_suffix(self.path.suffix + ".tmp")
-        tmp.write_text(json.dumps({"feeds": self.feeds, "errors": self.errors, "channels": self.channels}, ensure_ascii=False, indent=1), encoding="utf-8")
+        tmp.write_text(json.dumps({"feeds": self.feeds, "errors": self.errors, "channels": self.channels, "fetched": self.fetched}, ensure_ascii=False, indent=1), encoding="utf-8")
         os.replace(tmp, self.path)

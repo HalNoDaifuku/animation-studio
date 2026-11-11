@@ -247,9 +247,43 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
             return fetch_youtube(feed, resolved=state.channels, timeout=yt_timeout, opener=youtube_opener)
         return fetch(feed.request_url)
 
+    rl = opts.get("rate_limit") or {}
+    rl_on = bool(rl.get("enabled", True))
+    rl_chunk = max(1, int(rl.get("chunk_size", workers * 4)))
+    rl_waits = int(rl.get("waits", 1))
+    rl_wait_s = float(rl.get("wait_seconds", 540))
+    rl_ratio = float(rl.get("failure_ratio", 0.9))
+    skipped: list[Feed] = []
+
+    def first_pass(todo: list[Feed]):
+        """最初の取得。X(RSSHub)が短時間に多すぎる要求を制限すると、ほぼ全部がタイムアウトになる。
+        そこで少しずつ取得し、ほぼ全滅したら制限とみなして待つ。待っても続くなら、残りは次回に回す(古いものから先に取る)。"""
+        queue = list(todo)
+        waits_left = rl_waits
+        while queue:
+            chunk, queue = queue[:rl_chunk], queue[rl_chunk:]
+            got = list(_fetch_all(chunk, fetch_one, workers, interval, sleep, clock))
+            probes = [g for g in got if not g[0].direct]   # YouTube 公式APIは、この制限とは別
+            limited = [g for g in probes if g[2] is not None and "タイムアウト" in str(g[2])]
+            if rl_on and len(probes) >= 4 and len(limited) >= rl_ratio * len(probes):
+                log(f"[制限の疑い] {len(probes)}件中{len(limited)}件がタイムアウトしました(RSSHub/X の要求制限の可能性)")
+                retry = [g[0] for g in got if g[2] is not None and g[0] in [x[0] for x in limited]]
+                if waits_left > 0:
+                    waits_left -= 1
+                    log(f"[制限の疑い] {rl_wait_s:g}秒待ってから続けます(残り{waits_left}回)")
+                    sleep(rl_wait_s)
+                    got = [g for g in got if g[0] not in retry]
+                    queue = retry + queue
+                else:
+                    log(f"[制限の疑い] 待っても改善しないため、残り{len(retry) + len(queue)}件は次回に回します(古いものから優先して取得します)")
+                    got = [g for g in got if g[0] not in retry]
+                    skipped.extend(retry + queue)
+                    queue = []
+            yield from got
+
     result = RunResult(errors=[])
     last_error: dict[str, str] = {}
-    pending = list(feeds)
+    pending = sorted(feeds, key=lambda f: state.fetched.get(f.key, 0.0))   # 最後に取得できてから長いものを先に
     still_failed: list[Feed] = []
     started = clock()
     for attempt in range(rounds + 1):
@@ -268,7 +302,7 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
             log(f"[再試行 {attempt}/{rounds}] 取得に失敗した{len(pending)}件を、{wait:g}秒待ってから取得し直します")
             sleep(wait)
         failed: list[Feed] = []
-        for feed, items, err, took in _fetch_all(pending, fetch_one, workers, interval, sleep, clock):
+        for feed, items, err, took in (first_pass(pending) if attempt == 0 else _fetch_all(pending, fetch_one, workers, interval, sleep, clock)):
             if err is not None:
                 last_error[feed.key] = str(err)
                 failed.append(feed)
@@ -276,6 +310,7 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
                 continue
             if not dry_run:
                 state.clear_error(feed.key)
+                state.mark_fetched(feed.key)
             who = f" / チャンネル名「{_safe(feed.channel_title, 60)}」(会社: {feed.company_name})" if feed.channel_title else ""
             log(f"[取得] {feed.key}: {len(items)}件{who} / {took:.1f}秒")
             _process_feed(cfg, feed, items, state, bot, result, cfg.company(feed.company_slug) or {},
@@ -283,6 +318,8 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
         pending = failed
 
     unresolved = [(f.key, last_error[f.key]) for f in pending + still_failed] + list(build_errors or [])
+    if skipped:   # 個別のエラーにはせず、1件にまとめて必ず知らせる
+        unresolved.append(("RSSHub/X の要求制限(疑い)", f"{len(skipped)}件を今回は取得できませんでした。次回の実行で、取得してから長いものを優先して取り直します"))
     to_report = []
     for key, reason in unresolved:
         if dry_run or state.error_due(key, renotify):
