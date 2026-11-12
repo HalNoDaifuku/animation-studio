@@ -53,7 +53,8 @@ sns:
   search:
     default_filter:
       include: {add: [], remove: []}
-      exclude: {add: [], remove: []}
+      # 依頼・相談の告知が採用情報と誤検知されるため(ユーザー指定 2026-11-12)
+      exclude: {add: [相談], remove: []}
     keywords: [TriPoint]
     use_presets: []
     custom: {}
