@@ -355,7 +355,7 @@ def run_urlwatch_command(urls_path: Path, cache_path: Path, command: str = "urlw
 
 
 def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot, *, dry_run: bool = False,
-                        skip_new: bool = False, use_wayback: bool = False,
+                        skip_new: bool = False, baseline: bool = False, use_wayback: bool = False,
                         capture: Callable[[str], tuple[str, str]] | None = None,
                         probe: Callable[[str], str] | None = probe_url,
                         entries: list[ReportEntry] | None = None, state: State | None = None, explain_unreported: bool = False,
@@ -393,6 +393,10 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
         if entry.status == "UNCHANGED" or not info:
             continue
         if entry.status == "NEW" and skip_new:
+            result.skipped += 1
+            continue
+        if baseline and entry.status in ("NEW", "CHANGED"):   # フィルターを変えた直後など、内容の差を通知せずに記録だけ進める
+            log(f"[基準更新] {entry.name}: 変更を通知せず、今の内容を基準にしました")
             result.skipped += 1
             continue
         company = cfg.company(info.company_slug) or {}

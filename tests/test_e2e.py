@@ -294,6 +294,15 @@ class UrlwatchE2E(unittest.TestCase):
         self.assertEqual(self.go("--generate-only"), 0)
         self.assertTrue((self.root / "build" / "urls.yaml").exists())
 
+    def test_baseline_records_without_notifying(self):
+        report = self.root / "r.txt"
+        report.write_text("-" * 75 + "\nCHANGED: 採用情報 - CloverWorks ( http://x/ )\n" + "-" * 75 + "\n-古い\n+新しい\n"
+                          + "-" * 75 + "\nERROR: 消えるページ - CloverWorks ( http://x/gone )\n" + "-" * 75 + "\nHTTP 404\n", encoding="utf-8")
+        self.assertEqual(self.go("--report", str(report), "--baseline"), 0)
+        sent = " ".join(m["content"] for m in self.discord.messages())
+        self.assertNotIn("+新しい", sent)               # 変更は通知しない
+        self.assertIn("消えるページ", sent)              # エラーは通知する
+
     def test_summary_lists_jobs_missing_from_report(self):
         import io, contextlib
         report = self.root / "r.txt"

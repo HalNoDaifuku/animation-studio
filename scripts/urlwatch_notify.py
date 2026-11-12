@@ -4,6 +4,7 @@
   python scripts/urlwatch_notify.py --generate-only      # urls.yaml を作るだけ(urlwatch も送信もしない)
   python scripts/urlwatch_notify.py --dry-run            # urlwatch は(キャッシュのコピーで)実行し、送信内容を表示。キャッシュは進めない
   python scripts/urlwatch_notify.py --skip-new           # 初回(全部NEW)の通知を出さずにキャッシュだけ作る
+  python scripts/urlwatch_notify.py --baseline           # 変更を通知せずキャッシュだけ進める(フィルターを変えた直後に1回)
   python scripts/urlwatch_notify.py --report FILE        # urlwatch を実行せず、保存済みのレポートを送る
 
 既存の urls.yaml / キャッシュとは別のファイル(build/urls.yaml / .urlwatch/cache-companies.db)を使うので、
@@ -44,6 +45,8 @@ def main(argv=None) -> int:
     ap.add_argument("--generate-only", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--skip-new", action="store_true")
+    ap.add_argument("--baseline", action="store_true",
+                    help="変更(CHANGED/NEW)を通知せず、今の内容を基準として記録だけ進める。フィルターを変えた直後に1回だけ使うと、全サイトの「変更あり」通知を防げる(エラー通知は送る)")
     ap.add_argument("--retry-rounds", type=int, default=None, help="エラーになったジョブを、全部終わってから再取得する回数(既定: common.yaml の web.retry.rounds)")
     ap.add_argument("--retry-wait", type=float, default=None, help="再取得の前に待つ秒数(既定: common.yaml の web.retry.wait_seconds)")
     ap.add_argument("--error-state", type=Path, default=None, help="エラー通知の記録(既定: .urlwatch/error-state.json)")
@@ -143,7 +146,7 @@ def main(argv=None) -> int:
             return 1
 
     sent = run_urlwatch_report(cfg, report_text, infos, bot, dry_run=args.dry_run,
-                               skip_new=args.skip_new, use_wayback=args.wayback, entries=entries,
+                               skip_new=args.skip_new, baseline=args.baseline, use_wayback=args.wayback, entries=entries,
                                explain_unreported=args.explain_unreported,
                                state=None if args.report else error_state,
                                error_renotify_hours=float(cfg.web.get("error_renotify_hours", 24)))

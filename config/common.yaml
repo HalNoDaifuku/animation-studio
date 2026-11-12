@@ -457,6 +457,24 @@ web:
             pattern: '(?i)(?:\b(?:today|yesterday|total)|本日|昨日|累計)(?:&nbsp;|&amp;nbsp;|\s)*[:：](?:&nbsp;|&amp;nbsp;|\s)*[\d,]+'
             repl: ''
 
+    strip_stray_comment_end:
+      auto: true    # 行頭の単独の --> (コメントの閉じだけが残る形。Wix のサイトなどで出たり消えたりして毎回「変更あり」になる)
+      description: 行だけの --> を取り除く。ページの出力が揺れて、コメントの閉じだけが現れたり消えたりするため。
+        追加・変更した直後は、全サイトで差が出るので、Actions を baseline を true にして1回実行し、記録だけ進める。
+      filter:
+        - re.sub:
+            pattern: '(?m)^[ \t]*-->[ \t]*(?:\r?\n|$)'
+            repl: ''
+
+    strip_stray_comment_end_text:
+      auto: true
+      stage: text
+      description: strip_stray_comment_end の、html2text のあとの文字版。
+      filter:
+        - re.sub:
+            pattern: '(?m)^\s*-->\s*$'
+            repl: ''
+
     strip_all_html_comments:
       auto: false
       description: HTMLコメントをすべて除去する。<!-- 目印 --> を re.findall で使うサイトでは使わないこと。
