@@ -247,12 +247,16 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
     workers = max(1, int(opts.get("concurrency", 1)))
     yt_timeout = int((opts.get("youtube") or {}).get("timeout_seconds", timeout))
 
-    import itertools
-    rr = itertools.count()                       # 交互に使うための通し番号
+    import threading
+    lock = threading.Lock()
+    switch_after = max(1, int(opts.get("switch_after_failures", 3)))   # 連続でこの回数失敗したら、別の RSSHub に切り替える
     stats: dict[int, list[int]] = {}             # インスタンスごとの [要求数, 失敗数, 別のインスタンスから切り替えて成功した数]
     n_instances = 1 + max((len(f.alt_urls) for f in feeds), default=0)
     if n_instances > 1:
         stats = {i: [0, 0, 0] for i in range(n_instances)}
+    # 今使っている RSSHub。前回最後に使ったものとは別のものから始める。失敗が続いたら次のものへ切り替える(1つ目→2つ目→1つ目…)
+    cur = {"idx": ((state.last_instance + 1) % n_instances) if (state.last_instance is not None and n_instances > 1) else 0,
+           "streak": 0, "last": None}
 
     def fetch_one(feed: Feed) -> list:
         if feed.direct == "youtube_api":   # RSSHub を通さず、YouTube Data API(公式)で取得
@@ -262,18 +266,31 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
         urls = [feed.request_url] + list(feed.alt_urls)
         if len(urls) == 1:
             return fetch(urls[0])
-        # 複数の RSSHub を交互に使う(要求ごとに、最初に使うものを順番に変える)。失敗したら、残りのインスタンスで取り直す。
-        start = next(rr) % len(urls)
+        # 今使っている RSSHub で取得する。失敗したら、その1件は別の RSSHub で取り直す。失敗が続いたら、以後は別の RSSHub を使う。
+        with lock:
+            start = cur["idx"] % len(urls)
         order = [(start + k) % len(urls) for k in range(len(urls))]
         problems: dict[int, str] = {}
         for attempt, idx in enumerate(order):
-            stats[idx][0] += 1
+            with lock:
+                stats[idx][0] += 1
+                cur["last"] = idx
             try:
                 items = fetch(urls[idx])
             except FeedFetchError as e:
-                stats[idx][1] += 1
+                with lock:
+                    stats[idx][1] += 1
+                    if idx == cur["idx"] % len(urls):
+                        cur["streak"] += 1
+                        if cur["streak"] >= switch_after:
+                            cur["idx"] = (idx + 1) % len(urls)
+                            cur["streak"] = 0
+                            log(f"[切替] RSSHub {idx + 1}つ目で{switch_after}回続けて失敗したため、以後は{cur['idx'] + 1}つ目を使います")
                 problems[idx] = str(e)
                 continue
+            with lock:
+                if idx == cur["idx"] % len(urls):
+                    cur["streak"] = 0
             if attempt:
                 stats[idx][2] += 1
                 log(f"[切替] {feed.key}: RSSHub {order[0] + 1}つ目で失敗({_safe(problems[order[0]], 60)})→{idx + 1}つ目で取得しました")
@@ -350,6 +367,8 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
                           dry_run=dry_run, notify_on_first_run=notify_on_first_run, limit=limit, log=log)
         pending = failed
 
+    if n_instances > 1 and cur["last"] is not None and not dry_run:
+        state.last_instance = cur["last"]   # 次回は、これとは別のものから使い始める
     if stats:
         log("[RSSHub] " + " / ".join(f"{i + 1}つ目: 要求{s[0]}件・失敗{s[1]}件・他から切り替えて成功{s[2]}件" for i, s in sorted(stats.items())))
     unresolved = [(f.key, last_error[f.key]) for f in pending + still_failed] + list(build_errors or [])

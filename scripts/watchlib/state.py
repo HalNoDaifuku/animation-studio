@@ -15,6 +15,7 @@ class State:
         self.feeds: dict[str, list[str]] = {}
         self.channels: dict[str, str] = {}  # YouTube の @ID → チャンネルID(調べ直さないための控え)
         self.fetched: dict[str, float] = {}  # キー → 最後に取得できた時刻(UNIX秒)。古いものから先に取得するため
+        self.last_instance: int | None = None  # 最後に使った RSSHub の番号(0始まり)。次回は、これとは別のものから使い始める
         self.errors: dict[str, float] = {}  # キー → 最後にエラー通知を送った時刻(UNIX秒)
         if self.path and self.path.exists():
             try:
@@ -23,6 +24,8 @@ class State:
                 self.errors = {k: float(v) for k, v in (data.get("errors") or {}).items()}
                 self.channels = {k: str(v) for k, v in (data.get("channels") or {}).items()}
                 self.fetched = {k: float(v) for k, v in (data.get("fetched") or {}).items()}
+                li = data.get("last_instance")
+                self.last_instance = int(li) if isinstance(li, int) and not isinstance(li, bool) and li >= 0 else None
             except (ValueError, OSError, AttributeError):
                 self.feeds, self.errors, self.channels, self.fetched = {}, {}, {}, {}  # 壊れていたら初回扱い(通知は出さず既読にする)
 
@@ -59,5 +62,5 @@ class State:
             return
         self.path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.path.with_suffix(self.path.suffix + ".tmp")
-        tmp.write_text(json.dumps({"feeds": self.feeds, "errors": self.errors, "channels": self.channels, "fetched": self.fetched}, ensure_ascii=False, indent=1), encoding="utf-8")
+        tmp.write_text(json.dumps({"feeds": self.feeds, "errors": self.errors, "channels": self.channels, "fetched": self.fetched, "last_instance": self.last_instance}, ensure_ascii=False, indent=1), encoding="utf-8")
         os.replace(tmp, self.path)

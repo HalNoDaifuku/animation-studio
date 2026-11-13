@@ -575,14 +575,55 @@ class MultiInstanceTest(unittest.TestCase):
                          error_renotify_hours=0, sleep=lambda s: None, log=logs.append)
         return res, logs
 
-    def test_alternates_between_instances(self):
+    def test_sticky_until_failures_then_switch_back_and_forth(self):
+        from watchlib.rsshub import FeedFetchError
         used = []
+        fail = {"one": 0, "two": 0}   # 各インスタンスの、これから失敗させる回数
 
         def fetch(url):
-            used.append(url.split("/")[2])
+            host = url.split("/")[2]
+            used.append(host)
+            if fail[host] > 0:
+                fail[host] -= 1
+                raise FeedFetchError("タイムアウト")
             return []
-        self._run(fetch, 6)
-        self.assertEqual(used, ["one", "two", "one", "two", "one", "two"])
+        # 成功が続く間は、1つ目のまま
+        self._run(fetch, 4)
+        self.assertEqual(used, ["one"] * 4)
+
+    def test_switches_after_consecutive_failures_and_returns(self):
+        from watchlib.rsshub import FeedFetchError
+        used = []
+        script = {"one": [True, True, True], "two": [False, False, False, True, True, True]}   # True=失敗
+
+        def fetch(url):
+            host = url.split("/")[2]
+            used.append(host)
+            if script[host] and script[host].pop(0):
+                raise FeedFetchError("タイムアウト")
+            return []
+        res, logs = self._run(fetch, 8)
+        self.assertEqual(res.errors, [])
+        self.assertTrue(any("以後は2つ目を使います" in l for l in logs))
+        self.assertTrue(any("以後は1つ目を使います" in l for l in logs))
+
+    def test_next_run_starts_from_other_instance(self):
+        from types import SimpleNamespace
+        from watchlib.runners import run_rsshub
+        from watchlib.state import State
+        used = []
+        cfg = SimpleNamespace(sns={"fetch": {"retry_rounds": 0, "concurrency": 1, "rate_limit": {"enabled": False}}},
+                              discord_channels={"errors": "E"}, company=lambda s: {})
+        state = State(None)
+        run_rsshub(cfg, self._feeds(3), state, _Bot(), dry_run=False, fetch=lambda u: used.append(u.split("/")[2]) or [],
+                   request_interval=0, error_renotify_hours=0, sleep=lambda s: None, log=lambda m: None)
+        self.assertEqual(used, ["one"] * 3)
+        self.assertEqual(state.last_instance, 0)
+        used.clear()
+        run_rsshub(cfg, self._feeds(3), state, _Bot(), dry_run=False, fetch=lambda u: used.append(u.split("/")[2]) or [],
+                   request_interval=0, error_renotify_hours=0, sleep=lambda s: None, log=lambda m: None)
+        self.assertEqual(used, ["two"] * 3)
+        self.assertEqual(state.last_instance, 1)
 
     def test_failover_to_other_instance(self):
         from watchlib.rsshub import FeedFetchError
