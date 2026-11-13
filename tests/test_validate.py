@@ -321,3 +321,30 @@ class AiConfigTest(unittest.TestCase):
 
     def test_bad_template_is_error(self):
         self.assertTrue(self._issues(lambda s: s.update(user_template="{nothing}")))
+
+
+class WaybackSpn2Test(unittest.TestCase):
+    def test_authenticated_capture(self):
+        import io, json, os, urllib.request
+        from unittest import mock
+        from watchlib import wayback
+        calls = []
+
+        class R(io.BytesIO):
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+
+        def fake(request, timeout=0):
+            calls.append((request.full_url, request.headers.get("Authorization"), request.data))
+            if request.full_url.endswith("/save"):
+                return R(json.dumps({"job_id": "J1"}).encode())
+            n = len([c for c in calls if "/status/" in c[0]])
+            body = {"status": "pending"} if n == 1 else {"status": "success", "timestamp": "20261113120000", "original_url": "http://x/"}
+            return R(json.dumps(body).encode())
+
+        with mock.patch.dict(os.environ, {"WAYBACK_ACCESS_KEY": "AK", "WAYBACK_SECRET_KEY": "SK"}), \
+                mock.patch.object(urllib.request, "urlopen", fake):
+            url, reason = wayback.capture("http://x/", sleep=lambda s: None)
+        self.assertEqual(reason, "")
+        self.assertEqual(url, "https://web.archive.org/web/20261113120000/http://x/")
+        self.assertEqual(calls[0][1], "LOW AK:SK")

@@ -45,6 +45,8 @@ jobs:
       RSSHUB_BASE_URL_2: ${{ secrets.RSSHUB_BASE_URL_2 }}
       RSSHUB_ACCESS_KEY_2: ${{ secrets.RSSHUB_ACCESS_KEY_2 }}
       YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+      WAYBACK_ACCESS_KEY: ${{ secrets.WAYBACK_ACCESS_KEY }}
+      WAYBACK_SECRET_KEY: ${{ secrets.WAYBACK_SECRET_KEY }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
     steps:
       - uses: actions/checkout@v4
