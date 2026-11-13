@@ -96,6 +96,53 @@ def check_filter_list(c: _Collector, where: str, filters) -> None:
 
 # --- common.yaml ------------------------------------------------------------------------------
 
+def check_ai(c: _Collector, cfg: Config) -> None:
+    f = "config/ai.yaml"
+    s = cfg.ai.get("summary") if isinstance(cfg.ai, dict) else None
+    if s is None:
+        return
+    if not isinstance(s, dict):
+        c.error(f"{f}: summary", "辞書で書いてください")
+        return
+    if not s.get("enabled", False):
+        return
+    if not isinstance(s.get("model"), str) or not s["model"].strip():
+        c.error(f"{f}: summary.model", "モデル名が必要です")
+    if not isinstance(s.get("instructions"), str) or not s["instructions"].strip():
+        c.error(f"{f}: summary.instructions", "AIへの指示(instructions)が空です")
+    for k in ("max_per_run", "max_input_chars", "timeout_seconds", "request_interval_seconds", "max_output_tokens"):
+        v = s.get(k)
+        if v is not None and (isinstance(v, bool) or not isinstance(v, (int, float)) or v < 0):
+            c.error(f"{f}: summary.{k}", "0以上の数字で書いてください")
+    judgements = s.get("judgements")
+    if judgements is not None and (not isinstance(judgements, list) or not judgements or not all(isinstance(j, str) and j.strip() for j in judgements)):
+        c.error(f"{f}: summary.judgements", "文字列のリストで書いてください")
+        judgements = None
+    if isinstance(s.get("instructions"), str) and "{judgements}" not in s["instructions"]:
+        c.warn(f"{f}: summary.instructions", "{judgements} がありません。判定に使える言葉がAIに伝わりません")
+    tmpl = s.get("user_template")
+    if tmpl is not None:
+        if not isinstance(tmpl, str) or "{diff}" not in tmpl:
+            c.error(f"{f}: summary.user_template", "{diff} を含む文字列で書いてください")
+        else:
+            try:
+                tmpl.format(company="", page="", diff="")
+            except (KeyError, IndexError, ValueError) as e:
+                c.error(f"{f}: summary.user_template", f"使えるのは {{company}} {{page}} {{diff}} だけです({e})")
+    examples = s.get("examples") or []
+    if not isinstance(examples, list):
+        c.error(f"{f}: summary.examples", "リストで書いてください")
+        examples = []
+    for i, ex in enumerate(examples, 1):
+        w = f"{f}: summary.examples[{i}]"
+        if not isinstance(ex, dict) or not str(ex.get("diff", "")).strip() or not str(ex.get("output", "")).strip():
+            c.error(w, "diff と output の両方が必要です")
+            continue
+        last = str(ex["output"]).strip().splitlines()[-1]
+        if judgements and not any(last.strip() == f"判定: {j}" for j in judgements):
+            c.error(w, f"output の最後の行は「判定: ○○」で、○○は judgements のどれかにしてください(今: {last[:30]})")
+
+
 def check_common(c: _Collector, cfg: Config) -> None:
     f = "config/common.yaml"
     if (cfg.root / "common.yaml").exists():
@@ -588,6 +635,7 @@ def validate_config(root: Path | None = None, **paths) -> list[Issue]:
         return c.issues
     check_common(c, cfg)
     check_discord(c, cfg)
+    check_ai(c, cfg)
     for company in cfg.companies:
         check_company(c, cfg, company)
     check_cross(c, cfg)

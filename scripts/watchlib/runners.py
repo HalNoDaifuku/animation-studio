@@ -18,7 +18,6 @@ from .report import ReportEntry, parse_report
 from .routing import Target, pick_roles, resolve_channels
 from .rsshub import Feed, FeedFetchError, fetch_feed, fetch_youtube, fetch_youtube_api, is_retweet
 from .state import State
-from .summarize import added_lines
 from .urlwatch_jobs import JobInfo
 from . import wayback as wayback_mod
 
@@ -462,9 +461,9 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
                 attachment = (fname, (f"{entry.name}\nURL: {shown_url}\n\n" + entry.body).encode("utf-8"))
                 messages = [build_summary_message(status=entry.status, name=entry.name, url=shown_url,
                                                   archive_url=archive_url, archive_status=archive_status,
-                                                  summary=summary, note=note, added_preview=added_lines(condensed))]
+                                                  summary=summary, note=note)]
                 log(f"[要約] {entry.name}: " + (f"要約しました({len(summary)}字)" if summary
-                                                  else f"要約なし({'差分が短いためそのまま' if note == 'short' else note})"))
+                                                  else f"要約なし({note})"))
             else:
                 empty = "(初めて取得しました。以降の変更を通知します)" if entry.status == "NEW" else "(差分の本文なし)"
                 chunks = split_long_text(entry.body, CHUNK_LIMIT) or [empty]

@@ -354,19 +354,7 @@ web:
     wait_seconds: 120
   error_renotify_hours: 0   # 0 = 毎回すべて通知する(省略しない)
 
-  # 変更の通知を、Gemini で要約する(エラー通知は要約しない。SNS も対象外)。要約と、元の差分のファイル(diff_年月日_会社名.txt)を送る。
-  # APIキーは環境変数 GEMINI_API_KEY(GitHub の Secrets)。無いとき・上限に達したとき・失敗したときは、要約なしで差分のファイルだけ送る。
-  # 差分の追加が short_diff_chars 文字以下なら、AIを使わず、追加された内容をそのまま載せる。
-  # 無料枠の上限は変わりやすい。AI Studio(https://aistudio.google.com/rate-limit)で、自分のプロジェクトの上限を確認する。
-  ai_summary:
-    enabled: true
-    model: gemini-3.5-flash-lite    # モデルは頻繁に入れ替わる。使えなくなったら、公式のモデル一覧で新しい ID に変える
-    max_per_run: 20                 # 1回の実行で要約する差分の数(同じ差分を複数のチャンネルに送っても1件)
-    short_diff_chars: 200
-    max_input_chars: 20000          # AIに渡す差分の最大文字数(超えた分は省略)
-    timeout_seconds: 60
-    request_interval_seconds: 4     # 呼び出しの間隔(毎分の上限に当たらないように)
-    max_output_tokens: 2048
+  # 変更の通知のAI要約の設定は、config/ai.yaml にあります。
 
   # bot対策の確認ページ("One moment, please..." など)が返ってきたら、変更とは扱わず「エラー」にして取り直す。
   # markers は正規表現(大文字小文字は区別する)。確認ページに出る文言を足せば、対象が増える。

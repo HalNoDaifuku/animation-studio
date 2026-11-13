@@ -187,6 +187,7 @@ def make_root(discord_base: str | None = None, *, roles_to_channels: dict | None
     root = Path(tempfile.mkdtemp(prefix="wc-test-"))
     (root / "config").mkdir()
     shutil.copy(REPO / "config" / "common.yaml", root / "config" / "common.yaml")
+    shutil.copy(REPO / "config" / "ai.yaml", root / "config" / "ai.yaml")
     (root / "db" / "companies").mkdir(parents=True)
     (root / "db" / "portals").mkdir()
     for stem, data in (companies or {}).items():

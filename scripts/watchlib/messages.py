@@ -78,9 +78,9 @@ def build_diff_message(
 
 
 def build_summary_message(*, status: str, name: str, url: str, archive_url: str, archive_status: str,
-                          summary: str | None, note: str, added_preview: str = "") -> str:
+                          summary: str | None, note: str) -> str:
     """AI要約つきの変更通知(差分本体は、ファイルとして添付する)。
-    summary があれば要約を、なければ理由(note)を書く。note が "short" のときは、差分が短いので追加された内容をそのまま載せる。"""
+    summary があれば要約を、なければ理由(note)を書く。"""
     label = STATUS_LABEL.get(status, status)
     lines = [f"**{label}: {name}**"]
     if url:
@@ -88,10 +88,6 @@ def build_summary_message(*, status: str, name: str, url: str, archive_url: str,
     if summary:
         lines.append("🤖 AI要約(誤りがあり得ます。原文は添付の差分を確認してください)")
         lines.append(truncate(summary, 1200))
-    elif note == "short":
-        shown = (added_preview or "(追加された行はありません)").replace("```", "'''")
-        lines.append("追加された内容(短いため、要約せずにそのまま載せます):")
-        lines.append("```\n" + truncate(shown, 800) + "\n```")
     else:
         lines.append(f"(要約なし: {note})")
     if archive_url:

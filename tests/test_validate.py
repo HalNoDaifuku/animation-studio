@@ -296,3 +296,28 @@ class CondenseDiffTest(unittest.TestCase):
         self.assertTrue(truncated)
         self.assertIn("募集中", text)
         self.assertIn("以下省略", text)
+
+
+class AiConfigTest(unittest.TestCase):
+    def _issues(self, mutate):
+        import yaml
+        from helpers import make_root
+        root = make_root()
+        p = root / "config" / "ai.yaml"
+        data = yaml.safe_load(p.read_text(encoding="utf-8"))
+        mutate(data["summary"])
+        p.write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
+        from watchlib.validate import validate_config
+        return [i for i in validate_config(root) if "ai.yaml" in str(i)]
+
+    def test_default_is_valid(self):
+        self.assertEqual(self._issues(lambda s: None), [])
+
+    def test_empty_instructions_is_error(self):
+        self.assertTrue(self._issues(lambda s: s.update(instructions="")))
+
+    def test_example_without_judgement_line_is_error(self):
+        self.assertTrue(self._issues(lambda s: s["examples"][0].update(output="要約です")))
+
+    def test_bad_template_is_error(self):
+        self.assertTrue(self._issues(lambda s: s.update(user_template="{nothing}")))

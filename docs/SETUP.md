@@ -154,7 +154,7 @@ RSSHub 経由の Instagram は bot 判定で 503 になりやすく、取得用�
 - **準備**:
   1. [Google AI Studio](https://aistudio.google.com/) で API キーを作ります。
   2. GitHub の Settings → Secrets and variables → Actions → New repository secret で、`GEMINI_API_KEY` として登録します。
-- **設定**(`config/common.yaml` の `web.ai_summary`): `enabled`(false で今までどおりの差分表示に戻る)、`model`、`max_per_run`(1回の実行での上限。既定20件)、`short_diff_chars`(追加がこの文字数以下なら、AIを使わずそのまま載せる)など。
+- **設定**(`config/ai.yaml`。プロンプト=AIへの指示と見本もここ): `enabled`(false で今までどおりの差分表示に戻る)、`model`、`max_per_run`(1回の実行での上限。既定20件)、`instructions`(指示)、`examples`(見本)など。エラー以外の変更は、長さに関係なく全部要約します。
 - **要約しないとき**: キーがない、上限に達した、無料枠の上限(429)、AIのエラー、のどれでも、通知は止めずに、要約なしで差分のファイルだけを送ります。理由は通知とログに書きます。
 - **注意**: 無料枠の上限は変わりやすく、公開されていません。上限は AI Studio のレート制限ページで、自分のプロジェクトのものを確認してください。モデル名も入れ替わるので、使えなくなったら公式のモデル一覧で `model` を変えます。要約は誤ることがあるので、重要なものは添付の差分を確認してください。
 - **ログ**: `[要約]` の行で、要約した件数・要約なしの理由・失敗を確認できます。APIキーは出しません。

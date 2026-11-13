@@ -475,7 +475,7 @@ class AiSummaryE2E(unittest.TestCase):
                                     "roles": ["finishing"], "snippets": [], "skip_common_excludes": [], "urlwatch": {"max_tries": 1}})
         self.root = make_root(self.discord.base, roles_to_channels={"key_animator": CH_A, "production_assistant": CH_B, "finishing": CH_A},
                               fallback=CH_FB, errors=CH_ERR, companies={"cloverworks": company})
-        cfg_path = self.root / "config" / "common.yaml"
+        cfg_path = self.root / "config" / "ai.yaml"
         self.cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8"))
         self.cfg_path = cfg_path
         self.env = {"DISCORD_BOT_TOKEN": "TOK", "GEMINI_API_KEY": "SECRET-KEY-123"}
@@ -483,7 +483,7 @@ class AiSummaryE2E(unittest.TestCase):
 
     def set_ai(self, **kw):
         import yaml
-        self.cfg["web"]["ai_summary"].update({"enabled": True, **kw})
+        self.cfg["summary"].update({"enabled": True, **kw})
         self.cfg_path.write_text(yaml.safe_dump(self.cfg, allow_unicode=True), encoding="utf-8")
 
     def go(self, *extra):
@@ -542,12 +542,13 @@ class AiSummaryE2E(unittest.TestCase):
         self.assertEqual(self.gemini.requests, [])
         self.assertTrue(any("GEMINI_API_KEY" in m["content"] for m in self.changed_msgs()))
 
-    def test_short_diff_not_sent_to_ai_and_errors_not_summarized(self):
+    def test_short_diff_is_summarized_too_and_errors_not_summarized(self):
         self.change("<p>追加</p>")
         self.go("--skip-new")
-        self.assertEqual(self.gemini.requests, [])
+        self.assertTrue(self.gemini.requests)
         msgs = self.changed_msgs()
-        self.assertTrue(all("追加された内容" in m["content"] for m in msgs))
+        self.assertTrue(all("AI要約" in m["content"] for m in msgs))
         errs = self.discord.messages(CH_ERR)
         self.assertTrue(errs)
         self.assertTrue(all(not m["files"] and "AI要約" not in m["content"] for m in errs))
+

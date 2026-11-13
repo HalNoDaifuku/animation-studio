@@ -1,7 +1,7 @@
 """設定ファイル(config/common.yaml / config/discord.yaml / db/companies/*.yaml / db/portals/*.yaml)の読み込みと共通ヘルパー。"""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -58,6 +58,7 @@ class Config:
     common: dict
     discord: dict
     companies: list[dict]
+    ai: dict = field(default_factory=dict)
 
     @property
     def job_roles(self) -> dict:
@@ -98,6 +99,7 @@ def load_config(
     portals_dir: Path | None = None,
     common_path: Path | None = None,
     discord_path: Path | None = None,
+    ai_path: Path | None = None,
     require_discord: bool = False,
 ) -> Config:
     root = Path(root) if root else ROOT
@@ -105,6 +107,11 @@ def load_config(
     companies_dir = Path(companies_dir) if companies_dir else root / "db" / "companies"
     portals_dir = Path(portals_dir) if portals_dir else root / "db" / "portals"
     discord_path = Path(discord_path) if discord_path else root / "config" / "discord.yaml"
+
+    ai_path = Path(ai_path) if ai_path else root / "config" / "ai.yaml"
+    ai = (load_yaml(ai_path) or {}) if ai_path.exists() else {}
+    if not isinstance(ai, dict):
+        raise ConfigError(f"{ai_path}: 最上位が辞書ではありません")
 
     common = load_yaml(common_path)
     if not isinstance(common, dict):
@@ -130,7 +137,7 @@ def load_config(
             data["_folder"] = folder
             data.setdefault("type", "studio" if folder == "companies" else "portal")
             companies.append(data)
-    return Config(root=root, common=common, discord=discord, companies=companies)
+    return Config(root=root, common=common, discord=discord, companies=companies, ai=ai)
 
 
 # --- 会社ファイルの読み取りヘルパー ---------------------------------------------------

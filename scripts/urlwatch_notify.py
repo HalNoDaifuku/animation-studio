@@ -146,7 +146,7 @@ def main(argv=None) -> int:
             send_to_errors_channel(cfg, bot, msg, result, dry_run=args.dry_run)
             return 1
 
-    summarizer = Summarizer(cfg.web.get("ai_summary"), os.environ.get("GEMINI_API_KEY"))
+    summarizer = Summarizer(cfg.ai.get("summary"), os.environ.get("GEMINI_API_KEY"))
     sent = run_urlwatch_report(cfg, report_text, infos, bot, dry_run=args.dry_run, summarizer=summarizer,
                                skip_new=args.skip_new, baseline=args.baseline, use_wayback=args.wayback, entries=entries,
                                explain_unreported=args.explain_unreported,
