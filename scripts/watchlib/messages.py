@@ -85,15 +85,17 @@ def build_summary_message(*, status: str, name: str, url: str, archive_url: str,
     lines = [f"**{label}: {name}**"]
     if url:
         lines.append(f"URL: {url}")
-    if summary:
-        lines.append("🤖 AI要約(誤りがあり得ます。原文は添付の差分を確認してください)")
-        lines.append(truncate(summary, 1200))
-    else:
-        lines.append(f"(要約なし: {note})")
     if archive_url:
         lines.append(f"Wayback: {archive_url}")
     elif archive_status:
         lines.append(f"Wayback: {archive_status}")
+    lines.append("")
+    rule = "-" * 58
+    if summary:
+        lines.append("🤖 AI要約(誤りがあり得ます。原文は添付の差分を確認してください)")
+        lines += [rule, truncate(summary, 1200), rule]
+    else:
+        lines.append(f"(要約なし: {note})")
     return truncate("\n".join(lines))
 
 
