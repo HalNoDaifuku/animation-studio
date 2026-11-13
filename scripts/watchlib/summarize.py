@@ -91,6 +91,15 @@ def condense_diff(body: str, *, max_chars: int = 20000) -> tuple[str, bool]:
     return text, False
 
 
+def judgement_of(summary: str | None) -> str:
+    """要約の最後の行「判定: ○○」の○○。なければ空。"""
+    for line in reversed((summary or "").strip().splitlines()):
+        m = re.match(r"\s*判定\s*[:：]\s*(.+?)\s*$", line)
+        if m:
+            return m.group(1)
+    return ""
+
+
 def added_lines(condensed: str) -> str:
     return "\n".join(ln[1:] for ln in condensed.splitlines() if ln.startswith("+") and not ln.startswith("+++"))
 

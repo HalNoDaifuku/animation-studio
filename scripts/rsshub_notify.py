@@ -26,6 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from watchlib.config import ROOT, ConfigError, load_config  # noqa: E402
 from watchlib.discord import DryRunBot, make_bot  # noqa: E402
+from watchlib.relevance import Classifier  # noqa: E402
 from watchlib.rsshub import build_feeds, mask_key  # noqa: E402
 from watchlib.runners import run_rsshub  # noqa: E402
 from watchlib.state import State  # noqa: E402
@@ -98,7 +99,8 @@ def main(argv=None) -> int:
                         notify_on_first_run=args.notify_on_first_run, limit=args.limit,
                         retry_rounds=args.retry_rounds, retry_wait=args.retry_wait,
                         request_interval=args.request_interval,
-                        youtube_api_key=os.environ.get("YOUTUBE_API_KEY") or None)
+                        youtube_api_key=os.environ.get("YOUTUBE_API_KEY") or None,
+                        classifier=Classifier(cfg.ai.get("relevance"), os.environ.get("GEMINI_API_KEY")))
     print(f"送信 {result.sent}件 / 上限で省略 {result.skipped}件 / 取得エラー {len(result.errors)}件 / 送信失敗 {len(result.send_failures)}件")
     for line in result.send_failures:
         print(f"[送信失敗] {line}")

@@ -96,8 +96,40 @@ def check_filter_list(c: _Collector, where: str, filters) -> None:
 
 # --- common.yaml ------------------------------------------------------------------------------
 
+def _check_relevance(c: _Collector, cfg: Config, f: str) -> None:
+    r = cfg.ai.get("relevance") if isinstance(cfg.ai, dict) else None
+    if not isinstance(r, dict) or not r.get("enabled", False):
+        return
+    if not isinstance(r.get("model"), str) or not r["model"].strip():
+        c.error(f"{f}: relevance.model", "モデル名が必要です")
+    if not isinstance(r.get("instructions"), str) or not r["instructions"].strip():
+        c.error(f"{f}: relevance.instructions", "AIへの指示(instructions)が空です")
+    for k in ("max_per_run", "max_input_chars", "timeout_seconds", "request_interval_seconds", "max_output_tokens"):
+        v = r.get(k)
+        if v is not None and (isinstance(v, bool) or not isinstance(v, (int, float)) or v < 0):
+            c.error(f"{f}: relevance.{k}", "0以上の数字で書いてください")
+    tmpl = r.get("user_template")
+    if tmpl is not None:
+        if not isinstance(tmpl, str) or "{text}" not in tmpl:
+            c.error(f"{f}: relevance.user_template", "{text} を含む文字列で書いてください")
+        else:
+            try:
+                tmpl.format(company="", text="")
+            except (KeyError, IndexError, ValueError) as e:
+                c.error(f"{f}: relevance.user_template", f"使えるのは {{company}} {{text}} だけです({e})")
+    for i, ex in enumerate(r.get("examples") or [], 1):
+        w = f"{f}: relevance.examples[{i}]"
+        if not isinstance(ex, dict) or not str(ex.get("text", "")).strip() or not str(ex.get("output", "")).strip():
+            c.error(w, "text と output の両方が必要です")
+            continue
+        first = str(ex["output"]).strip().splitlines()[0].strip()
+        if first not in ("判定: 関係あり", "判定: 関係なし"):
+            c.error(w, f"output の1行目は「判定: 関係あり」か「判定: 関係なし」にしてください(今: {first[:30]})")
+
+
 def check_ai(c: _Collector, cfg: Config) -> None:
     f = "config/ai.yaml"
+    _check_relevance(c, cfg, f)
     s = cfg.ai.get("summary") if isinstance(cfg.ai, dict) else None
     if s is None:
         return
@@ -301,6 +333,14 @@ def check_discord(c: _Collector, cfg: Config) -> None:
 
     for key in ("fallback", "errors"):
         check_id(f"{f}: discord.channels.{key}", ch.get(key))
+    irr = ch.get("irrelevant") or {}
+    if not isinstance(irr, dict):
+        c.error(f"{f}: discord.channels.irrelevant", "辞書が必要です(sns / web)")
+        irr = {}
+    for key, value in irr.items():
+        if key not in ("sns", "web"):
+            c.error(f"{f}: discord.channels.irrelevant.{key}", "使えるのは sns と web だけです")
+        check_id(f"{f}: discord.channels.irrelevant.{key}", value)
     for tid, value in (ch.get("types") or {}).items():
         if tid not in (cfg.common.get("company_types") or {}):
             c.error(f"{f}: discord.channels.types.{tid}", "common.yaml の company_types にない種別です(綴りの間違い?)")

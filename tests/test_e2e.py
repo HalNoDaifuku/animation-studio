@@ -501,6 +501,22 @@ class AiSummaryE2E(unittest.TestCase):
     def changed_msgs(self):
         return [m for m in self.discord.messages() if "変更検知" in m["content"]]
 
+    def test_irrelevant_judgement_goes_to_irrelevant_web_channel(self):
+        import yaml
+        CH_IRR = "100000000000000009"
+        dp = self.root / "config" / "discord.yaml"
+        d = yaml.safe_load(dp.read_text(encoding="utf-8"))
+        d["discord"]["channels"]["irrelevant"] = {"web": CH_IRR}
+        dp.write_text(yaml.safe_dump(d, allow_unicode=True), encoding="utf-8")
+        self.gemini.replies = ["作品情報の追加です。\n採用との関係はありません。\n判定: 採用と無関係"] * 2
+        self.change(self.LONG_ADD)
+        self.go("--skip-new")
+        irr = self.discord.messages(CH_IRR)
+        self.assertTrue(irr)
+        self.assertTrue(all("AI要約" in m["content"] and m["files"] for m in irr))
+        others = [m for m in self.changed_msgs() if m not in irr]
+        self.assertEqual(others, [])
+
     def test_summary_and_file_sent_once_per_diff(self):
         self.change(self.LONG_ADD)
         self.go("--skip-new")

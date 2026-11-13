@@ -666,3 +666,73 @@ class MultiInstanceTest(unittest.TestCase):
             self.assertTrue(f.request_url.startswith("https://one.example/") and "key=K1" in f.request_url)
             self.assertTrue(f.alt_urls[0].startswith("https://two.example/") and "key=K2" in f.alt_urls[0])
             self.assertNotIn("one.example", f.alt_urls[0])
+
+
+class RelevanceTest(unittest.TestCase):
+    """SNSの就活関連判定: 関係なしだけ別のチャンネルへ。判定できなければ、今までどおり。"""
+
+    def _run(self, answers, irrelevant="IRR", n=3, key="K", **opts):
+        import io
+        import json
+        import urllib.request
+        from types import SimpleNamespace
+        from watchlib.relevance import Classifier
+        from watchlib.rsshub import Feed, Item as FeedItem
+        from watchlib.runners import run_rsshub
+        from watchlib.state import State
+
+        class R(io.BytesIO):
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+
+        replies = list(answers)
+
+        def opener(request, timeout=0):
+            r = replies.pop(0)
+            if isinstance(r, int):
+                raise urllib.error.HTTPError(request.full_url, r, "x", {}, io.BytesIO(b'{"error":{"message":"q"}}'))
+            return R(json.dumps({"candidates": [{"content": {"parts": [{"text": r}]}}]}).encode())
+
+        import urllib.error
+        cfg = SimpleNamespace(sns={"fetch": {"retry_rounds": 0, "concurrency": 1, "rate_limit": {"enabled": False}}, "exclude_retweets": False},
+                              discord_channels={"errors": "E", "fallback": "FB", "roles": {}, "types": {}, "irrelevant": {"sns": irrelevant}},
+                              ai={}, job_roles={}, company=lambda s: {})
+        feed = Feed(key="c:x:user:a", company_id="1", company_slug="c", company_name="会社", platform="x", platform_label="X",
+                    kind="user", label="x", url="u", request_url="http://hub/1")
+        items = [FeedItem(id=str(i), text=f"投稿{i}", url=f"http://x/{i}", published="2026-11-13T00:00:00Z") for i in range(n)]
+        state = State(None)
+        state.mark(feed.key, ["old"])
+        classifier = Classifier({"enabled": True, "instructions": "指示", "request_interval_seconds": 0, **opts}, key,
+                                opener=opener, sleep=lambda s: None, log=lambda m: None)
+        bot = _Bot()
+        run_rsshub(cfg, [feed], state, bot, dry_run=False, fetch=lambda u: items, request_interval=0, error_renotify_hours=0,
+                   sleep=lambda s: None, log=lambda m: None, classifier=classifier)
+        return bot.sent, classifier
+
+    def test_irrelevant_goes_to_other_channel(self):
+        sent, c = self._run(["判定: 関係あり\n理由: 募集", "判定: 関係なし\n理由: 宣伝", "判定: 関係あり\n理由: 採用"])
+        chans = sorted(ch for ch, _ in sent)
+        self.assertEqual(chans, ["FB", "FB", "IRR"])
+        irr = [m for ch, m in sent if ch == "IRR"][0]
+        self.assertIn("AI判定: 就活に関係なし(理由: 宣伝)", irr)
+        self.assertEqual(c.irrelevant, 1)
+
+    def test_failure_and_unreadable_are_treated_as_relevant(self):
+        sent, c = self._run([500, 500, "よく分からない", "判定: 関係なし\n理由: x"], n=3)   # 500 は1回だけ取り直す
+        self.assertEqual([ch for ch, _ in sent], ["FB", "FB", "IRR"])
+        self.assertEqual(c.failed, 2)
+
+    def test_quota_stops_calls_and_sends_normally(self):
+        sent, c = self._run([429], n=3)
+        self.assertTrue(all(ch == "FB" for ch, _ in sent))
+        self.assertEqual(c.used, 1)
+
+    def test_no_irrelevant_channel_means_no_ai_call(self):
+        sent, c = self._run([], irrelevant=None, n=2)
+        self.assertEqual(c.used, 0)
+        self.assertEqual(len(sent), 2)
+
+    def test_per_run_limit(self):
+        sent, c = self._run(["判定: 関係なし\n理由: a"], n=3, max_per_run=1)
+        self.assertEqual(sorted(ch for ch, _ in sent), ["FB", "FB", "IRR"])
+        self.assertEqual(c.used, 1)

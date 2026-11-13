@@ -20,6 +20,7 @@ from .rsshub import Feed, FeedFetchError, fetch_feed, fetch_youtube, fetch_youtu
 from .state import State
 from .urlwatch_jobs import JobInfo
 from . import wayback as wayback_mod
+from .summarize import judgement_of
 
 def probe_url(url: str, timeout: int = 20) -> str:  # 既定値。実際は common.yaml の network.probe_timeout_seconds
     """URLを1回だけ取得して、状態を短い文字列で返す(報告に載らなかったジョブの原因調べ用)。"""
@@ -127,7 +128,7 @@ def _parse_published(value: str | None):
 
 
 def _process_feed(cfg: Config, feed: Feed, items: list, state: State, bot, result: RunResult, company: dict, *,
-                  dry_run: bool, notify_on_first_run: bool, limit: int, log: Callable[[str], None]) -> None:
+                  dry_run: bool, notify_on_first_run: bool, limit: int, log: Callable[[str], None], classifier=None) -> None:
     first_run = not state.initialized(feed.key)
     if first_run and not notify_on_first_run:
         if not dry_run:
@@ -168,6 +169,15 @@ def _process_feed(cfg: Config, feed: Feed, items: list, state: State, bot, resul
                                  account_label=feed.label, text=item.text, url=item.url,
                                  published=item.published)
         targets = _targets(cfg, company, feed.hint_roles, item.text, dry_run)
+        irrelevant_ch = (cfg.discord_channels.get("irrelevant") or {}).get("sns")
+        if classifier is not None and classifier.enabled and irrelevant_ch and targets:
+            verdict, reason = classifier.judge(feed.company_name, item.text)
+            if verdict is False:
+                targets = [Target(irrelevant_ch)]
+                text = text + f"\n🤖 AI判定: 就活に関係なし(理由: {reason or '不明'})"
+                log(f"[関連判定] 関係なし: {feed.company_name} / {_safe(item.text, 60)}(理由: {_safe(reason, 60)})")
+            elif verdict is None and reason:
+                log(f"[関連判定] 判定できないため、関係ありとして送ります: {reason}")
         if not targets:
             result.send_failures.append(f"{feed.key}: 送り先チャンネルがありません(config/discord.yaml を確認)")
             continue
@@ -229,7 +239,7 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
                request_interval: float | None = None, error_renotify_hours: float | None = None,
                sleep: Callable[[float], None] = time.sleep, clock: Callable[[], float] = time.monotonic,
                youtube_opener: Callable | None = None, youtube_api_key: str | None = None,
-               log: Callable[[str], None] = print) -> RunResult:
+               classifier=None, log: Callable[[str], None] = print) -> RunResult:
     """全フィードを1回取得し、失敗したものだけを「全部が終わってから」待って再取得する(retry_rounds 回まで)。
 
     すぐ再試行すると、同じ相手へ続けて要求することになるため、まとめて後回しにする。
@@ -364,9 +374,11 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
             who = f" / チャンネル名「{_safe(feed.channel_title, 60)}」(会社: {feed.company_name})" if feed.channel_title else ""
             log(f"[取得] {feed.key}: {len(items)}件{who} / {took:.1f}秒")
             _process_feed(cfg, feed, items, state, bot, result, cfg.company(feed.company_slug) or {},
-                          dry_run=dry_run, notify_on_first_run=notify_on_first_run, limit=limit, log=log)
+                          dry_run=dry_run, notify_on_first_run=notify_on_first_run, limit=limit, log=log, classifier=classifier)
         pending = failed
 
+    if classifier is not None and classifier.enabled and classifier.used:
+        log(f"[関連判定] AI判定: {classifier.used}件(上限{classifier.max_per_run}件)、関係なし{classifier.irrelevant}件、判定できず{classifier.failed}件")
     if n_instances > 1 and cur["last"] is not None and not dry_run:
         state.last_instance = cur["last"]   # 次回は、これとは別のものから使い始める
     if stats:
@@ -488,6 +500,10 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
                 messages = [build_summary_message(status=entry.status, name=entry.name, url=shown_url,
                                                   archive_url=archive_url, archive_status=archive_status,
                                                   summary=summary, note=note)]
+                irr_web = (cfg.discord_channels.get("irrelevant") or {}).get("web")
+                if summary and irr_web and judgement_of(summary) == "採用と無関係":
+                    targets = [Target(irr_web)]
+                    log(f"[関連判定] 採用と無関係: {entry.name} → 関係ない通知用のチャンネル")
                 log(f"[要約] {entry.name}: " + (f"要約しました({len(summary)}字)" if summary
                                                   else f"要約なし({note})"))
             else:

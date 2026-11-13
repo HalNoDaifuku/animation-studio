@@ -85,6 +85,7 @@ class Config:
             "api_base": d.get("api_base") or "https://discord.com/api/v10",
             "fallback": channel_id(ch.get("fallback")),
             "errors": channel_id(ch.get("errors")),
+            "irrelevant": {k: channel_id(v) for k, v in (ch.get("irrelevant") or {}).items()},
             "types": {k: channel_id(v) for k, v in (ch.get("types") or {}).items()},
             "roles": {k: channel_id(v) for k, v in (ch.get("roles") or {}).items()},
         }

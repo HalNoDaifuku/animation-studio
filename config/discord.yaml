@@ -25,6 +25,9 @@ discord:
     types:             # 会社ファイルの type ごとの送り先(職種が決まらない通知用)。未設定なら fallback
       studio: null     # アニメ会社
       portal: "1567047200176087091"     # 就活・求人サイト
+    irrelevant:
+      sns: "1570905504903987392"
+      web: "1570905560688099579"
     roles:
       producer: null                  # プロデューサー
       production_desk: "1570449810496946367"           # 制作デスク
