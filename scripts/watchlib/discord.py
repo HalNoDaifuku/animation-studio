@@ -5,6 +5,7 @@ Bot トークンは環境変数 DISCORD_BOT_TOKEN で渡す。ログやエラー
 from __future__ import annotations
 
 import json
+import uuid
 import re
 import time
 import urllib.error
@@ -61,9 +62,11 @@ class DiscordBot:
         return f"DiscordBot(api_base={self.api_base!r})"
 
     # --- 低レベル -------------------------------------------------------------------
-    def _request(self, method: str, path: str, body: Any = None) -> Any:
+    def _request(self, method: str, path: str, body: Any = None, *, raw: tuple[bytes, str] | None = None) -> Any:
+        """raw=(送る中身, Content-Type) を渡すと、JSON の代わりにそれを送る(ファイル添付用)。"""
         url = self.api_base + path
-        data = json.dumps(body, ensure_ascii=False).encode("utf-8") if body is not None else None
+        data = raw[0] if raw else (json.dumps(body, ensure_ascii=False).encode("utf-8") if body is not None else None)
+        content_type = raw[1] if raw else "application/json"
         for attempt in range(1, self.max_retries + 1):
             request = urllib.request.Request(
                 url,
@@ -71,7 +74,7 @@ class DiscordBot:
                 method=method,
                 headers={
                     "Authorization": f"Bot {self._token}",
-                    "Content-Type": "application/json",
+                    "Content-Type": content_type,
                     "User-Agent": USER_AGENT,
                 },
             )
@@ -118,6 +121,30 @@ class DiscordBot:
             body["flags"] = SUPPRESS_EMBEDS
         return self._request("POST", f"/channels/{channel_id}/messages", body)
 
+    def send_message_with_file(self, channel_id: str, content: str, filename: str, data: bytes, *,
+                               suppress_embeds: bool = False) -> dict:
+        """テキストのファイルを1つ添付して送る(multipart/form-data)。"""
+        if not re.fullmatch(r"\d+", str(channel_id)):
+            raise DiscordError(0, f"チャンネルIDが数字ではありません: {channel_id!r}")
+        safe_name = re.sub(r'[\\/:*?"<>|\r\n]', "_", filename) or "diff.txt"
+        payload: dict[str, Any] = {
+            "content": truncate(content, DISCORD_LIMIT),
+            "allowed_mentions": {"parse": []},
+            "attachments": [{"id": 0, "filename": safe_name}],
+        }
+        if suppress_embeds:
+            payload["flags"] = SUPPRESS_EMBEDS
+        boundary = "----watch" + uuid.uuid4().hex
+        parts = [
+            f'--{boundary}\r\nContent-Disposition: form-data; name="payload_json"\r\nContent-Type: application/json\r\n\r\n'.encode(),
+            json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+            f'\r\n--{boundary}\r\nContent-Disposition: form-data; name="files[0]"; filename="{safe_name}"\r\n'
+            f"Content-Type: text/plain; charset=utf-8\r\n\r\n".encode("utf-8"),
+            data,
+            f"\r\n--{boundary}--\r\n".encode(),
+        ]
+        return self._request("POST", f"/channels/{channel_id}/messages", raw=(b"".join(parts), f"multipart/form-data; boundary={boundary}"))
+
     # --- チャンネル管理(discord_setup_channels.py 用) -------------------------------
     def list_guild_channels(self, guild_id: str) -> list[dict]:
         return self._request("GET", f"/guilds/{guild_id}/channels")
@@ -136,6 +163,12 @@ class DryRunBot:
     def send_message(self, channel_id: str, content: str, *, suppress_embeds: bool = False) -> dict:
         self.sent.append((str(channel_id), content))
         self.out(f"[dry-run] → チャンネル {channel_id}\n{content}\n{'-' * 40}")
+        return {}
+
+    def send_message_with_file(self, channel_id: str, content: str, filename: str, data: bytes, *,
+                               suppress_embeds: bool = False) -> dict:
+        self.sent.append((str(channel_id), content))
+        self.out(f"[dry-run] → チャンネル {channel_id}\n{content}\n[添付 {filename}: {len(data)}バイト]\n{'-' * 40}")
         return {}
 
 

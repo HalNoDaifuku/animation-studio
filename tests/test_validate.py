@@ -268,3 +268,31 @@ class TextStageExcludeTest(unittest.TestCase):
             i = names.index("html2text")
             patterns = [f["re.sub"]["pattern"] for f in job["filter"][i + 1:] if isinstance(f, dict)]
             self.assertTrue(any("today" in p for p in patterns), slug_url)
+
+
+class CondenseDiffTest(unittest.TestCase):
+    """AIに渡す差分の整形(改行のないページでも、変わった部分だけにする)。"""
+
+    def test_single_line_page_shows_only_changed_part(self):
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+        from watchlib.summarize import condense_diff, added_lines
+        old = "ABOUT。" + "あ" * 200 + "。SCHOOL紹介。" + "い" * 200 + "。✦RECRUIT求人。募集予定。"
+        new = "ABOUT。" + "あ" * 200 + "。SCHOOL紹介。" + "い" * 200 + "。体験会について(note)。✦RECRUIT求人。募集予定。"
+        body = f"--- @\tA\n+++ @\tB\n@@ -1 +1 @@\n-{old}\n+{new}\n"
+        text, truncated = condense_diff(body)
+        self.assertFalse(truncated)
+        self.assertEqual(added_lines(text).strip(), "体験会について(note)。")
+        self.assertNotIn("@@", text)
+        self.assertLess(len(text), 100)
+
+    def test_context_kept_and_long_text_truncated(self):
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+        from watchlib.summarize import condense_diff
+        text, truncated = condense_diff("@@ -1 +1 @@\n 募集中\n+" + "あ" * 500, max_chars=100)
+        self.assertTrue(truncated)
+        self.assertIn("募集中", text)
+        self.assertIn("以下省略", text)

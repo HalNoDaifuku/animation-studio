@@ -223,7 +223,7 @@ class UrlwatchE2E(unittest.TestCase):
         self.assertEqual(self.go("--skip-new"), 0)
         changed = [m for m in self.discord.messages() if "変更検知" in m["content"]]
         self.assertTrue(changed)
-        self.assertTrue(all("```diff" in m["content"] and len(m["content"]) <= 2000 for m in changed))
+        self.assertTrue(all(len(m["content"]) <= 2000 and any("原画を募集" in f[1].decode() for f in m["files"]) for m in changed))   # 差分はファイルで添付
         self.assertTrue(all(m["flags"] == 4 for m in changed))
         self.assertEqual({m["channel"] for m in changed}, {CH_A, CH_B})          # 増えた行にある職種(原画・制作進行)だけ。他の職種や fallback には送らない
 
@@ -290,7 +290,7 @@ class UrlwatchE2E(unittest.TestCase):
         report.write_text("=" * 75 + "\n01. CHANGED: 採用情報 - CloverWorks ( http://x/ )\n" + "=" * 75 + "\n\n" + "-" * 75 +
                           "\nCHANGED: 採用情報 - CloverWorks ( http://x/ )\n" + "-" * 75 + "\n-古い\n+新しい\n", encoding="utf-8")
         self.assertEqual(self.go("--report", str(report)), 0)
-        self.assertTrue(any("+新しい" in m["content"] for m in self.discord.messages()))
+        self.assertTrue(any("+新しい" in m["content"] or any("+新しい" in f[1].decode() for f in m["files"]) for m in self.discord.messages()))
         self.assertEqual(self.go("--generate-only"), 0)
         self.assertTrue((self.root / "build" / "urls.yaml").exists())
 
@@ -454,3 +454,100 @@ class LogContentTest(unittest.TestCase):
         self.assertNotIn("::set-output", out)
         for secret in ("SECRETTOKEN", "SECRETKEY", hub.base, CH_A, CH_FB, CH_ERR):
             self.assertNotIn(secret, out)
+
+
+class AiSummaryE2E(unittest.TestCase):
+    """変更通知のAI要約: 要約+差分ファイル、上限・失敗・短い差分・エラーの扱い。"""
+
+    LONG_A = "<html><body>" + "".join(f"<p>募集職種{i}</p>" for i in range(3)) + "</body></html>"
+
+    def setUp(self):
+        import yaml
+        self.discord, self.web, self.gemini = MockDiscord(), MockWeb({"/recruit/": self.LONG_A, "/two/": self.LONG_A}), helpers.MockGemini()
+        for s in (self.discord, self.web, self.gemini):
+            self.addCleanup(s.close)
+        company = load_sample("cloverworks")
+        company["monitors"] = [{"id": "one", "name": "一つ目", "url": self.web.base + "/recruit/", "category": "recruit", "enabled": True,
+                                "roles": ["production_assistant"], "snippets": [], "skip_common_excludes": [], "urlwatch": {}}]
+        company["monitors"].append({"id": "two", "name": "二つ目", "url": self.web.base + "/two/", "category": "recruit", "enabled": True,
+                                    "roles": ["key_animator"], "snippets": [], "skip_common_excludes": [], "urlwatch": {}})
+        company["monitors"].append({"id": "gone", "name": "消えるページ", "url": self.web.base + "/missing/", "category": "news", "enabled": True,
+                                    "roles": ["finishing"], "snippets": [], "skip_common_excludes": [], "urlwatch": {"max_tries": 1}})
+        self.root = make_root(self.discord.base, roles_to_channels={"key_animator": CH_A, "production_assistant": CH_B, "finishing": CH_A},
+                              fallback=CH_FB, errors=CH_ERR, companies={"cloverworks": company})
+        cfg_path = self.root / "config" / "common.yaml"
+        self.cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8"))
+        self.cfg_path = cfg_path
+        self.env = {"DISCORD_BOT_TOKEN": "TOK", "GEMINI_API_KEY": "SECRET-KEY-123"}
+        self.set_ai(base_url=self.gemini.base, request_interval_seconds=0)
+
+    def set_ai(self, **kw):
+        import yaml
+        self.cfg["web"]["ai_summary"].update({"enabled": True, **kw})
+        self.cfg_path.write_text(yaml.safe_dump(self.cfg, allow_unicode=True), encoding="utf-8")
+
+    def go(self, *extra):
+        return run(urlwatch_notify.main, "--root", str(self.root), "--urlwatch-cmd", URLWATCH, "--retry-wait", "0", *extra, env=self.env)
+
+    def change(self, extra: str):
+        self.go("--skip-new")                                   # 1回目で基準を作る
+        self.discord.requests.clear()
+        for path in ("/recruit/", "/two/"):
+            self.web.pages[path] = self.LONG_A.replace("</body>", extra + "</body>")
+        self.gemini.requests.clear()
+
+    LONG_ADD = "".join(f"<p>追加された募集職種その{i}の説明文です。応募はフォームから。</p>" for i in range(6))
+
+    def changed_msgs(self):
+        return [m for m in self.discord.messages() if "変更検知" in m["content"]]
+
+    def test_summary_and_file_sent_once_per_diff(self):
+        self.change(self.LONG_ADD)
+        self.go("--skip-new")
+        msgs = self.changed_msgs()
+        self.assertTrue(msgs)
+        self.assertEqual(len(self.gemini.requests), 2)                       # 差分2件 → 2回だけ(チャンネル数に関係しない)
+        for m in msgs:
+            self.assertIn("AI要約", m["content"])
+            self.assertIn("判定: 判断できない", m["content"])
+            self.assertEqual(len(m["files"]), 1)
+            name, data = m["files"][0]
+            self.assertRegex(name, r"^diff_\d{8}_CloverWorks\.txt$")
+            self.assertIn("追加された募集職種その0", data.decode())
+        req = self.gemini.requests[0]
+        self.assertEqual({k.lower(): v for k, v in req["headers"].items()}.get("x-goog-api-key"), "SECRET-KEY-123")   # キーはヘッダーで、URLには入れない
+        self.assertNotIn("SECRET", req["path"])
+        self.assertIn("追加された募集職種その0", req["json"]["contents"][0]["parts"][0]["text"])
+        self.assertNotIn("SECRET-KEY-123", str(msgs))                          # 通知にキーが出ない
+
+    def test_limit_failure_and_missing_key_still_send_diff(self):
+        self.set_ai(max_per_run=1)
+        self.change(self.LONG_ADD)
+        self.go("--skip-new")
+        msgs = self.changed_msgs()
+        self.assertEqual(len(self.gemini.requests), 1)
+        self.assertTrue(any("要約上限(1件)" in m["content"] for m in msgs))
+        self.assertTrue(all(m["files"] for m in msgs))                          # 要約がなくても差分ファイルは付く
+        # 429: 以降は呼ばない
+        self.set_ai(max_per_run=20)
+        self.change(self.LONG_ADD + "<p>もう1つ</p>")
+        self.gemini.replies = [429]
+        self.go("--skip-new")
+        self.assertEqual(len(self.gemini.requests), 1)
+        self.assertTrue(any("429" in m["content"] for m in self.changed_msgs()))
+        # キーなし
+        self.env.pop("GEMINI_API_KEY")
+        self.change(self.LONG_ADD + "<p>さらに</p>")
+        self.go("--skip-new")
+        self.assertEqual(self.gemini.requests, [])
+        self.assertTrue(any("GEMINI_API_KEY" in m["content"] for m in self.changed_msgs()))
+
+    def test_short_diff_not_sent_to_ai_and_errors_not_summarized(self):
+        self.change("<p>追加</p>")
+        self.go("--skip-new")
+        self.assertEqual(self.gemini.requests, [])
+        msgs = self.changed_msgs()
+        self.assertTrue(all("追加された内容" in m["content"] for m in msgs))
+        errs = self.discord.messages(CH_ERR)
+        self.assertTrue(errs)
+        self.assertTrue(all(not m["files"] and "AI要約" not in m["content"] for m in errs))

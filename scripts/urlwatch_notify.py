@@ -27,6 +27,7 @@ from watchlib.messages import truncate  # noqa: E402
 from watchlib.report import parse_report  # noqa: E402
 from watchlib.runners import RunResult, run_urlwatch_command, run_urlwatch_report, send_to_errors_channel  # noqa: E402
 from watchlib.state import State  # noqa: E402
+from watchlib.summarize import Summarizer  # noqa: E402
 from watchlib.urlwatch_jobs import build_jobs, missing_filter_modules, write_urls_yaml  # noqa: E402
 from watchlib.validate import ERROR, validate_config  # noqa: E402
 
@@ -145,7 +146,8 @@ def main(argv=None) -> int:
             send_to_errors_channel(cfg, bot, msg, result, dry_run=args.dry_run)
             return 1
 
-    sent = run_urlwatch_report(cfg, report_text, infos, bot, dry_run=args.dry_run,
+    summarizer = Summarizer(cfg.web.get("ai_summary"), os.environ.get("GEMINI_API_KEY"))
+    sent = run_urlwatch_report(cfg, report_text, infos, bot, dry_run=args.dry_run, summarizer=summarizer,
                                skip_new=args.skip_new, baseline=args.baseline, use_wayback=args.wayback, entries=entries,
                                explain_unreported=args.explain_unreported,
                                state=None if args.report else error_state,

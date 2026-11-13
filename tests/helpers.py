@@ -62,8 +62,24 @@ class MockDiscord(_Server):
 
                 def do_POST(self):
                     body = self.rfile.read(int(self.headers.get("Content-Length", 0)))
-                    data = json.loads(body) if body else None
-                    server.requests.append({"method": "POST", "path": self.path, "headers": dict(self.headers), "json": data})
+                    files = []
+                    ctype = self.headers.get("Content-Type", "")
+                    if ctype.startswith("multipart/form-data"):   # ファイル添付つき。payload_json と files[n] に分ける
+                        boundary = ctype.split("boundary=", 1)[1].encode()
+                        data = None
+                        for part in body.split(b"--" + boundary):
+                            if b"\r\n\r\n" not in part:
+                                continue
+                            head, content = part.split(b"\r\n\r\n", 1)
+                            content = content[:-2] if content.endswith(b"\r\n") else content
+                            if b'name="payload_json"' in head:
+                                data = json.loads(content)
+                            elif b'name="files[' in head:
+                                name = head.split(b'filename="', 1)[1].split(b'"', 1)[0].decode("utf-8")
+                                files.append((name, content))
+                    else:
+                        data = json.loads(body) if body else None
+                    server.requests.append({"method": "POST", "path": self.path, "headers": dict(self.headers), "json": data, "files": files})
                     parts = self.path.strip("/").split("/")
                     if parts[0] == "channels" and parts[-1] == "messages":
                         queue = server.fail.get(parts[1])
@@ -89,7 +105,7 @@ class MockDiscord(_Server):
             parts = r["path"].strip("/").split("/")
             if r["method"] == "POST" and parts[0] == "channels" and parts[-1] == "messages":
                 if channel_id is None or parts[1] == channel_id:
-                    out.append({"channel": parts[1], **r["json"], "headers": r["headers"]})
+                    out.append({"channel": parts[1], **r["json"], "headers": r["headers"], "files": r.get("files", [])})
         return out
 
 
@@ -187,3 +203,35 @@ def write_company(root: Path, stem: str, data: dict, folder: str = "companies") 
 
 def load_sample(slug: str) -> dict:
     return yaml.safe_load((REPO / "db" / "companies" / f"{slug}.yaml").read_text(encoding="utf-8"))
+
+
+class MockGemini(_Server):
+    """POST /v1beta/models/{model}:generateContent を記録する。replies に応答を順に入れる(文字列=要約、整数=そのHTTPエラー)。空なら要約を返す。"""
+
+    def __init__(self):
+        self.requests: list[dict] = []
+        self.replies: list = []
+        server = self
+
+        def factory(_):
+            class H(BaseHTTPRequestHandler):
+                def log_message(self, *a):
+                    pass
+
+                def do_POST(self):
+                    body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))
+                    server.requests.append({"path": self.path, "headers": dict(self.headers), "json": body})
+                    reply = server.replies.pop(0) if server.replies else "追加がありました。\n詳細は原文を確認してください。\n判定: 判断できない"
+                    if isinstance(reply, int):
+                        raw = json.dumps({"error": {"message": "quota exceeded" if reply == 429 else "err"}}).encode()
+                        self.send_response(reply)
+                    else:
+                        raw = json.dumps({"candidates": [{"content": {"parts": [{"text": reply}]}, "finishReason": "STOP"}]}).encode()
+                        self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Length", str(len(raw)))
+                    self.end_headers()
+                    self.wfile.write(raw)
+            return H
+
+        super().__init__(factory)

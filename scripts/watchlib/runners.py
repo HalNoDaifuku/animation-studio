@@ -12,12 +12,13 @@ from typing import Callable
 
 from .config import Config
 from .discord import DiscordError
-from .messages import (build_diff_message, build_error_message, build_feed_error_message, build_sns_message,
-                       split_long_text, CHUNK_LIMIT)
+from .messages import (build_diff_message, build_error_message, build_summary_message, build_feed_error_message, build_sns_message,
+                       split_long_text, CHUNK_LIMIT, JST)
 from .report import ReportEntry, parse_report
 from .routing import Target, pick_roles, resolve_channels
 from .rsshub import Feed, FeedFetchError, fetch_feed, fetch_youtube, fetch_youtube_api, is_retweet
 from .state import State
+from .summarize import added_lines
 from .urlwatch_jobs import JobInfo
 from . import wayback as wayback_mod
 
@@ -359,7 +360,7 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
                         capture: Callable[[str], tuple[str, str]] | None = None,
                         probe: Callable[[str], str] | None = probe_url,
                         entries: list[ReportEntry] | None = None, state: State | None = None, explain_unreported: bool = False,
-                        error_renotify_hours: float = 24,
+                        error_renotify_hours: float = 24, summarizer=None, now: Callable[[], datetime] | None = None,
                         log: Callable[[str], None] = print) -> RunResult:
     """entries を渡すと、report_text を読み直さずそれを使う(再取得で差し替えた結果を渡すため)。
     state を渡すと、同じジョブのエラーは error_renotify_hours 時間は繰り返し通知しない(エラーが直ったら記録を消す)。"""
@@ -390,6 +391,7 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
         log(f"[報告なし] {name}: 変更なし、または無視する一時エラー(408/429/5xx)のためレポートに載りませんでした{note}")
     for entry in entries:
         info = by_name.get(entry.name)
+        attachment = None
         if entry.status == "UNCHANGED" or not info:
             continue
         if entry.status == "NEW" and skip_new:
@@ -424,14 +426,26 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
                     wait=float(wb.get("retry_wait_seconds", 10)))))(shown_url)
                 if archive_status:
                     archive_status = f"保存失敗({archive_status})"
-            empty = "(初めて取得しました。以降の変更を通知します)" if entry.status == "NEW" else "(差分の本文なし)"
-            chunks = split_long_text(entry.body, CHUNK_LIMIT) or [empty]
-            messages = [build_diff_message(status=entry.status, name=entry.name, url=shown_url,
-                                           archive_url=archive_url, archive_status=archive_status,
-                                           chunk=c, index=n, total=len(chunks))
-                        for n, c in enumerate(chunks[:MAX_DIFF_MESSAGES], 1)]
-            if len(chunks) > MAX_DIFF_MESSAGES:
-                messages.append(f"(ほか{len(chunks) - MAX_DIFF_MESSAGES}分割は省略しました。URL: {shown_url})")
+            use_ai = summarizer is not None and summarizer.enabled and entry.status == "CHANGED"
+            if use_ai:
+                summary, note, condensed = summarizer.summarize(info.company_name, entry.name, entry.body)
+                stamp = (now() if now else datetime.now(JST)).strftime("%Y%m%d")
+                fname = re.sub(r'[\\/:*?"<>|\s]+', "_", f"diff_{stamp}_{info.company_name}") + ".txt"
+                attachment = (fname, (f"{entry.name}\nURL: {shown_url}\n\n" + entry.body).encode("utf-8"))
+                messages = [build_summary_message(status=entry.status, name=entry.name, url=shown_url,
+                                                  archive_url=archive_url, archive_status=archive_status,
+                                                  summary=summary, note=note, added_preview=added_lines(condensed))]
+                log(f"[要約] {entry.name}: " + (f"要約しました({len(summary)}字)" if summary
+                                                  else f"要約なし({'差分が短いためそのまま' if note == 'short' else note})"))
+            else:
+                empty = "(初めて取得しました。以降の変更を通知します)" if entry.status == "NEW" else "(差分の本文なし)"
+                chunks = split_long_text(entry.body, CHUNK_LIMIT) or [empty]
+                messages = [build_diff_message(status=entry.status, name=entry.name, url=shown_url,
+                                               archive_url=archive_url, archive_status=archive_status,
+                                               chunk=c, index=n, total=len(chunks))
+                            for n, c in enumerate(chunks[:MAX_DIFF_MESSAGES], 1)]
+                if len(chunks) > MAX_DIFF_MESSAGES:
+                    messages.append(f"(ほか{len(chunks) - MAX_DIFF_MESSAGES}分割は省略しました。URL: {shown_url})")
         if entry.status == "ERROR":
             log(f"[エラー通知] {entry.name} {shown_url}: {_safe(entry.body, 200)}")
         else:
@@ -442,11 +456,16 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
         for t in targets:
             for m in messages:
                 try:
-                    bot.send_message(t.channel_id, m, suppress_embeds=True)
+                    if attachment:
+                        bot.send_message_with_file(t.channel_id, m, attachment[0], attachment[1], suppress_embeds=True)
+                    else:
+                        bot.send_message(t.channel_id, m, suppress_embeds=True)
                     result.sent += 1
                 except DiscordError as e:
                     result.send_failures.append(f"{entry.name} → {_mask(t.channel_id)}: {e}")
                     break  # このチャンネルの残りは送らない(順序が崩れるため)
+    if summarizer is not None and summarizer.enabled:
+        log(f"[要約] AI要約: {summarizer.used}件(上限{summarizer.max_per_run}件)、失敗{summarizer.failed}件")
     if state is not None and not dry_run:
         state.save()
     return result
