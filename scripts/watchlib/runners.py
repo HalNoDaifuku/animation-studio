@@ -57,6 +57,13 @@ def added_text(body: str) -> str:
     return "\n".join(added) if added else body
 
 
+def changed_text(body: str) -> str:
+    """送信先の判定に使う文。増えた行(+)と、消えた行(-)の両方。差分の形でなければ、本文全体。"""
+    lines = body.splitlines()
+    changed = [ln[1:] for ln in lines if (ln.startswith("+") and not ln.startswith("+++")) or (ln.startswith("-") and not ln.startswith("---"))]
+    return "\n".join(changed) if changed else body
+
+
 def _safe(text, limit: int = 160) -> str:
     """ログ用に1行へ縮める。"::" は GitHub Actions のコマンドと解釈されるので変える(外部ページの本文が混ざるため)。"""
     raw = str(text or "")
@@ -444,7 +451,7 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
                 targets = _targets(cfg, company, info.roles, None, dry_run)
             messages = [msg]
         else:
-            targets = _targets(cfg, company, info.roles, added_text(entry.body), dry_run)
+            targets = _targets(cfg, company, info.roles, changed_text(entry.body), dry_run)
             archive_url = archive_status = ""
             if use_wayback and not dry_run:
                 wb = cfg.network.get("wayback") or {}

@@ -348,3 +348,14 @@ class WaybackSpn2Test(unittest.TestCase):
         self.assertEqual(reason, "")
         self.assertEqual(url, "https://web.archive.org/web/20261113120000/http://x/")
         self.assertEqual(calls[0][1], "LOW AK:SK")
+
+
+class ChangedTextTest(unittest.TestCase):
+    def test_removed_lines_included_for_routing(self):
+        from watchlib.runners import changed_text
+        body = "--- a\n+++ b\n@@ -1 +1 @@\n-仕上げ募集\n+制作進行募集\n 変わらない行"
+        text = changed_text(body)
+        self.assertIn("仕上げ募集", text)
+        self.assertIn("制作進行募集", text)
+        self.assertNotIn("変わらない行", text)
+        self.assertNotIn("---", text)
