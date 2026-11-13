@@ -10,6 +10,7 @@
 環境変数:
   RSSHUB_BASE_URL     RSSHub のURL(--base でも指定可)
   RSSHUB_ACCESS_KEY   RSSHub のアクセスキー(使っている場合)
+  RSSHUB_BASE_URL_2 / RSSHUB_ACCESS_KEY_2   2つ目の RSSHub(省略可。_5 まで)。交互に使い、失敗したら別のもので取り直す
   YOUTUBE_API_KEY     YouTube Data API のキー(YouTube の監視に使う)
   DISCORD_BOT_TOKEN   Discord Bot のトークン(--dry-run / --list では不要)
 
@@ -65,7 +66,15 @@ def main(argv=None) -> int:
         print("RSSHub のURLがありません。--base か環境変数 RSSHUB_BASE_URL を指定してください。")
         return 2
     key = os.environ.get("RSSHUB_ACCESS_KEY") or None
-    feeds, errors = build_feeds(cfg, base, key, args.only, apply_filter=not args.no_filter)
+    # 2つ目以降の RSSHub(RSSHUB_BASE_URL_2 / RSSHUB_ACCESS_KEY_2, … _5まで)。アクセスキーが無ければ、1つ目と同じキーを使う
+    extra = []
+    for n in range(2, 6):
+        b = (os.environ.get(f"RSSHUB_BASE_URL_{n}") or "").strip()
+        if b:
+            extra.append((b, os.environ.get(f"RSSHUB_ACCESS_KEY_{n}") or key))
+    feeds, errors = build_feeds(cfg, base, key, args.only, apply_filter=not args.no_filter, extra_instances=extra)
+    if extra:
+        print(f"RSSHub は{1 + len(extra)}つ使います(交互に使い、失敗したら別のもので取り直します)。")
 
     if args.list:
         for f in feeds:

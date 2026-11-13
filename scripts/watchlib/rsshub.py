@@ -43,6 +43,7 @@ class Feed:
     handle: str = ""
     include: list[str] = field(default_factory=list)   # direct のとき、こちらで絞る語(RSSHub の filter の代わり)
     exclude: list[str] = field(default_factory=list)
+    alt_urls: list[str] = field(default_factory=list)  # 2つ目以降の RSSHub インスタンスの取得用URL(アクセスキー付き。ログに出さない)
     channel_title: str = ""     # YouTube のチャンネル名(取得できたときだけ。会社と合っているかをログで確かめる用)
 
 
@@ -424,8 +425,20 @@ def company_feeds(cfg: Config, company: dict, base: str, access_key: str | None 
     return feeds, errors
 
 
+def alt_request_url(feed: Feed, base: str, other_base: str, other_key: str | None) -> str:
+    """feed の取得用URLを、別の RSSHub インスタンス用にする(ベースURLとアクセスキーを入れ替える)。"""
+    prefix = base.rstrip("/")
+    shown = feed.url
+    if not shown.startswith(prefix):
+        raise FeedBuildError(f"{feed.key}: URLがベースURLで始まっていません")
+    moved = other_base.rstrip("/") + shown[len(prefix):]
+    return _with_query(moved, f"key={urllib.parse.quote(other_key, safe='')}" if other_key else "")
+
+
 def build_feeds(cfg: Config, base: str, access_key: str | None = None, only: str | None = None,
-                apply_filter: bool = True) -> tuple[list[Feed], list[tuple[str, str]]]:
+                apply_filter: bool = True, extra_instances: list[tuple[str, str | None]] | None = None
+                ) -> tuple[list[Feed], list[tuple[str, str]]]:
+    """extra_instances に (ベースURL, アクセスキー) を渡すと、各フィードに2つ目以降の RSSHub の取得用URLも持たせる。"""
     feeds: list[Feed] = []
     errors: list[tuple[str, str]] = []
     for company in cfg.companies:
@@ -434,6 +447,9 @@ def build_feeds(cfg: Config, base: str, access_key: str | None = None, only: str
         f, e = company_feeds(cfg, company, base, access_key, apply_filter)
         feeds += f
         errors += e
+    for feed in feeds:
+        if not feed.direct:
+            feed.alt_urls = [alt_request_url(feed, base, b, k) for b, k in (extra_instances or [])]
     return feeds, errors
 
 

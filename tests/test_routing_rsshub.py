@@ -553,3 +553,75 @@ class RateLimitTest(unittest.TestCase):
             return []
         self._run(fetch, feeds, st)
         self.assertEqual(order[0], "http://hub/4")
+
+
+class MultiInstanceTest(unittest.TestCase):
+    """RSSHub を2つ使う: 交互に使い、失敗したら別のもので取り直す。"""
+
+    def _feeds(self, n):
+        from watchlib.rsshub import Feed
+        return [Feed(key=f"c{i}:x:user:a{i}", company_id=str(i), company_slug=f"c{i}", company_name=f"c{i}", platform="x",
+                     platform_label="X", kind="user", label="x", url=f"http://one/{i}", request_url=f"http://one/{i}?key=K1",
+                     alt_urls=[f"http://two/{i}?key=K2"]) for i in range(n)]
+
+    def _run(self, fetch, n=6):
+        from types import SimpleNamespace
+        from watchlib.runners import run_rsshub
+        from watchlib.state import State
+        cfg = SimpleNamespace(sns={"fetch": {"retry_rounds": 0, "concurrency": 1, "rate_limit": {"enabled": False}}},
+                              discord_channels={"errors": "E"}, company=lambda s: {})
+        logs = []
+        res = run_rsshub(cfg, self._feeds(n), State(None), _Bot(), dry_run=True, fetch=fetch, request_interval=0,
+                         error_renotify_hours=0, sleep=lambda s: None, log=logs.append)
+        return res, logs
+
+    def test_alternates_between_instances(self):
+        used = []
+
+        def fetch(url):
+            used.append(url.split("/")[2])
+            return []
+        self._run(fetch, 6)
+        self.assertEqual(used, ["one", "two", "one", "two", "one", "two"])
+
+    def test_failover_to_other_instance(self):
+        from watchlib.rsshub import FeedFetchError
+        calls = []
+
+        def fetch(url):
+            calls.append(url)
+            if url.startswith("http://one/"):
+                raise FeedFetchError("タイムアウト")
+            return []
+        res, logs = self._run(fetch, 4)
+        self.assertEqual(res.errors, [])                                  # 2つ目で取れたのでエラーにならない
+        self.assertTrue(any("[切替]" in l and "2つ目で取得" in l for l in logs))
+        self.assertTrue(any("[RSSHub]" in l and "1つ目: 要求" in l for l in logs))
+        self.assertFalse(any("K1" in l or "K2" in l for l in logs))       # アクセスキーはログに出ない
+
+    def test_both_fail_reports_both(self):
+        from watchlib.rsshub import FeedFetchError
+
+        def fetch(url):
+            raise FeedFetchError("タイムアウト" if "one" in url else "HTTP 503")
+        res, _ = self._run(fetch, 1)
+        self.assertEqual(len(res.errors), 1)
+        msg = res.errors[0][1]
+        self.assertIn("RSSHub 1つ目: タイムアウト", msg)
+        self.assertIn("RSSHub 2つ目: HTTP 503", msg)
+
+    def test_build_feeds_adds_alt_urls(self):
+        import sys
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        sys.path.insert(0, str(root / "scripts"))
+        from watchlib.config import load_config
+        from watchlib.rsshub import build_feeds
+        feeds, _ = build_feeds(load_config(root), "https://one.example", "K1", "cloverworks",
+                               extra_instances=[("https://two.example/", "K2")])
+        x = [f for f in feeds if not f.direct]
+        self.assertTrue(x)
+        for f in x:
+            self.assertTrue(f.request_url.startswith("https://one.example/") and "key=K1" in f.request_url)
+            self.assertTrue(f.alt_urls[0].startswith("https://two.example/") and "key=K2" in f.alt_urls[0])
+            self.assertNotIn("one.example", f.alt_urls[0])

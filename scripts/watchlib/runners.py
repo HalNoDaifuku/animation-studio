@@ -241,12 +241,38 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
     workers = max(1, int(opts.get("concurrency", 1)))
     yt_timeout = int((opts.get("youtube") or {}).get("timeout_seconds", timeout))
 
+    import itertools
+    rr = itertools.count()                       # 交互に使うための通し番号
+    stats: dict[int, list[int]] = {}             # インスタンスごとの [要求数, 失敗数, 別のインスタンスから切り替えて成功した数]
+    n_instances = 1 + max((len(f.alt_urls) for f in feeds), default=0)
+    if n_instances > 1:
+        stats = {i: [0, 0, 0] for i in range(n_instances)}
+
     def fetch_one(feed: Feed) -> list:
         if feed.direct == "youtube_api":   # RSSHub を通さず、YouTube Data API(公式)で取得
             return fetch_youtube_api(feed, youtube_api_key, resolved=state.channels, timeout=yt_timeout, opener=youtube_opener)
         if feed.direct == "youtube":   # RSSHub を通さず、YouTube の公式フィードを直接読む
             return fetch_youtube(feed, resolved=state.channels, timeout=yt_timeout, opener=youtube_opener)
-        return fetch(feed.request_url)
+        urls = [feed.request_url] + list(feed.alt_urls)
+        if len(urls) == 1:
+            return fetch(urls[0])
+        # 複数の RSSHub を交互に使う(要求ごとに、最初に使うものを順番に変える)。失敗したら、残りのインスタンスで取り直す。
+        start = next(rr) % len(urls)
+        order = [(start + k) % len(urls) for k in range(len(urls))]
+        problems: dict[int, str] = {}
+        for attempt, idx in enumerate(order):
+            stats[idx][0] += 1
+            try:
+                items = fetch(urls[idx])
+            except FeedFetchError as e:
+                stats[idx][1] += 1
+                problems[idx] = str(e)
+                continue
+            if attempt:
+                stats[idx][2] += 1
+                log(f"[切替] {feed.key}: RSSHub {order[0] + 1}つ目で失敗({_safe(problems[order[0]], 60)})→{idx + 1}つ目で取得しました")
+            return items
+        raise FeedFetchError(" / ".join(f"RSSHub {i + 1}つ目: {problems[i]}" for i in sorted(problems)))
 
     rl = opts.get("rate_limit") or {}
     rl_on = bool(rl.get("enabled", True))
@@ -265,7 +291,7 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
             chunk, queue = queue[:rl_chunk], queue[rl_chunk:]
             got = list(_fetch_all(chunk, fetch_one, workers, interval, sleep, clock))
             probes = [g for g in got if not g[0].direct]   # YouTube 公式APIは、この制限とは別
-            limited = [g for g in probes if g[2] is not None and "タイムアウト" in str(g[2])]
+            limited = [g for g in probes if g[2] is not None and str(g[2]).count("タイムアウト") >= 1 + len(g[0].alt_urls)]   # 全インスタンスがタイムアウト
             if rl_on and len(probes) >= 4 and len(limited) >= rl_ratio * len(probes):
                 log(f"[制限の疑い] {len(probes)}件中{len(limited)}件がタイムアウトしました(RSSHub/X の要求制限の可能性)")
                 retry = [g[0] for g in got if g[2] is not None and g[0] in [x[0] for x in limited]]
@@ -318,6 +344,8 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
                           dry_run=dry_run, notify_on_first_run=notify_on_first_run, limit=limit, log=log)
         pending = failed
 
+    if stats:
+        log("[RSSHub] " + " / ".join(f"{i + 1}つ目: 要求{s[0]}件・失敗{s[1]}件・他から切り替えて成功{s[2]}件" for i, s in sorted(stats.items())))
     unresolved = [(f.key, last_error[f.key]) for f in pending + still_failed] + list(build_errors or [])
     if skipped:   # 個別のエラーにはせず、1件にまとめて必ず知らせる
         unresolved.append(("RSSHub/X の要求制限(疑い)", f"{len(skipped)}件を今回は取得できませんでした。次回の実行で、取得してから長いものを優先して取り直します"))
