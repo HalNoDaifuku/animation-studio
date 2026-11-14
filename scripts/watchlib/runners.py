@@ -170,11 +170,13 @@ def _process_feed(cfg: Config, feed: Feed, items: list, state: State, bot, resul
                                  published=item.published)
         targets = _targets(cfg, company, feed.hint_roles, item.text, dry_run)
         irrelevant_ch = (cfg.discord_channels.get("irrelevant") or {}).get("sns")
+        verdict_note = ""
         if classifier is not None and classifier.enabled and irrelevant_ch and targets:
             verdict, reason = classifier.judge(feed.company_name, item.text)
             if verdict is False:
                 targets = [Target(irrelevant_ch)]
-                text = text + f"\n🤖 AI判定: 就活に関係なし(理由: {reason or '不明'})"
+                # 投稿の本文はそのまま送り、AI判定は別のメッセージにする(手動で転送するとき、余計なものが付かないように)
+                verdict_note = f"🤖 AI判定: 就活に関係なし\n理由: {reason or '不明'}"
                 log(f"[関連判定] 関係なし: {feed.company_name} / {_safe(item.text, 60)}(理由: {_safe(reason, 60)})")
             elif verdict is None and reason:
                 log(f"[関連判定] 判定できないため、関係ありとして送ります: {reason}")
@@ -191,6 +193,12 @@ def _process_feed(cfg: Config, feed: Feed, items: list, state: State, bot, resul
             except DiscordError as e:
                 ok = False
                 result.send_failures.append(f"{feed.key} → {_mask(t.channel_id)}: {e}")
+                continue
+            if verdict_note:   # 本文は送れた。判定のメッセージが送れなくても、本文を再送しない(重複を避ける)
+                try:
+                    bot.send_message(t.channel_id, verdict_note, suppress_embeds=True)
+                except DiscordError as e:
+                    log(f"[関連判定] 判定のメッセージを送れませんでした: {_safe(str(e), 100)}")
         if ok and not dry_run:
             state.mark(feed.key, [item.id])  # 送れなかったものは既読にせず、次回また試す
     if not dry_run:

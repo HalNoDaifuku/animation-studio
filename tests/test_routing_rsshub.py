@@ -711,15 +711,16 @@ class RelevanceTest(unittest.TestCase):
 
     def test_irrelevant_goes_to_other_channel(self):
         sent, c = self._run(["判定: 関係あり\n理由: 募集", "判定: 関係なし\n理由: 宣伝", "判定: 関係あり\n理由: 採用"])
-        chans = sorted(ch for ch, _ in sent)
-        self.assertEqual(chans, ["FB", "FB", "IRR"])
-        irr = [m for ch, m in sent if ch == "IRR"][0]
-        self.assertIn("AI判定: 就活に関係なし(理由: 宣伝)", irr)
+        self.assertEqual(sorted(ch for ch, _ in sent), ["FB", "FB", "IRR", "IRR"])
+        irr = [m for ch, m in sent if ch == "IRR"]
+        self.assertEqual(len(irr), 2)
+        self.assertNotIn("AI判定", irr[0])                       # 投稿の本文は、そのまま
+        self.assertEqual(irr[1], "🤖 AI判定: 就活に関係なし\n理由: 宣伝")   # 判定は、別のメッセージ
         self.assertEqual(c.irrelevant, 1)
 
     def test_failure_and_unreadable_are_treated_as_relevant(self):
         sent, c = self._run([500, 500, "よく分からない", "判定: 関係なし\n理由: x"], n=3)   # 500 は1回だけ取り直す
-        self.assertEqual([ch for ch, _ in sent], ["FB", "FB", "IRR"])
+        self.assertEqual([ch for ch, _ in sent], ["FB", "FB", "IRR", "IRR"])
         self.assertEqual(c.failed, 2)
 
     def test_quota_stops_calls_and_sends_normally(self):
@@ -734,5 +735,5 @@ class RelevanceTest(unittest.TestCase):
 
     def test_per_run_limit(self):
         sent, c = self._run(["判定: 関係なし\n理由: a"], n=3, max_per_run=1)
-        self.assertEqual(sorted(ch for ch, _ in sent), ["FB", "FB", "IRR"])
+        self.assertEqual(sorted(ch for ch, _ in sent), ["FB", "FB", "IRR", "IRR"])
         self.assertEqual(c.used, 1)
