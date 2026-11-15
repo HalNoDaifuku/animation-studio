@@ -187,6 +187,9 @@ def make_root(discord_base: str | None = None, *, roles_to_channels: dict | None
     root = Path(tempfile.mkdtemp(prefix="wc-test-"))
     (root / "config").mkdir()
     shutil.copy(REPO / "config" / "common.yaml", root / "config" / "common.yaml")
+    # 最短の取得間隔は、試験では0にする(同じ状態で何度も実行するため)。間隔の試験は、別に行う
+    p = root / "config" / "common.yaml"
+    p.write_text(p.read_text(encoding="utf-8").replace("min_interval_minutes: 120", "min_interval_minutes: 0"), encoding="utf-8")
     shutil.copy(REPO / "config" / "ai.yaml", root / "config" / "ai.yaml")
     (root / "db" / "companies").mkdir(parents=True)
     (root / "db" / "portals").mkdir()

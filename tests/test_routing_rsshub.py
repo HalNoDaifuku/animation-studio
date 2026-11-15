@@ -737,3 +737,46 @@ class RelevanceTest(unittest.TestCase):
         sent, c = self._run(["判定: 関係なし\n理由: a"], n=3, max_per_run=1)
         self.assertEqual(sorted(ch for ch, _ in sent), ["FB", "FB", "IRR", "IRR"])
         self.assertEqual(c.used, 1)
+
+
+class MinIntervalTest(unittest.TestCase):
+    """同じアカウントは、最短間隔(分)がたつまで取得しない。会社ごとの指定が優先。時刻の少しのずれでは飛ばさない(grace)。"""
+
+    def _run(self, fetched_minutes_ago, default_min=120, company_min=None, grace=10):
+        import time
+        from types import SimpleNamespace
+        from watchlib.rsshub import Feed
+        from watchlib.runners import run_rsshub
+        from watchlib.state import State
+        company = {"sns": {"min_interval_minutes": company_min}} if company_min is not None else {}
+        cfg = SimpleNamespace(sns={"fetch": {"retry_rounds": 0, "concurrency": 1, "rate_limit": {"enabled": False},
+                                             "min_interval_minutes": default_min, "min_interval_grace_minutes": grace}},
+                              discord_channels={"errors": "E"}, job_roles={}, company=lambda s: company)
+        feed = Feed(key="c:x:user:a", company_id="1", company_slug="c", company_name="会社", platform="x", platform_label="X",
+                    kind="user", label="x", url="u", request_url="http://hub/1")
+        state = State(None)
+        if fetched_minutes_ago is not None:
+            state.fetched[feed.key] = time.time() - fetched_minutes_ago * 60
+        calls, logs = [], []
+        run_rsshub(cfg, [feed], state, _Bot(), dry_run=True, fetch=lambda u: calls.append(u) or [], request_interval=0,
+                   error_renotify_hours=0, sleep=lambda s: None, log=logs.append)
+        return len(calls), logs
+
+    def test_never_fetched_is_fetched(self):
+        self.assertEqual(self._run(None)[0], 1)
+
+    def test_skipped_within_interval(self):
+        n, logs = self._run(60)
+        self.assertEqual(n, 0)
+        self.assertTrue(any("[間隔]" in l for l in logs))
+
+    def test_grace_for_scheduler_jitter(self):
+        self.assertEqual(self._run(112)[0], 1)      # 120 - 10 = 110分より前なので、取得する
+        self.assertEqual(self._run(105)[0], 0)
+
+    def test_company_setting_overrides(self):
+        self.assertEqual(self._run(100, company_min=30)[0], 1)
+        self.assertEqual(self._run(100, company_min=180)[0], 0)
+
+    def test_zero_means_always(self):
+        self.assertEqual(self._run(1, default_min=0)[0], 1)

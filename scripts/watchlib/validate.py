@@ -476,6 +476,9 @@ def check_sns(c: _Collector, cfg: Config, company: dict, f: str) -> None:
     if not isinstance(sns, dict):
         c.error(f, "sns が必要です(アカウントが無くても accounts: {} などで書く)")
         return
+    mi = sns.get("min_interval_minutes")
+    if mi is not None and (isinstance(mi, bool) or not isinstance(mi, (int, float)) or mi < 0):
+        c.error(f"{f}: sns.min_interval_minutes", "0以上の数字(分)で書いてください")
     accounts = sns.get("accounts") or {}
     if not isinstance(accounts, dict):
         c.error(f"{f}: sns.accounts", "辞書にしてください")

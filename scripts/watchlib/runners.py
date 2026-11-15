@@ -351,6 +351,24 @@ def run_rsshub(cfg: Config, feeds: list[Feed], state: State, bot, *, dry_run: bo
 
     result = RunResult(errors=[])
     last_error: dict[str, str] = {}
+    # 前回の取得から、最短間隔(min_interval_minutes。会社ごとに sns.min_interval_minutes で変えられる)がたっていないフィードは、今回は取らない。
+    # 実行が1時間ごとでも、RSSHub への要求を減らすため(Vercel の無料枠を守る)。実行の時刻が少しずれても飛ばされないよう、grace 分は差し引く。
+    now_ts = time.time()
+    grace = float(opts.get("min_interval_grace_minutes", 10))
+    default_min = float(opts.get("min_interval_minutes", 0))
+    due: list[Feed] = []
+    waiting = 0
+    for f in feeds:
+        own = ((cfg.company(f.company_slug) or {}).get("sns") or {}).get("min_interval_minutes")
+        minutes = float(default_min if own is None else own)
+        last = state.fetched.get(f.key)
+        if minutes > 0 and last is not None and now_ts - last < (minutes - grace) * 60:
+            waiting += 1
+            continue
+        due.append(f)
+    if waiting:
+        log(f"[間隔] 前回の取得から最短間隔(既定{default_min:g}分)がたっていない{waiting}件は、今回は取得しません。取得するのは{len(due)}件です")
+    feeds = due
     pending = sorted(feeds, key=lambda f: state.fetched.get(f.key, 0.0))   # 最後に取得できてから長いものを先に
     still_failed: list[Feed] = []
     started = clock()
