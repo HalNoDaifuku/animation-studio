@@ -17,6 +17,7 @@ class State:
         self.fetched: dict[str, float] = {}  # キー → 最後に取得できた時刻(UNIX秒)。古いものから先に取得するため
         self.last_instance: int | None = None  # 最後に使った RSSHub の番号(0始まり)。次回は、これとは別のものから使い始める
         self.errors: dict[str, float] = {}  # キー → 最後にエラー通知を送った時刻(UNIX秒)
+        self.web_fails: dict[str, int] = {}  # サイト監視の名前 → 実行を続けて失敗した回数(一時的なエラーを、すぐには通知しないため)
         if self.path and self.path.exists():
             try:
                 data = json.loads(self.path.read_text(encoding="utf-8"))
@@ -24,6 +25,7 @@ class State:
                 self.errors = {k: float(v) for k, v in (data.get("errors") or {}).items()}
                 self.channels = {k: str(v) for k, v in (data.get("channels") or {}).items()}
                 self.fetched = {k: float(v) for k, v in (data.get("fetched") or {}).items()}
+                self.web_fails = {k: int(v) for k, v in (data.get("web_fails") or {}).items()}
                 li = data.get("last_instance")
                 self.last_instance = int(li) if isinstance(li, int) and not isinstance(li, bool) and li >= 0 else None
             except (ValueError, OSError, AttributeError):
@@ -56,11 +58,16 @@ class State:
 
     def clear_error(self, key: str) -> None:
         self.errors.pop(key, None)
+        self.web_fails.pop(key, None)
+
+    def bump_fail(self, key: str) -> int:
+        self.web_fails[key] = self.web_fails.get(key, 0) + 1
+        return self.web_fails[key]
 
     def save(self) -> None:
         if not self.path:
             return
         self.path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.path.with_suffix(self.path.suffix + ".tmp")
-        tmp.write_text(json.dumps({"feeds": self.feeds, "errors": self.errors, "channels": self.channels, "fetched": self.fetched, "last_instance": self.last_instance}, ensure_ascii=False, indent=1), encoding="utf-8")
+        tmp.write_text(json.dumps({"feeds": self.feeds, "errors": self.errors, "channels": self.channels, "fetched": self.fetched, "last_instance": self.last_instance, "web_fails": self.web_fails}, ensure_ascii=False, indent=1), encoding="utf-8")
         os.replace(tmp, self.path)

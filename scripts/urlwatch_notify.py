@@ -151,7 +151,8 @@ def main(argv=None) -> int:
                                skip_new=args.skip_new, baseline=args.baseline, use_wayback=args.wayback, entries=entries,
                                explain_unreported=args.explain_unreported,
                                state=None if args.report else error_state,
-                               error_renotify_hours=float(cfg.web.get("error_renotify_hours", 24)))
+                               error_renotify_hours=float(cfg.web.get("error_renotify_hours", 24)),
+                               error_min_failures=int(cfg.web.get("error_min_failures", 1)))
     sent.sent += result.sent
     print(f"送信 {sent.sent}件 / 省略(NEW) {sent.skipped}件 / 送信失敗 {len(sent.send_failures)}件")
     for line in sent.send_failures + result.send_failures:

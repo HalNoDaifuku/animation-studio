@@ -245,6 +245,25 @@ class UrlwatchE2E(unittest.TestCase):
         self.go("--skip-new", "--retry-rounds", "0")
         self.assertEqual(len(self.discord.messages(CH_ERR)), 3)    # 3回の実行で、毎回1件ずつ
 
+    def test_error_is_held_until_it_fails_in_consecutive_runs(self):
+        import yaml
+        cp = self.root / "config" / "common.yaml"
+        d = yaml.safe_load(cp.read_text(encoding="utf-8"))
+        d["web"]["error_min_failures"] = 3
+        cp.write_text(yaml.safe_dump(d, allow_unicode=True), encoding="utf-8")
+        for _ in range(2):
+            self.go("--skip-new", "--retry-rounds", "0")
+            self.assertEqual(self.discord.messages(CH_ERR), [])        # 1回目・2回目は、通知しない
+        self.go("--skip-new", "--retry-rounds", "0")
+        self.assertEqual(len(self.discord.messages(CH_ERR)), 1)        # 3回続けて失敗したので、通知する
+        self.go("--skip-new", "--retry-rounds", "0")
+        self.assertEqual(len(self.discord.messages(CH_ERR)), 2)        # その後は、続く限り毎回
+        self.web.pages["/missing/"] = "<html><body><p>復活</p></body></html>"
+        self.go("--skip-new", "--retry-rounds", "0")                   # 直ったら、回数は0に戻る
+        self.web.pages.pop("/missing/")
+        self.go("--skip-new", "--retry-rounds", "0")
+        self.assertEqual(len(self.discord.messages(CH_ERR)), 2)        # また1回目からなので、通知しない
+
     def test_bot_challenge_page_is_an_error_not_a_change(self):
         challenge = "<html><body><p>One moment, please...</p><p>Please wait while your request is being verified...</p></body></html>"
         self.go("--skip-new")                                       # 通常のページを保存

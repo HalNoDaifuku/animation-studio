@@ -451,7 +451,7 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
                         capture: Callable[[str], tuple[str, str]] | None = None,
                         probe: Callable[[str], str] | None = probe_url,
                         entries: list[ReportEntry] | None = None, state: State | None = None, explain_unreported: bool = False,
-                        error_renotify_hours: float = 24, summarizer=None, now: Callable[[], datetime] | None = None,
+                        error_renotify_hours: float = 24, error_min_failures: int = 1, summarizer=None, now: Callable[[], datetime] | None = None,
                         log: Callable[[str], None] = print) -> RunResult:
     """entries を渡すと、report_text を読み直さずそれを使う(再取得で差し替えた結果を渡すため)。
     state を渡すと、同じジョブのエラーは error_renotify_hours 時間は繰り返し通知しない(エラーが直ったら記録を消す)。"""
@@ -496,6 +496,10 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
         shown_url = info.url if info.is_command else (entry.url or info.url)  # command ジョブは、報告にコマンドが出るので表示用URLを使う
         if entry.status == "ERROR":
             if state is not None and not dry_run:
+                fails = state.bump_fail(entry.name)
+                if fails < error_min_failures:   # 一時的なエラー(ネットワークの不調など)かもしれないので、続けて失敗してから通知する
+                    log(f"[エラー保留] {entry.name}: 実行を続けて{fails}回目の失敗です({error_min_failures}回続いたら通知します)")
+                    continue
                 if not state.error_due(entry.name, error_renotify_hours):
                     log(f"[エラー通知を省略] {entry.name}: 前回の通知から{error_renotify_hours:g}時間以内です")
                     continue
