@@ -16,12 +16,44 @@ import time
 
 USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
               "Chrome/131.0.0.0 Safari/537.36")
-CHALLENGE_MARKERS = ("Checking your browser", "Just a moment", "cf-browser-verification", "ブラウザを確認", "Access denied")
+CHALLENGE_MARKERS = ("Checking your browser", "Just a moment", "cf-browser-verification")
 
 
-def looks_like_challenge(html: str) -> bool:
-    head = html[:6000]
-    return any(m in head for m in CHALLENGE_MARKERS)
+def load_markers() -> list[str]:
+    """config/common.yaml の web.bot_challenge.markers(urlwatch の botguard が使う目印。正規表現)と、同じものを使う。"""
+    import re
+    markers = list(CHALLENGE_MARKERS)
+    try:
+        import yaml
+        with open("config/common.yaml", encoding="utf-8") as f:
+            c = (yaml.safe_load(f).get("web") or {}).get("bot_challenge") or {}
+        markers += [str(m) for m in (c.get("markers") or []) if str(m)]
+    except Exception:  # noqa: BLE001 - 読めなければ、組み込みの目印だけ
+        pass
+    return [re.compile(m, re.I) for m in markers if _valid(m)]
+
+
+def _valid(pattern: str) -> bool:
+    import re
+    try:
+        re.compile(pattern)
+        return True
+    except re.error:
+        return False
+
+
+def looks_like_challenge(html: str, markers=None) -> bool:
+    import re
+    ms = markers if markers is not None else load_markers()
+    return any((m.search(html) if hasattr(m, "search") else re.search(m, html, re.I)) for m in ms)
+
+
+def describe(html: str) -> str:
+    """失敗の原因を調べやすいように、ページのタイトルと、見えている文章の先頭を返す。"""
+    import re
+    title = re.search(r"(?is)<title[^>]*>(.*?)</title>", html)
+    body = re.sub(r"(?is)<(script|style)\b.*?</\1>|<[^>]+>", " ", html)
+    return f"title={' '.join((title.group(1) if title else '').split())[:60]!r} text={' '.join(body.split())[:100]!r}"
 
 
 def fetch(url: str, *, timeout: float, retries: int, sleep_seconds: float, wait_selector: str | None, log=print) -> str:
@@ -29,7 +61,8 @@ def fetch(url: str, *, timeout: float, retries: int, sleep_seconds: float, wait_
     from playwright.sync_api import TimeoutError as PlaywrightTimeout
     from playwright.sync_api import sync_playwright
 
-    last = "不明なエラー"
+    last = "unknown error"
+    markers = load_markers()
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--disable-blink-features=AutomationControlled"])
         try:
@@ -51,21 +84,21 @@ def fetch(url: str, *, timeout: float, retries: int, sleep_seconds: float, wait_
                         except PlaywrightTimeout:
                             pass   # 広告などで通信が止まらないページ。ここまでの内容を使う
                     html = page.content()
-                    for _ in range(3):   # 確認ページなら、通過するのを待って読み直す
-                        if not looks_like_challenge(html):
+                    for _ in range(10):   # 確認ページなら、通過するのを待って読み直す(最大30秒)
+                        if not looks_like_challenge(html, markers):
                             break
-                        time.sleep(5)
+                        time.sleep(3)
                         html = page.content()
                     status = response.status if response else 0
                     if status >= 400:
                         last = f"HTTP {status}"
                         continue
-                    if looks_like_challenge(html):
-                        last = "bot対策の確認ページのままでした"
+                    if looks_like_challenge(html, markers):
+                        last = f"still a bot-challenge page after 30s ({describe(html)})"
                         continue
                     return html
                 except PlaywrightTimeout:
-                    last = "時間内に読み込めませんでした(タイムアウト)"
+                    last = "timeout (the site did not respond in time; the server may block cloud IP addresses)"
                 except PlaywrightError as e:
                     last = " ".join(str(e).split())[:200]
         finally:
@@ -84,7 +117,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         html = fetch(a.url, timeout=a.timeout, retries=a.retries, sleep_seconds=a.sleep, wait_selector=a.wait_selector)
     except Exception as e:  # noqa: BLE001 - 終了コードとメッセージで知らせる
-        print(f"ブラウザでの取得に失敗しました: {e}", file=sys.stderr)
+        print(f"browser fetch failed: {e}", file=sys.stderr)
         return 1
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stdout.write(html)
