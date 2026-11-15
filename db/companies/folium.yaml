@@ -1,0 +1,66 @@
+# =============================================================================
+# db/companies/folium.yaml — Folium
+# =============================================================================
+# 2026-11-16 に Hal の依頼で追加しました。公式サイトはありません(Hal 確認)。
+#   確認済み: SNSアカウント(Hal が指定した X と YouTube)
+#   未確認: 所在地・設立年・正式な社名表記(日本語の表記が分かれば name を直す)。
+#   roles は Anime News Network のクレジット(2026-11-16 確認)から付けました。
+#     撮影(Photography / Composite)=compositing、3DCG=cg_3d、仕上げ(Finish Animation)=finishing、背景美術=background_art。
+#     出典: https://www.animenewsnetwork.com/encyclopedia/company.php?id=23465
+#   採用ページの監視(monitors)は、採用ページが見つかったら追加してください。
+
+schema_version: 1
+
+id: 302bfbb0-7a2d-410c-823e-0cd49962f379
+slug: folium
+
+name: Folium
+display_name: Folium
+name_en: Folium
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: null
+  city: null
+  area: null
+  address: null
+
+roles:
+  - compositing
+  - cg_3d
+  - finishing
+  - background_art
+
+related_companies: []
+
+website: null
+
+sns:
+  accounts:
+    x:
+      # 出典: Hal の指定(2026-11-16) https://x.com/Folium_Info
+      - handle: Folium_Info
+        label: メイン
+        monitor: true
+    youtube:
+      # 出典: Hal の指定(2026-11-16) https://www.youtube.com/@folium8628
+      - handle: folium8628
+        label: メイン
+        monitor: true
+    instagram:
+      - handle: null
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [Folium]
+    use_presets: []
+    custom: {}
+
+monitors: []
