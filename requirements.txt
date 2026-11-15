@@ -7,3 +7,5 @@ cssbeautifier>=1.15
 # scripts/fetch_urlwatch_last_good.py(グラフィニカなどの command ジョブ)が使う
 html2text>=2020.1.16
 requests>=2.31
+# scripts/fetch_browser.py(403・確認ページで断られるサイトを、ブラウザで取得する)が使う。ブラウザ本体は watch.yml で入れる
+playwright>=1.40

@@ -66,6 +66,9 @@ monitors:
     url: https://www.c2c2009.com/recruit/
     category: recruit
     enabled: true
+    # 通常の取得だと断られる(403・確認ページ・接続タイムアウト)ため、ブラウザ(Playwright)で開く。scripts/fetch_browser.py
+    fetch:
+      mode: browser
     roles: []
     snippets: []
     skip_common_excludes: []

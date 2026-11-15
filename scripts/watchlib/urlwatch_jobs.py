@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import shlex
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -68,6 +69,12 @@ def build_jobs(cfg: Config, only: str | None = None) -> tuple[list[dict], list[J
                 continue
             name = job_name(monitor, company)
             command = monitor.get("command")
+            fetch_opts = monitor.get("fetch") or {}
+            if not command and fetch_opts.get("mode") == "browser":
+                # 通常の取得が 403・確認ページで断られるサイト: ブラウザ(Playwright)で開いた後のHTMLを使う
+                command = f"python scripts/fetch_browser.py --url {shlex.quote(monitor['url'])}" + "".join(
+                    f" --{k.replace('_', '-')} {shlex.quote(str(v))}" for k, v in fetch_opts.items()
+                    if k in ("timeout", "retries", "sleep", "wait_selector"))
             job: dict = {"name": name, **({"command": command} if command else {"url": monitor["url"]})}
             if not command:  # command(shell)ジョブには、HTTP用の既定値(ignore_http_error_codes など)は使えない
                 job.update(copy.deepcopy(defaults))
@@ -81,7 +88,7 @@ def build_jobs(cfg: Config, only: str | None = None) -> tuple[list[dict], list[J
                 own_filter[(at + 1 if at is not None else len(own_filter)):(at + 1 if at is not None else len(own_filter))] = text_filters
             filters = common_excludes(cfg, monitor) + own_filter
             guard = bot_guard_filter(cfg)
-            if guard and not command:
+            if guard and (not command or fetch_opts.get("mode") == "browser"):
                 filters.insert(0, guard)  # HTMLのまま、いちばん先に確認ページを検出する
             if filters:
                 job["filter"] = filters

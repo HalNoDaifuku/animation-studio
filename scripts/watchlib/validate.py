@@ -603,6 +603,16 @@ def check_monitors(c: _Collector, cfg: Config, company: dict, f: str, company_ro
         urls.add(str(url))
         if m.get("job_name") is not None and (not isinstance(m["job_name"], str) or not m["job_name"].strip()):
             c.error(w, "job_name は空でない文字列にしてください")
+        fo = m.get("fetch")
+        if fo is not None:
+            if not isinstance(fo, dict) or fo.get("mode") not in ("browser",):
+                c.error(w, "fetch は {mode: browser} の形で書いてください")
+            elif m.get("command"):
+                c.error(w, "fetch と command は、同時に書けません")
+            else:
+                for k in fo:
+                    if k not in ("mode", "timeout", "retries", "sleep", "wait_selector"):
+                        c.error(w, f"fetch.{k} は使えません(使えるのは mode / timeout / retries / sleep / wait_selector)")
         if m.get("command") is not None and (not isinstance(m["command"], str) or not m["command"].strip()):
             c.error(w, "command は空でない文字列にしてください(url は表示用として必要です)")
         if "enabled" in m and not isinstance(m["enabled"], bool):

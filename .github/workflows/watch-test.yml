@@ -56,6 +56,12 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
+      - name: ブラウザの準備(ブラウザで取得するサイトがあるときだけ)
+        run: |
+          if grep -rqs "mode: browser" db/companies; then
+            python -m playwright install --with-deps chromium
+          fi
+
       - name: 設定ファイルのチェック
         run: python scripts/check_companies.py
 

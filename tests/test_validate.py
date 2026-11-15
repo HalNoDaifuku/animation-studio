@@ -359,3 +359,37 @@ class ChangedTextTest(unittest.TestCase):
         self.assertIn("制作進行募集", text)
         self.assertNotIn("変わらない行", text)
         self.assertNotIn("---", text)
+
+
+class BrowserFetchTest(unittest.TestCase):
+    """fetch: {mode: browser} の monitor は、ブラウザ取得の command ジョブになる(フィルターは、そのまま使える)。"""
+
+    def _cfg(self, fetch):
+        import sys
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        sys.path.insert(0, str(root / "scripts"))
+        from watchlib.config import load_config
+        cfg = load_config(root, require_discord=False)
+        target = next(m for c in cfg.companies for m in (c.get("monitors") or []) if m.get("enabled", True) and "fetch" not in m)
+        if fetch is not None:
+            target["fetch"] = fetch
+        return cfg, target
+
+    def test_browser_mode_becomes_command_job(self):
+        from watchlib.urlwatch_jobs import build_jobs
+        cfg, m = self._cfg({"mode": "browser", "timeout": 30})
+        jobs, infos = build_jobs(cfg)
+        job = next(j for j in jobs if j.get("command") and m["url"] in j["command"])
+        self.assertIn("scripts/fetch_browser.py --url", job["command"])
+        self.assertIn("--timeout 30", job["command"])
+        self.assertNotIn("url", job)
+        self.assertTrue(any(isinstance(f, dict) and "botguard" in f for f in job["filter"]))   # 確認ページの検出は効く
+
+    def test_validation(self):
+        from watchlib import validate
+        cfg, m = self._cfg({"mode": "firefox"})
+        company = next(c for c in cfg.companies if m in (c.get("monitors") or []))
+        collector = validate._Collector()
+        validate.check_company(collector, cfg, company)
+        self.assertTrue(any("fetch" in str(i) for i in collector.issues if i.level == "error"))

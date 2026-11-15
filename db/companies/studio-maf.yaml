@@ -65,6 +65,9 @@ monitors:
     url: https://maf.themedia.jp/pages/5769936/page_202202032100
     category: recruit
     enabled: true
+    # 通常の取得だと断られる(403・確認ページ・接続タイムアウト)ため、ブラウザ(Playwright)で開く。scripts/fetch_browser.py
+    fetch:
+      mode: browser
     roles: []
     snippets: []
     skip_common_excludes: []
