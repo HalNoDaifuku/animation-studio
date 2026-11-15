@@ -62,7 +62,7 @@ monitors:
     name: 採用情報
     url: https://www.jumondou.com/recruit
     category: recruit
-    enabled: true
+    enabled: false  # 2026-11-16 停止: 接続タイムアウトでHalも開けず。復旧したら true に戻す
     roles: []
     snippets: []
     skip_common_excludes: []

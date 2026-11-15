@@ -61,7 +61,7 @@ monitors:
     name: 採用情報
     url: https://wowinc.co.jp/recruit
     category: recruit
-    enabled: true
+    enabled: false  # 2026-11-16 停止: SSLエラーでHalも開けず。復旧したら true に戻す
     roles: []
     snippets: []
     skip_common_excludes: []
