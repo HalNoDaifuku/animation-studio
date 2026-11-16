@@ -54,4 +54,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 職種別URLなし。開いて確認済み(2026-11-16 調査)
+  - id: recruit
+    name: スタッフ募集(3D CG)
+    url: https://axis-graphic.jp/recruit.html
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

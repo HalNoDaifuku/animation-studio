@@ -58,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 専用の採用ページはなく、トップがこの登録ページへ誘導。開いて確認済み(2026-11-16 調査)
+  - id: recruit
+    name: アニメーター募集(人材ネットワーク登録)
+    url: https://www.animeinfinite.co/network/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

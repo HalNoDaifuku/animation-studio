@@ -55,4 +55,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用情報がトップページ内のRecruitセクションのため無効(ページ全体の変化を拾ってしまう)。制作進行/撮影の募集あり(2026-11-16 調査)
+  - id: recruit
+    name: 採用情報
+    url: https://asurafilm.jp/
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

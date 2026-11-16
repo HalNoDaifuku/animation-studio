@@ -57,4 +57,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用情報がトップページ内のセクションのため無効(ページ全体の変化を拾ってしまう)(2026-11-16 調査)
+  - id: recruit
+    name: 採用情報
+    url: https://basara4.wixsite.com/basara
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
