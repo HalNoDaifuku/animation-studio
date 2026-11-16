@@ -53,4 +53,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # ナビの「採用情報」。現状は問い合わせ先のみで職種記載なし。(2026-11-16 調査)
+  - id: recruit
+    name: 採用情報
+    url: https://acecreation.jimdofree.com/採用情報/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
