@@ -56,4 +56,19 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # Hal の指定URL(2026-11-16)。サイトが自動読み取りを禁止(robots)しているため、中身と職種別URLは未確認。
+  # 職種ごとにURLが分かれていると分かったら、ここに追加してください。
+  - id: recruit
+    name: 採用情報
+    url: http://www.brainsbase.co.jp/recruit/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
