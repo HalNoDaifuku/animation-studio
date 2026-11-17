@@ -31,6 +31,9 @@ roles:
   - in_between
 
 related_companies:
+  - name: ダブトゥーンスタジオ
+    company_id: 74c7a8c5-24a5-481f-b74d-7cea7fec649b
+    relation: 事業の譲受(2021-09-30 に DMM.futureworks から事業譲渡を受けた。出典 https://w-toonstudio.com/)
   - name: ツインエンジン
     company_id: null
     relation: 親会社(animeco.link の備考より)

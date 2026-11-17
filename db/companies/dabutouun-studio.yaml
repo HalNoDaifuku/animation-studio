@@ -6,6 +6,7 @@
 #   未確認: 設立年・公式サイトのURL・SNSのアカウント(animeco.link のリンクからそのまま取得。要確認)
 #   roles は animeco.link の「作業種別」から付けた目安です(作画=key_animator/in_between、仕上げ=finishing、背景=background_art、CG・VFX=cg_3d、撮影=compositing。元請け・編集・2Dワークスなどは対応する通知先が無いので付けていません)。
 #   通知は本文から職種を判定して振り分けます(roles は、その会社だけ除外語を調整したいときに使います)。
+#   事業譲渡: 2021-09-30 に株式会社DMM.futureworks から株式会社スクーターフィルムズへ(related_companies 参照)。採用は sukuutaa-films 側で監視。
 #   採用ページの監視(monitors)は、採用ページを確認してから追加してください。
 
 schema_version: 1
@@ -31,9 +32,13 @@ roles:
   - in_between
 
 related_companies:
+  # 事業譲渡の出典: 公式サイト https://w-toonstudio.com/ の告知(2026-11-17 Hal が確認)
   - name: スクーターフィルムズ
+    company_id: e86c8dd4-ad10-4ccf-bbed-78056aa2d2bd
+    relation: 事業譲渡先(2021-09-30 に株式会社DMM.futureworks から株式会社スクーターフィルムズへ事業譲渡。現在はスクーターフィルムズの事業。公式サイトは https://www.scooterfilms.jp)
+  - name: DMM.futureworks
     company_id: null
-    relation: 親会社(animeco.link の備考より)
+    relation: 事業譲渡元(2021-09-30 まで運営。旧親会社)
 
 website: https://w-toonstudio.com/
 
