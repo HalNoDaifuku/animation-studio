@@ -58,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # RECRUITセクションを含む紹介ページ。ページ全体を監視(2026-11-17 調査)
+  - id: recruit
+    name: 採用情報
+    url: https://pictures.dmm.com/about/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

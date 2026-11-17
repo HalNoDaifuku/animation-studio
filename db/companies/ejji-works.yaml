@@ -58,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 親会社サイトの募集ページ(シナリオライター/絵コンテ、作品単位契約)。開いて確認済み(2026-11-17 調査)
+  - id: recruit
+    name: クリエイター募集
+    url: https://www.edge-works.co.jp/create/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

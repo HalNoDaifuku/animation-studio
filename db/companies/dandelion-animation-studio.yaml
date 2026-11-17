@@ -57,4 +57,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 公式サイトは読めず、外部の求人サイト上の同社求人を監視。開いて確認済み(2026-11-17 調査)
+  - id: recruit
+    name: 制作進行募集(HERP)
+    url: https://herp.careers/careers/companies/dlas/jobs/l4xQ7jUlMeHA
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

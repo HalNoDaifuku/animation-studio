@@ -60,4 +60,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 作画・3DCG・背景美術・編集・演出・絵コンテを募集。開いて確認済み(2026-11-17 調査)
+  - id: recruit
+    name: 採用情報
+    url: https://www.domerica.net/recruit/recruit.php
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

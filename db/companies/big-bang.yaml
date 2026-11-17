@@ -53,4 +53,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用情報がトップページ内のセクションのため無効。現在は採用募集を行っていない表示(2026-11-17 調査)
+  - id: recruit
+    name: 採用情報
+    url: https://www.bigbang2001.com/
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

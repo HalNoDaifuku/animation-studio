@@ -55,4 +55,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用情報がトップページ内のセクションのため無効。職種別の募集表あり(2026-11-17 調査)
+  - id: recruit
+    name: 採用情報
+    url: https://colorandsmile.studio/
+    category: recruit
+    enabled: false
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
