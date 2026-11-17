@@ -58,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 公式サイトが自動読み取りを禁止(robots)しているため、採用ページを確認できていない。Halの指示(2026-11-18)でトップ全体を監視。採用ページが分かったら差し替える(2026-11-18)
+  - id: recruit
+    name: 採用情報(公式サイトのトップ)
+    url: http://www.artbasebam.com/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
