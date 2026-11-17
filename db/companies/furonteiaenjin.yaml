@@ -58,12 +58,12 @@ sns:
     custom: {}
 
 monitors:
-  # 採用情報がトップページ内のアンカーのため無効(ページ全体の変化を拾ってしまう)。メモ: トップ内のRecruitセクション(職種2種・選考流れ・郵送応募)。
+  # 採用情報がトップページ内のアンカーのため、Halの指示(2026-11-17)で有効化(トップ全体を監視)(ページ全体の変化を拾ってしまう)。メモ: トップ内のRecruitセクション(職種2種・選考流れ・郵送応募)。
   - id: recruit
     name: 採用情報
     url: https://www.fr-en.co.jp/#recruit
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []

@@ -59,12 +59,12 @@ sns:
     custom: {}
 
 monitors:
-  # 採用情報がトップページ内にあるため無効(トップ全体の変化を拾ってしまう)。メモ: 専用ページなし。トップ内にRECRUIT節と【募集中】プロデューサー、応募先メールの記載あり(トップURLを代用)。
+  # 採用情報がトップページ内にあるため、Halの指示(2026-11-17)で有効化(トップ全体を監視)(トップ全体の変化を拾ってしまう)。メモ: 専用ページなし。トップ内にRECRUIT節と【募集中】プロデューサー、応募先メールの記載あり(トップURLを代用)。
   - id: recruit
     name: 採用情報
     url: http://eggfirm.com/
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []

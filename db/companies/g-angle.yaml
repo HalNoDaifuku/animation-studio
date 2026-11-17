@@ -59,12 +59,12 @@ sns:
     custom: {}
 
 monitors:
-  # 採用情報がトップページ内にあるため無効(トップ全体の変化を拾ってしまう)。メモ: 職種紹介・ENTRY・新卒秋選考の案内あり。
+  # 採用情報がトップページ内にあるため、Halの指示(2026-11-17)で有効化(トップ全体を監視)(トップ全体の変化を拾ってしまう)。メモ: 職種紹介・ENTRY・新卒秋選考の案内あり。
   - id: recruit
     name: 採用情報
     url: https://recruit.g-angle.co.jp/
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []

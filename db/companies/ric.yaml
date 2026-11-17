@@ -58,12 +58,12 @@ sns:
     custom: {}
 
 monitors:
-  # 公式サイトの採用リンクから作成(採用がトップページ内や外部サイトのため、無効にしてあります)。
+  # 公式サイトの採用リンクから作成(採用がトップページ内や外部サイトのため、2026-11-17 Halの指示で有効化しました(トップ全体を監視))。
   - id: recruit
     name: 採用情報
     url: https://ric-japan.com/
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []

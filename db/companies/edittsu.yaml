@@ -57,12 +57,12 @@ sns:
     custom: {}
 
 monitors:
-  # 採用情報がトップページ内のアンカーのため無効(ページ全体の変化を拾ってしまう)。メモ: トップ内の採用セクション(現在募集しておりません、と記載)。
+  # 採用情報がトップページ内のアンカーのため、Halの指示(2026-11-17)で有効化(トップ全体を監視)(ページ全体の変化を拾ってしまう)。メモ: トップ内の採用セクション(現在募集しておりません、と記載)。
   - id: recruit
     name: 採用情報
     url: https://editz.jp/#recruit
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []

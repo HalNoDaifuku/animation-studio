@@ -56,12 +56,12 @@ sns:
     custom: {}
 
 monitors:
-  # 採用情報がトップページ内のセクションのため無効。プロデューサー/制作進行・CGデザイナー・コンポジター/撮影を募集(2026-11-17 調査)
+  # 採用情報がトップページ内のセクションのため、Halの指示(2026-11-17)で有効化(トップ全体を監視)。プロデューサー/制作進行・CGデザイナー・コンポジター/撮影を募集(2026-11-17 調査)
   - id: recruit
     name: 採用情報
     url: http://www.cyclone-graphics.com/
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []

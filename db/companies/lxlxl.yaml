@@ -59,12 +59,12 @@ sns:
     custom: {}
 
 monitors:
-  # 採用ページのリンクは見つかったが、内容を確認できなかったため無効。メモ: トップ内アンカーのみ。内容は未確認。
+  # 採用ページのリンクは見つかったが、内容を確認できなかったため、Halの指示(2026-11-17)で有効化(トップ全体を監視)。メモ: トップ内アンカーのみ。内容は未確認。
   - id: recruit
     name: 採用情報
     url: https://lxlxl.biz/#recruit
     category: recruit
-    enabled: false
+    enabled: true
     roles: []
     snippets: []
     skip_common_excludes: []
