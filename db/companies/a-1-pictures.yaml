@@ -28,6 +28,12 @@ location:
 # 募集する職種(common.yaml の job_roles のIDから選ぶ)
 roles:
   - compositing
+  - production_assistant
+  - cg_3d
+  - finishing
+  - background_art
+  - in_between
+  - key_animator
 
 related_companies: []
 
@@ -67,6 +73,110 @@ monitors:
     enabled: true
     roles:
     - compositing
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - beautify
+      - strip
+  # 新卒採用の募集要項と、職種ごとのページ(2026-11-17 Halの指示で追加。各職種に「募集は終了しました」の表示あり)
+  - id: recruit-newgrad-requirements
+    name: 採用情報(新卒 募集要項)
+    url: https://a1p.jp/new_grad/requirements/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - beautify
+      - strip
+  - id: recruit-newgrad-pm
+    name: 採用情報(制作進行 新卒)
+    url: https://a1p.jp/new_grad/pm/
+    category: recruit
+    enabled: true
+    roles:
+    - production_assistant
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - beautify
+      - strip
+  - id: recruit-newgrad-cg
+    name: 採用情報(CGクリエイター 新卒)
+    url: https://a1p.jp/new_grad/cg/
+    category: recruit
+    enabled: true
+    roles:
+    - cg_3d
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - beautify
+      - strip
+  - id: recruit-newgrad-finishing
+    name: 採用情報(仕上げ 新卒)
+    url: https://a1p.jp/new_grad/finishing/
+    category: recruit
+    enabled: true
+    roles:
+    - finishing
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - beautify
+      - strip
+  - id: recruit-newgrad-art
+    name: 採用情報(美術 新卒)
+    url: https://a1p.jp/new_grad/art/
+    category: recruit
+    enabled: true
+    roles:
+    - background_art
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - beautify
+      - strip
+  - id: recruit-newgrad-drawing-movie
+    name: 採用情報(作画(動画) 新卒)
+    url: https://a1p.jp/new_grad/drawing-movie/
+    category: recruit
+    enabled: true
+    roles:
+    - in_between
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - beautify
+      - strip
+  - id: recruit-newgrad-drawing
+    name: 採用情報(作画(原画) 新卒)
+    url: https://a1p.jp/new_grad/drawing/
+    category: recruit
+    enabled: true
+    roles:
+    - key_animator
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - beautify
+      - strip
+  - id: recruit-newgrad-drawing-fukuoka
+    name: 採用情報(作画(福岡スタジオ) 新卒)
+    url: https://a1p.jp/new_grad/drawing-fukuoka/
+    category: recruit
+    enabled: true
+    roles:
+    - key_animator
     snippets: []
     skip_common_excludes: []
     urlwatch:
