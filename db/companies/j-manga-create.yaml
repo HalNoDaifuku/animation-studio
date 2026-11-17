@@ -59,4 +59,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用リンクなし。お知らせがトップに載るためトップを監視(2026-11-17 調査)
+  - id: news
+    name: お知らせ(トップ)
+    url: https://promanga.jp/
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

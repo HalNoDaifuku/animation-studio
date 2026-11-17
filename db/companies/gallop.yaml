@@ -54,4 +54,32 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # トップのリンク先(ページ本体は未取得)(2026-11-17 調査)
+  - id: recruit
+    name: 採用情報
+    url: https://www.anime-gallop.co.jp/recruit.php
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # トップのリンク先。塾生募集・スタッフ募集の告知が載る(2026-11-17 調査)
+  - id: news
+    name: お知らせ一覧
+    url: https://www.anime-gallop.co.jp/info.php
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

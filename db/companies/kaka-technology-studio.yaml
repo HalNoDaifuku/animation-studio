@@ -58,4 +58,32 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 外部の採用サイト。開いて確認済み。求人は動的読み込み(2026-11-17 調査)
+  - id: recruit
+    name: 採用情報(Talentio)
+    url: https://open.talentio.com/r/1/c/kakacreation/homes/4615
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 開いて確認済み(2026-11-17 調査)
+  - id: news
+    name: NEWS
+    url: https://www.kakacreation.co.jp/news
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

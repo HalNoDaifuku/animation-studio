@@ -57,4 +57,20 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # トップに「動画、仕上げのスタッフを募集」の記載。専用ページなしのためトップ全体を監視(2026-11-17 調査)
+  - id: recruit
+    name: 採用情報(トップ内)
+    url: http://www.hadashipro.jp
+    category: recruit
+    enabled: true
+    roles:
+    - in_between
+    - finishing
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

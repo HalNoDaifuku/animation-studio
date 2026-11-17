@@ -56,4 +56,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用ページはなく、NEWSがトップページ内のセクションのためトップ全体を監視(2026-11-17 調査)
+  - id: news
+    name: NEWS(トップ内セクション)
+    url: https://www.goodsmilefilm.com/
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

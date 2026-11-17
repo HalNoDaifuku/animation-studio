@@ -27,6 +27,7 @@ location:
 
 roles: 
   - compositing
+  - production_assistant
 
 related_companies: []
 
@@ -53,4 +54,33 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 新卒採用は行っていない旨の記載あり。開いて確認済み(2026-11-17 調査)
+  - id: recruit
+    name: 採用情報(中途)
+    url: https://www.fusionstudiollc.com/recruit-1
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 職種別ページ。開いて確認済み(2026-11-17 調査)
+  - id: recruit-production
+    name: 制作進行募集
+    url: https://www.fusionstudiollc.com/recruit/production-progress
+    category: recruit
+    enabled: true
+    roles:
+    - production_assistant
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

@@ -58,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用ページはなく、NEWSカテゴリの一覧のみ(2026-11-17 調査)
+  - id: news
+    name: NEWS
+    url: https://pocoloco.jp/?cat=18
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

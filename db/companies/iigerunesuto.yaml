@@ -57,4 +57,19 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # デジタルペイントスタッフ希望者は問い合わせ。専用ページなしのためトップ全体を監視(2026-11-17 調査)
+  - id: recruit
+    name: 採用情報(トップ内Recruit)
+    url: http://www.igel-nest.co.jp/
+    category: recruit
+    enabled: true
+    roles:
+    - finishing
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

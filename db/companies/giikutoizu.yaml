@@ -65,4 +65,32 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 外部の求人サイト。開いて確認済み(2026-11-17 調査)
+  - id: recruit
+    name: 採用情報(HRMOS)
+    url: https://hrmos.co/pages/geekpictures/jobs
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 過去のアニメーター募集告知が載っていたお知らせ一覧(2026-11-17 調査)
+  - id: news
+    name: TOPICS一覧
+    url: https://geekpictures.co.jp/jp/geektoys/topics/
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

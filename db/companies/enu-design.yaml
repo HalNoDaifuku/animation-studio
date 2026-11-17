@@ -57,4 +57,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用がトップページ内のセクションのためトップ全体を監視。NEWSも同じトップ内(2026-11-17 調査)
+  - id: recruit
+    name: 採用情報(トップ内セクション)
+    url: https://www.ndesign.co.jp/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

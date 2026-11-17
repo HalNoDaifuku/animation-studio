@@ -60,4 +60,32 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 親会社ツインエンジンのサイトの採用ページ。開いて確認済み(2026-11-17 調査)
+  - id: recruit
+    name: 採用情報(ツインエンジン)
+    url: https://twinengine.jp/recruit/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 職種別の求人ページ。開いて確認済み(2026-11-17 調査)
+  - id: recruit-genostudio-animator
+    name: アニメーター募集(ジェノスタジオ)
+    url: https://hrmos.co/pages/twinengine/jobs/03_01_02_02
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

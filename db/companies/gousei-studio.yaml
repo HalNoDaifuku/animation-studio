@@ -56,4 +56,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用ページは未確認のため、お知らせ一覧を監視(2026-11-17 調査)
+  - id: news
+    name: TOPICS一覧
+    url: https://gosay.studio/news/
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

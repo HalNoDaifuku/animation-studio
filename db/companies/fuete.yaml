@@ -56,4 +56,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 採用ページはなく、お知らせ一覧のみ(現在お知らせなし)(2026-11-17 調査)
+  - id: news
+    name: お知らせ
+    url: https://fuete.co.jp/information/
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
