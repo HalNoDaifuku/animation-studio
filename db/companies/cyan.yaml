@@ -53,4 +53,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 臨時募集(アニメーション撮影2D)。開いて確認済み(2026-11-17 調査)
+  - id: recruit
+    name: 採用情報
+    url: https://st-cyan.com/recruit/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

@@ -62,4 +62,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 仲間を募集の文言を確認。詳細は動的表示のため未確認(2026-11-17 調査)
+  - id: recruit
+    name: 採用情報
+    url: https://www.cydesignation.co.jp/recruit/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

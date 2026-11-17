@@ -59,4 +59,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 公式サイトがscooterfilms.jpへ転送される。中途募集(ゲームクリエイター/コンテ・演出/アニメーター/制作進行)。開いて確認済み(2026-11-17 調査)
+  - id: recruit
+    name: 採用情報
+    url: https://www.scooterfilms.jp/recruit
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
