@@ -29,6 +29,21 @@ class ValidateTest(unittest.TestCase):
         root = make_root(companies={"cloverworks": load_sample("cloverworks"), "bones": load_sample("bones")})
         self.assertEqual(errors(validate_config(root)), [])
 
+    def test_same_url_in_two_companies_is_an_error(self):
+        a, b = load_sample("cloverworks"), load_sample("bones")
+        b["monitors"][0]["url"] = a["monitors"][0]["url"]
+        root = make_root(companies={"cloverworks": a, "bones": b})
+        self.assertHasError(validate_config(root), "監視URLが")
+
+    def test_duplicate_url_gets_distinct_job_url(self):
+        from watchlib.config import load_config
+        from watchlib.urlwatch_jobs import build_jobs
+        a, b = load_sample("cloverworks"), load_sample("bones")
+        b["monitors"][0]["url"] = a["monitors"][0]["url"]
+        cfg = load_config(make_root(companies={"cloverworks": a, "bones": b}))
+        urls = [j["url"] for j in build_jobs(cfg)[0] if "url" in j]
+        self.assertEqual(len(urls), len(set(urls)))
+
     def test_real_repo_files_have_no_errors(self):
         self.assertEqual(errors(validate_config()), [])
 
@@ -103,6 +118,8 @@ class ValidateTest(unittest.TestCase):
     def test_folder_decides_type(self):
         site = load_sample("cloverworks")
         site.update(slug="jobsite", id="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", display_name="就活サイト")
+        for m in site["monitors"]:
+            m["url"] = "https://jobsite.example/" + m["id"]   # 同じURLの重複は別の検査で扱う
         root = make_root(companies={"cloverworks": load_sample("cloverworks")})
         write_company(root, "jobsite", site, folder="portals")
         self.assertEqual(errors(validate_config(root)), [])                 # portals/ では portal が既定

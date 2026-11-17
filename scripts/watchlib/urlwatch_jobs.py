@@ -61,6 +61,7 @@ def build_jobs(cfg: Config, only: str | None = None) -> tuple[list[dict], list[J
     jobs: list[dict] = []
     infos: list[JobInfo] = []
     defaults = cfg.web.get("job_defaults") or {}
+    seen_urls: set[str] = set()   # urlwatch は同じURLのジョブが2つあると全体が止まるため、重複には #メモ を付けて区別する
     for company in cfg.companies:
         if only and only not in (company.get("slug"), company.get("id")):
             continue
@@ -75,7 +76,12 @@ def build_jobs(cfg: Config, only: str | None = None) -> tuple[list[dict], list[J
                 command = f"python scripts/fetch_browser.py --url {shlex.quote(monitor['url'])}" + "".join(
                     f" --{k.replace('_', '-')} {shlex.quote(str(v))}" for k, v in fetch_opts.items()
                     if k in ("timeout", "retries", "sleep", "wait_selector"))
-            job: dict = {"name": name, **({"command": command} if command else {"url": monitor["url"]})}
+            job_url = monitor["url"]
+            if not command:
+                if job_url in seen_urls:
+                    job_url = f"{job_url}#{company.get('slug', '')}-{monitor.get('id', '')}"
+                seen_urls.add(job_url)
+            job: dict = {"name": name, **({"command": command} if command else {"url": job_url})}
             if not command:  # command(shell)ジョブには、HTTP用の既定値(ignore_http_error_codes など)は使えない
                 job.update(copy.deepcopy(defaults))
             own = copy.deepcopy(monitor.get("urlwatch") or {})

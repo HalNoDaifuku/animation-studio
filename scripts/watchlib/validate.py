@@ -658,6 +658,7 @@ def check_cross(c: _Collector, cfg: Config) -> None:
     by_slug: dict[str, str] = {}
     by_name: dict[str, str] = {}
     by_job: dict[str, str] = {}
+    by_url: dict[str, str] = {}
     for co in cfg.companies:
         f = co.get("_file", "?")
         for table, key, label in ((by_id, co.get("id"), "id"), (by_slug, co.get("slug"), "slug")):
@@ -671,6 +672,12 @@ def check_cross(c: _Collector, cfg: Config) -> None:
         elif dn:
             by_name[dn] = f
         for m in co.get("monitors") or []:
+            if isinstance(m, dict) and m.get("enabled", True) and m.get("url") and not m.get("command"):
+                u = str(m["url"])
+                if u in by_url:
+                    c.error(f, f"監視URLが {by_url[u]} と同じです(同じページは1か所だけで監視してください): {u}")
+                else:
+                    by_url[u] = f
             if isinstance(m, dict) and m.get("name") and dn:
                 jn = job_name(m, co)
                 if jn in by_job:

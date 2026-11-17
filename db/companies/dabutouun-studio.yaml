@@ -65,7 +65,7 @@ monitors:
     name: 採用情報
     url: https://www.scooterfilms.jp/recruit
     category: recruit
-    enabled: true
+    enabled: false  # 2026-11-17 停止: 転送先のページが sukuutaa-films(スクーターフィルムズ)と同じで、同じURLは1か所だけで監視するため
     roles: []
     snippets: []
     skip_common_excludes: []
