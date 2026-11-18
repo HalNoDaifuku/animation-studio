@@ -56,4 +56,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-18 調査。職種ページ。開いて確認済み
+  - id: recruit-2d
+    name: 2D原画スタッフ募集
+    url: https://www.likaistudio.com/jobs/content-manager
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

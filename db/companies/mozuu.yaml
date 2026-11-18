@@ -58,4 +58,32 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-18 調査。モーションデザイナー等6区分を1ページに掲載。開いて確認済み
+  - id: recruit
+    name: 採用情報
+    url: https://www.mozoostudio.com/recruiting
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-18 調査。お知らせがトップ内のためトップ全体を監視
+  - id: news
+    name: WHAT'S NEW?(トップ内)
+    url: https://www.mozoostudio.com/
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

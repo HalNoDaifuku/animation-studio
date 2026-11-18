@@ -56,4 +56,32 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-18 調査。開いて確認済み。2026-11時点は「現在募集はしておりません」(2021.03.30付)
+  - id: recruit
+    name: 採用募集(制作スタッフ)
+    url: https://oddjob.jp/boshu
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-18 調査。お知らせ一覧
+  - id: news
+    name: NEWS
+    url: https://oddjob.jp/archives/category/news/
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

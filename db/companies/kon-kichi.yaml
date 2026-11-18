@@ -60,4 +60,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-18 調査。採用ページはなく、会社全体のお知らせ
+  - id: news
+    name: News & Blog
+    url: https://www.kon-yoshi.co.jp/news/
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

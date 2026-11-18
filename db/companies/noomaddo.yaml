@@ -59,4 +59,32 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-18 調査。募集ごとの個別ページ(本体ページなし)。開いて確認済み
+  - id: recruit-production-202403
+    name: 制作進行募集
+    url: https://nomad-inc.co.jp/saiyo202403.html
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-18 調査。募集ごとの個別ページ(本体ページなし)。開いて確認済み
+  - id: recruit-douga-202411
+    name: 動画募集
+    url: https://nomad-inc.co.jp/saiyo202411.html
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

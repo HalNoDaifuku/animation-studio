@@ -61,4 +61,32 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-18 調査。採用がトップ内のセクションのためトップ全体を監視
+  - id: recruit
+    name: 採用情報(トップ内RECRUIT)
+    url: https://www.as-nagomi.jp/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-18 調査。2027年新卒採用の開始告知が載っていた一覧
+  - id: news
+    name: NEWS 新着情報
+    url: https://www.as-nagomi.jp/news/
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

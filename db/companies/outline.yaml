@@ -62,4 +62,32 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-18 調査。採用がトップ内のセクションのためトップ全体を監視
+  - id: recruit
+    name: 採用情報(トップ内RECRUIT)
+    url: https://www.st-outline.jp/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-18 調査。お知らせ一覧
+  - id: news
+    name: NEWS ARCHIVE
+    url: https://www.st-outline.jp/news/
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

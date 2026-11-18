@@ -58,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-18 調査。採用ページはなく、会社のお知らせ一覧
+  - id: news
+    name: お知らせ
+    url: https://shinobicreative.com/blogs/updates
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

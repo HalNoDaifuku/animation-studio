@@ -60,4 +60,32 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-18 調査。トップ内のRECRUITセクション(動画/原画・業務委託)のためトップ全体を監視。ツインエンジングループ
+  - id: recruit
+    name: 採用情報(トップ内RECRUIT)
+    url: https://www.crew-cell.jp/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-18 調査。お知らせ一覧
+  - id: news
+    name: TOPICS
+    url: https://www.crew-cell.jp/topics/
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
