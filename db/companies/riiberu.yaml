@@ -58,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-18 調査。トップ内のセクション(現在は募集なし)のためトップ全体を監視
+  - id: recruit
+    name: 採用情報・NEWS(トップ内)
+    url: http://liber-inc.jp/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

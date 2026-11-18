@@ -58,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-18 調査。2Dアニメーター/3DCG/プロダクションマネージャー等を1ページに掲載。開いて確認済み
+  - id: recruit
+    name: 採用情報
+    url: https://sciencesaru.com/recruit-en2024
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

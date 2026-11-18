@@ -57,4 +57,32 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-18 調査。全職種を1ページに掲載(現在は募集終了中)。開いて確認済み
+  - id: recruit
+    name: 採用情報
+    url: https://www.shaft-web.co.jp/recruit/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-18 調査。募集開始/終了のお知らせが載る。開いて確認済み
+  - id: news
+    name: NEWS
+    url: https://www.shaft-web.co.jp/news/
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

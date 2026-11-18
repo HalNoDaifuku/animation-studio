@@ -59,4 +59,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-18 調査。採用とお知らせがトップ内のセクションのためトップ全体を監視
+  - id: recruit
+    name: 採用情報・お知らせ(トップ内)
+    url: https://regrim.jp/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

@@ -59,4 +59,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-18 調査。スタッフ募集の告知が載るお知らせ一覧。採用ページは確認できず(robots)
+  - id: news
+    name: TOPICS
+    url: https://www.studio4c.co.jp/topics/
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

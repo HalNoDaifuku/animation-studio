@@ -61,4 +61,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-18 調査。採用ページはなく、お知らせ一覧のみ
+  - id: news
+    name: お知らせ一覧
+    url: https://lunadigi.com/custom/
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

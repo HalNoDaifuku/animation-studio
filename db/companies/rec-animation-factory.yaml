@@ -27,6 +27,10 @@ location:
 
 roles: 
   - compositing
+  - key_animator
+  - in_between
+  - finishing
+  - production_assistant
 
 related_companies: []
 
@@ -56,4 +60,122 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-18 調査。開いて確認済み
+  - id: recruit
+    name: 採用情報
+    url: https://www.rec-animation-factory.com/recruit
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-18 調査。開いて確認済み
+  - id: news
+    name: NEWS一覧(採用/INFO)
+    url: https://www.rec-animation-factory.com/latastnews
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-18 調査。職種別ページ(採用ページ内のリンクで確認。個別ページ本体は未取得)
+  - id: recruit-sensatsu
+    name: 撮影スタッフ(線撮)募集
+    url: https://www.rec-animation-factory.com/job/sensatsu
+    category: recruit
+    enabled: true
+    roles:
+    - compositing
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-18 調査。職種別ページ(採用ページ内のリンクで確認。個別ページ本体は未取得)
+  - id: recruit-satsuei
+    name: 撮影スタッフ(本撮)募集
+    url: https://www.rec-animation-factory.com/job/satsuei
+    category: recruit
+    enabled: true
+    roles:
+    - compositing
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-18 調査。職種別ページ(採用ページ内のリンクで確認。個別ページ本体は未取得)
+  - id: recruit-genga
+    name: 原画スタッフ募集
+    url: https://www.rec-animation-factory.com/job/genga
+    category: recruit
+    enabled: true
+    roles:
+    - key_animator
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-18 調査。職種別ページ(採用ページ内のリンクで確認。個別ページ本体は未取得)
+  - id: recruit-douga
+    name: 動画スタッフ募集
+    url: https://www.rec-animation-factory.com/job/douga
+    category: recruit
+    enabled: true
+    roles:
+    - in_between
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-18 調査。職種別ページ(採用ページ内のリンクで確認。個別ページ本体は未取得)
+  - id: recruit-shiage
+    name: 仕上げスタッフ募集
+    url: https://www.rec-animation-factory.com/job/shiage
+    category: recruit
+    enabled: true
+    roles:
+    - finishing
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-18 調査。職種別ページ(採用ページ内のリンクで確認。個別ページ本体は未取得)
+  - id: recruit-seisaku
+    name: 制作進行募集
+    url: https://www.rec-animation-factory.com/job/seisaku
+    category: recruit
+    enabled: true
+    roles:
+    - production_assistant
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

@@ -58,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-18 調査。制作進行・アニメーターの募集がトップ内のためトップ全体を監視
+  - id: recruit
+    name: 採用情報(トップ内RECRUIT)
+    url: https://studio-bicolor.com/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

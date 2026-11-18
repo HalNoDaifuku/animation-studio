@@ -58,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 公式サイトを自動で読み取れず、採用ページを確認できていない。Halの指示(2026-11-18)でトップ全体を監視。採用ページが分かったら差し替える
+  - id: recruit
+    name: 採用情報(公式サイトのトップ)
+    url: http://lapintrack.com/wp/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
