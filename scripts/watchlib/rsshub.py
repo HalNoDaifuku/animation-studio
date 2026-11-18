@@ -354,7 +354,9 @@ def company_feeds(cfg: Config, company: dict, base: str, access_key: str | None 
     feeds: list[Feed] = []
     errors: list[tuple[str, str]] = []
     include, exclude = effective_filter(cfg, company)
-    if not apply_filter:  # 動作確認用: 採用ワードで絞らず、最新の投稿をそのまま取る
+    no_filter_types = cfg.sns.get("no_word_filter_types") or []
+    if not apply_filter or company.get("type", "studio") in no_filter_types:
+        # 動作確認用、または就活ポータルなど: 単語で絞らず、最新の投稿をそのまま取る(関係あり/なしはAIが判定する)
         include, exclude = [], []
 
     for platform, accounts in (sns.get("accounts") or {}).items():

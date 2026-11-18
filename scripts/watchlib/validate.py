@@ -257,6 +257,9 @@ def check_common(c: _Collector, cfg: Config) -> None:
 
     if not isinstance(sns.get("exclude_retweets", True), bool):
         c.error(f"{f}: sns.exclude_retweets", "true / false にしてください")
+    nwt = sns.get("no_word_filter_types", [])
+    if not _is_str_list(nwt):
+        c.error(f"{f}: sns.no_word_filter_types", "種別の文字列のリストにしてください(空は [])")
     limit = sns.get("search_max_query_length")
     if not isinstance(limit, int) or not 100 <= limit <= 1000:
         c.error(f"{f}: sns.search_max_query_length", "100〜1000 の整数にしてください")

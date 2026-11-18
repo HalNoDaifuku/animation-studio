@@ -77,6 +77,18 @@ class RoutingTest(unittest.TestCase):
 
 
 class RsshubUrlTest(unittest.TestCase):
+    def test_portal_has_no_word_filter_but_studio_does(self):
+        cfg, _ = cfg_with(lambda c: c.update(type="portal"))
+        feeds, errors = rsshub.build_feeds(cfg, "https://hub.example/", None)
+        self.assertEqual(errors, [])
+        q = parse_qs(urlsplit(feeds[0].url).query)
+        self.assertNotIn("filter", q)                                  # 就活ポータルは単語で絞らない(AIが判定する)
+        self.assertNotIn("filterout", q)
+        self.assertEqual(q["includeRts"], ["0"])                       # リポストは従来どおり除く
+        cfg2, _ = cfg_with()
+        feeds2, _ = rsshub.build_feeds(cfg2, "https://hub.example/", None)
+        self.assertIn("filter", parse_qs(urlsplit(feeds2[0].url).query))   # アニメ会社は従来どおり
+
     def test_user_feed_url(self):
         cfg, _ = cfg_with()
         feeds, errors = rsshub.build_feeds(cfg, "https://hub.example/", "KEY123")
