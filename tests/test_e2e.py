@@ -275,6 +275,28 @@ class UrlwatchE2E(unittest.TestCase):
         self.go("--skip-new")                                       # 元に戻っても「変更」にならない(保存内容は更新されていない)
         self.assertEqual([m for m in self.discord.messages() if "変更検知" in m["content"]], [])
 
+    def test_maintenance_page_is_an_error_not_a_change(self):
+        maint = "<html><body><p>メンテナンス中</p><p>現在、システムのメンテナンスを実施しています。</p><p>The service is under maintenance.</p></body></html>"
+        self.go("--skip-new")
+        self.discord.requests.clear()
+        self.web.pages["/recruit/"] = maint
+        self.go("--skip-new", "--retry-rounds", "0")
+        self.assertEqual([m for m in self.discord.messages() if "変更検知" in m["content"]], [])   # 変更としては通知しない
+        self.web.pages["/recruit/"] = "<html><body><p>制作進行を募集</p></body></html>"
+        self.go("--skip-new")
+        self.assertEqual([m for m in self.discord.messages() if "変更検知" in m["content"]], [])   # 保存内容は更新されていない
+
+    def test_generator_meta_and_wordpress_ver_are_ignored(self):
+        import re
+        from watchlib.config import load_config
+        ex = load_config(make_root(companies={})).web["excludes"]
+        html = ('<meta name="generator" content="WordPress 7.1.5" />'
+                '<link href="https://x/a.css?family=M&#038;display=swap&#038;ver=7.1.5" rel="stylesheet">')
+        for name in ("strip_generator_meta", "strip_asset_versions"):
+            for f in ex[name]["filter"]:
+                html = re.sub(f["re.sub"]["pattern"], f["re.sub"]["repl"], html)
+        self.assertNotIn("7.1.5", html)
+
     def test_bot_challenge_recovers_by_retry(self):
         self.go("--skip-new")
         self.discord.requests.clear()

@@ -386,6 +386,9 @@ web:
       - 'Checking your browser before accessing'
       - 'Attention Required! \| Cloudflare'
       - 'Enable JavaScript and cookies to continue'
+      # メンテナンス中の画面(変更ではないので、通知せず「エラー」として扱う。3回続けて失敗したら通知される)
+      - 'The service is under maintenance'
+      - 'システムのメンテナンスを実施しています'
 
   # urlwatch ジョブの既定値(監視URL側で同じキーを書けばそちらが優先)。
   # 一時的な HTTP エラー(タイムアウト・メンテナンス中の 503 など)だけを通知しない。
@@ -432,7 +435,15 @@ web:
         YouTube の watch?v= は対象外。
       filter:
         - re.sub:
-            pattern: '(?i)[?&](?:amp;)?(?:ver|cb|ts|timestamp|nocache)=[^"&\s<>]*'
+            pattern: '(?i)[?&](?:amp;|#038;|#38;)?(?:ver|cb|ts|timestamp|nocache)=[^"&\s<>]*'
+            repl: ''
+
+    strip_generator_meta:
+      auto: true    # <meta name="generator" content="WordPress 7.1.5"> (WordPress などを更新するたびに全サイトが「変更あり」になる)
+      description: 作成ソフトの名前とバージョンを書く <meta name="generator"> を除去する。
+      filter:
+        - re.sub:
+            pattern: '(?is)<meta\b[^>]*\bname="generator"[^>]*>'
             repl: ''
 
     strip_form_tokens:
