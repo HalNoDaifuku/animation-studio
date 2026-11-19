@@ -297,6 +297,15 @@ class UrlwatchE2E(unittest.TestCase):
                 html = re.sub(f["re.sub"]["pattern"], f["re.sub"]["repl"], html)
         self.assertNotIn("7.1.5", html)
 
+    def test_herp_similar_companies_block_is_ignored(self):
+        import re
+        from watchlib.config import load_config
+        f = load_config(make_root(companies={})).web["excludes"]["strip_herp_similar_companies"]["filter"][0]["re.sub"]
+        a = "有給取得推奨\n企業概要COMPANY OVERVIEW本社東京類似している企業株式会社Lime美容サロン従業員数81人本求人はHERP Career経由"
+        b = "有給取得推奨\n企業概要COMPANY OVERVIEW本社東京類似している企業株式会社Legalscape法律AI従業員数65人本求人はHERP Career経由"
+        self.assertEqual(re.sub(f["pattern"], f["repl"], a), re.sub(f["pattern"], f["repl"], b))
+        self.assertIn("本社東京", re.sub(f["pattern"], f["repl"], a))     # 求人本文は残る
+
     def test_bot_challenge_recovers_by_retry(self):
         self.go("--skip-new")
         self.discord.requests.clear()

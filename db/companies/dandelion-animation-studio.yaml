@@ -65,7 +65,7 @@ monitors:
     category: recruit
     enabled: true
     roles: []
-    snippets: []
+    snippets: [strip_herp_similar_companies]   # 「類似している企業」が毎回入れ替わるため
     skip_common_excludes: []
     urlwatch:
       filter:

@@ -508,6 +508,16 @@ web:
             pattern: '(?m)^\s*-->\s*$'
             repl: ''
 
+    strip_herp_similar_companies:
+      auto: false   # HERP Career の求人ページに付く「類似している企業」(毎回おすすめが入れ替わる)
+      stage: text   # html2text のあとの文字を処理する
+      description: HERP Career(herp.careers)の求人ページの「類似している企業」の欄を、「本求人は…」の手前まで取り除く。
+        ほかの企業のおすすめが毎回入れ替わり、求人は変わっていないのに「変更あり」になるため。HERP の求人URLの monitors[].snippets に名前を書く。
+      filter:
+        - re.sub:
+            pattern: '(?s)類似している企業.*?(?=本求人は|\Z)'
+            repl: ''
+
     strip_all_html_comments:
       auto: false
       description: HTMLコメントをすべて除去する。<!-- 目印 --> を re.findall で使うサイトでは使わないこと。
