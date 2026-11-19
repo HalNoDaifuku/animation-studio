@@ -62,4 +62,32 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-19 調査。作画・3DCGを積極採用。本文までは確認できていない
+  - id: recruit
+    name: 採用情報
+    url: https://www.trifstudio.com/recruit
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-19 調査。本文までは確認できていない
+  - id: news
+    name: NEWS
+    url: https://www.trifstudio.com/news
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

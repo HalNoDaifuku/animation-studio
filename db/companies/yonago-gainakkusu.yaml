@@ -58,4 +58,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-19 調査。採用ページはなく、会社全体のお知らせ一覧のみ
+  - id: news
+    name: NEWS
+    url: https://yonago-gainax.co.jp/news/news.html
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

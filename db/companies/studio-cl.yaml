@@ -53,4 +53,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-19 調査。デジタル作画(動画・第二原画)の募集。開いて確認済み
+  - id: recruit
+    name: 採用情報
+    url: https://studioclanime.weebly.com/25505299922477322577.html
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
