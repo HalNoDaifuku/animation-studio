@@ -59,4 +59,32 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-19 調査。制作進行・アニメーター・演出を1ページに掲載。開いて確認済み
+  - id: recruit
+    name: 採用情報
+    url: https://www.studio-peacock.co.jp/recruit
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-19 調査。採用情報カテゴリあり。開いて確認済み
+  - id: news
+    name: ブログ(新着情報・お知らせ)
+    url: https://www.studio-peacock.co.jp/blog
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

@@ -57,4 +57,32 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-19 調査。3Dディレクター/プロデューサー/制作進行管理の募集がトップ内のためトップ全体を監視
+  - id: recruit
+    name: 採用情報(トップ内Join Us)
+    url: https://tenjoyjapan.co.jp/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
+  # 2026-11-19 調査。開いて確認済み
+  - id: news
+    name: ニュース
+    url: https://tenjoyjapan.co.jp/news
+    category: news
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines

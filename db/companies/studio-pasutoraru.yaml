@@ -56,4 +56,18 @@ sns:
     use_presets: []
     custom: {}
 
-monitors: []
+monitors:
+  # 2026-11-19 調査。現在は募集なし(2029年新卒採用予定と記載)。開いて確認済み
+  - id: recruit
+    name: 採用情報
+    url: https://st-pastoral.com/recruit/
+    category: recruit
+    enabled: true
+    roles: []
+    snippets: []
+    skip_common_excludes: []
+    urlwatch:
+      filter:
+      - html2text
+      - strip
+      - striplines
