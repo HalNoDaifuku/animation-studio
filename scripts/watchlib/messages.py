@@ -90,7 +90,7 @@ def build_summary_message(*, status: str, name: str, url: str, archive_url: str,
     elif archive_status:
         lines.append(f"Wayback: {archive_status}")
     lines.append("")
-    rule = "-" * 58
+    rule = "-" * 45   # スマホの画面で折り返さない長さ
     if summary:
         lines.append("🤖 AI要約(誤りがあり得ます。原文は添付の差分を確認してください)")
         lines += [rule, truncate(summary, 1200), rule]
