@@ -446,6 +446,15 @@ web:
             pattern: '(?is)<meta\b[^>]*\bname="generator"[^>]*>'
             repl: ''
 
+    strip_last_modified_meta:
+      auto: true    # <meta http-equiv="Last-Modified" content="Thu, 19 Nov 2026 14:16:03 GMT"> (ページを作り直すたびに時刻が変わる)
+      description: ページの更新時刻を書く <meta http-equiv="Last-Modified" / "Expires" / "Date"> を除去する。
+        中身は変わっていないのに、時刻だけで毎回「変更あり」になるため。
+      filter:
+        - re.sub:
+            pattern: '(?is)<meta\b[^>]*\bhttp-equiv="(?:last-modified|expires|date)"[^>]*>'
+            repl: ''
+
     strip_form_tokens:
       auto: true    # フォームの hidden nonce / CSRF トークン
       description: フォームの hidden nonce / CSRF トークンの値を空にする(name が value より前にある形のみ対応)。

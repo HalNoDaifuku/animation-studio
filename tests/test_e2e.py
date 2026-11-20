@@ -286,6 +286,15 @@ class UrlwatchE2E(unittest.TestCase):
         self.go("--skip-new")
         self.assertEqual([m for m in self.discord.messages() if "変更検知" in m["content"]], [])   # 保存内容は更新されていない
 
+    def test_last_modified_meta_is_ignored(self):
+        import re
+        from watchlib.config import load_config
+        f = load_config(make_root(companies={})).web["excludes"]["strip_last_modified_meta"]["filter"][0]["re.sub"]
+        a = '<meta http-equiv="Last-Modified" content="Thu, 19 Nov 2026 13:53:34 GMT"><meta charset="utf-8"><p>募集</p>'
+        b = '<meta content="Thu, 19 Nov 2026 14:16:03 GMT" http-equiv="Last-Modified" /><meta charset="utf-8"><p>募集</p>'
+        self.assertEqual(re.sub(f["pattern"], f["repl"], a), re.sub(f["pattern"], f["repl"], b))
+        self.assertIn("募集", re.sub(f["pattern"], f["repl"], a))
+
     def test_generator_meta_and_wordpress_ver_are_ignored(self):
         import re
         from watchlib.config import load_config
