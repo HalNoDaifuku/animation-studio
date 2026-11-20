@@ -59,6 +59,18 @@ class RoutingTest(unittest.TestCase):
         self.assertEqual(pick_roles(cfg, company, hint_roles=["finishing", "compositing"]), ["finishing", "compositing"])
         self.assertEqual(pick_roles(cfg, company, hint_roles=["finishing", "key_animator"], text="原画を募集"), ["key_animator"])
 
+    def test_post_passing_general_words_but_no_role_still_goes_to_fallback(self):
+        # 共通の単語(募集・採用など)には当てはまるが、職種の語に当てはまらない投稿も、どこかには通知する(fallback)
+        from watchlib.runners import _targets
+        root = make_root(roles_to_channels={"key_animator": "111"}, fallback="999", companies={"cloverworks": load_sample("cloverworks")})
+        cfg = load_config(root)
+        company = cfg.company("cloverworks")
+        for text in ("社員募集のお知らせ", "新卒採用エントリー開始", "原画展を開催します(募集)"):
+            ts = _targets(cfg, company, [], text, dry_run=False)
+            self.assertEqual([(x.channel_id, x.is_fallback) for x in ts], [("999", True)], text)
+        ts = _targets(cfg, company, [], "原画マンを募集します", dry_run=False)
+        self.assertEqual([(x.channel_id, x.is_fallback) for x in ts], [("111", False)])
+
     def test_resolve_channels_dedupes_and_falls_back(self):
         channels = {"roles": {"a": "111", "b": "111", "c": "222"}, "fallback": "999", "errors": None}
         targets = resolve_channels(["a", "b", "c", "x"], channels)
