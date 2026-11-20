@@ -1,0 +1,61 @@
+# =============================================================================
+# db/companies/kadokawa.yaml — KADOKAWA(親会社。新卒採用のSNSアカウント)
+# =============================================================================
+# 2026-11-20 に Hal の依頼で追加しました。
+#   確認済み: SNSアカウント(Hal が指定した X と Instagram)
+#   未確認: 所在地・設立年・職種(アニメ制作の職種は子会社 kadokawa-kurieitaazu 側)・採用サイト
+#   Instagram は、方針により監視しない(monitor: false)。ハンドルだけ記録しておく。
+
+schema_version: 1
+
+id: a090cee1-34f5-4ae5-a99e-ba1b7fee7cad
+slug: kadokawa
+name: KADOKAWA
+display_name: KADOKAWA
+name_en: KADOKAWA Corporation
+name_history: []
+
+founded_year: null
+
+location:
+  prefecture: null
+  city: null
+  area: null
+  address: null
+
+roles: []
+
+related_companies:
+  - name: KADOKAWAクリエイターズ
+    company_id: 9c5bcaec-38a9-4fa7-a4c9-074e4059874f
+    relation: 子会社(アニメ制作の採用はこちら側)
+
+website: null
+
+sns:
+  accounts:
+    x:
+      # 出典: Hal の指定(2026-11-20) https://x.com/KADOKAWA_saiyou
+      - handle: KADOKAWA_saiyou
+        label: 採用
+        monitor: true
+    youtube:
+      - handle: null
+        monitor: false
+    instagram:
+      # 出典: Hal の指定(2026-11-20) https://www.instagram.com/kadokawa_saiyou
+      - handle: kadokawa_saiyou
+        label: 採用
+        monitor: false
+    bluesky:
+      - handle: null
+        monitor: false
+  search:
+    default_filter:
+      include: {add: [], remove: []}
+      exclude: {add: [], remove: []}
+    keywords: [KADOKAWA]
+    use_presets: []
+    custom: {}
+
+monitors: []
