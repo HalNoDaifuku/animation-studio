@@ -524,7 +524,7 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
             use_ai = summarizer is not None and summarizer.enabled and entry.status == "CHANGED"
             if use_ai:
                 summary, note, condensed = summarizer.summarize(info.company_name, entry.name, entry.body)
-                stamp = (now() if now else datetime.now(JST)).strftime("%Y%m%d")
+                stamp = (now() if now else datetime.now(JST)).strftime("%Y%m%d_%H%M%S")   # 年月日_時分秒(日本時間)
                 fname = re.sub(r'[\\/:*?"<>|\s]+', "_", f"diff_{stamp}_{info.company_name}") + ".txt"
                 attachment = (fname, (f"{entry.name}\nURL: {shown_url}\n\n" + entry.body).encode("utf-8"))
                 messages = [build_summary_message(status=entry.status, name=entry.name, url=shown_url,

@@ -587,7 +587,7 @@ class AiSummaryE2E(unittest.TestCase):
             self.assertIn("判定: 判断できない", m["content"])
             self.assertEqual(len(m["files"]), 1)
             name, data = m["files"][0]
-            self.assertRegex(name, r"^diff_\d{8}_CloverWorks\.txt$")
+            self.assertRegex(name, r"^diff_\d{8}_\d{6}_CloverWorks\.txt$")
             self.assertIn("追加された募集職種その0", data.decode())
         req = self.gemini.requests[0]
         self.assertEqual({k.lower(): v for k, v in req["headers"].items()}.get("x-goog-api-key"), "SECRET-KEY-123")   # キーはヘッダーで、URLには入れない
