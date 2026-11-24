@@ -18,6 +18,7 @@ class State:
         self.last_instance: int | None = None  # 最後に使った RSSHub の番号(0始まり)。次回は、これとは別のものから使い始める
         self.errors: dict[str, float] = {}  # キー → 最後にエラー通知を送った時刻(UNIX秒)
         self.web_fails: dict[str, int] = {}  # サイト監視の名前 → 実行を続けて失敗した回数(一時的なエラーを、すぐには通知しないため)
+        self.contents: dict[str, list[str]] = {}  # サイト監視の名前 → 直近に見た内容のハッシュ(古い順。連続する同じ内容は1件)
         if self.path and self.path.exists():
             try:
                 data = json.loads(self.path.read_text(encoding="utf-8"))
@@ -26,6 +27,7 @@ class State:
                 self.channels = {k: str(v) for k, v in (data.get("channels") or {}).items()}
                 self.fetched = {k: float(v) for k, v in (data.get("fetched") or {}).items()}
                 self.web_fails = {k: int(v) for k, v in (data.get("web_fails") or {}).items()}
+                self.contents = {k: [str(x) for x in v] for k, v in (data.get("contents") or {}).items() if isinstance(v, list)}
                 li = data.get("last_instance")
                 self.last_instance = int(li) if isinstance(li, int) and not isinstance(li, bool) and li >= 0 else None
             except (ValueError, OSError, AttributeError):
@@ -60,6 +62,27 @@ class State:
         self.errors.pop(key, None)
         self.web_fails.pop(key, None)
 
+    def observe_content(self, key: str, digest: str, keep: int, commit: bool = True) -> str:
+        """内容のハッシュを記録し、何が起きたかを返す。
+          "new"    … 記録がなかった(初めて見た)
+          "same"   … 前回と同じ内容
+          "revert" … 直近 keep 種類のうちのどれかに戻った(行き来しているだけ)
+          "change" … 見たことのない内容に変わった
+        commit=False なら、判定だけして記録は変えない(試し実行用)。"""
+        seen = list(self.contents.get(key, []))
+        if not seen:
+            verdict = "new"
+        elif seen[-1] == digest:
+            verdict = "same"
+        elif digest in seen:
+            verdict = "revert"
+        else:
+            verdict = "change"
+        if commit and verdict != "same":
+            seen = [h for h in seen if h != digest] + [digest]
+            self.contents[key] = seen[-max(keep, 1):]
+        return verdict
+
     def bump_fail(self, key: str) -> int:
         self.web_fails[key] = self.web_fails.get(key, 0) + 1
         return self.web_fails[key]
@@ -69,5 +92,5 @@ class State:
             return
         self.path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.path.with_suffix(self.path.suffix + ".tmp")
-        tmp.write_text(json.dumps({"feeds": self.feeds, "errors": self.errors, "channels": self.channels, "fetched": self.fetched, "last_instance": self.last_instance, "web_fails": self.web_fails}, ensure_ascii=False, indent=1), encoding="utf-8")
+        tmp.write_text(json.dumps({"feeds": self.feeds, "errors": self.errors, "channels": self.channels, "fetched": self.fetched, "last_instance": self.last_instance, "web_fails": self.web_fails, "contents": self.contents}, ensure_ascii=False, indent=1), encoding="utf-8")
         os.replace(tmp, self.path)

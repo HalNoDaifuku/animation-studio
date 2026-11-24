@@ -288,6 +288,10 @@ def check_common(c: _Collector, cfg: Config) -> None:
     jd = web.get("job_defaults", {})
     if not isinstance(jd, dict):
         c.error(f"{f}: web.job_defaults", "辞書ではありません")
+    rs = web.get("revert_suppression") or {}
+    hist = rs.get("history", 0) if isinstance(rs, dict) else None
+    if hist is None or not isinstance(hist, int) or isinstance(hist, bool) or hist < 0:
+        c.error(f"{f}: web.revert_suppression.history", "0以上の整数にしてください(0 = 使わない)")
     excludes = web.get("excludes") or {}
     if not isinstance(excludes, dict):
         c.error(f"{f}: web.excludes", "辞書ではありません")

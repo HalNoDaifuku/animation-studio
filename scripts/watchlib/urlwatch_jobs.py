@@ -57,10 +57,17 @@ def bot_guard_filter(cfg: Config) -> dict | None:
     return {"botguard": "|".join(f"(?:{m})" for m in markers)}
 
 
+def revert_history(cfg: Config) -> int:
+    """web.revert_suppression.history(直近何種類の内容を覚えるか)。0 なら機能を使わない。"""
+    value = (cfg.web.get("revert_suppression") or {}).get("history", 0)
+    return value if isinstance(value, int) and not isinstance(value, bool) and value > 0 else 0
+
+
 def build_jobs(cfg: Config, only: str | None = None) -> tuple[list[dict], list[JobInfo]]:
     jobs: list[dict] = []
     infos: list[JobInfo] = []
     defaults = cfg.web.get("job_defaults") or {}
+    record_hashes = revert_history(cfg) > 0
     seen_urls: set[str] = set()   # urlwatch は同じURLのジョブが2つあると全体が止まるため、重複には #メモ を付けて区別する
     for company in cfg.companies:
         if only and only not in (company.get("slug"), company.get("id")):
@@ -96,6 +103,8 @@ def build_jobs(cfg: Config, only: str | None = None) -> tuple[list[dict], list[J
             guard = bot_guard_filter(cfg)
             if guard and (not command or fetch_opts.get("mode") == "browser"):
                 filters.insert(0, guard)  # HTMLのまま、いちばん先に確認ページを検出する
+            if record_hashes:
+                filters.append("contenthash")   # いちばん最後。内容のハッシュを記録する(戻りの通知を省くため)
             if filters:
                 job["filter"] = filters
             jobs.append(job)

@@ -12,6 +12,7 @@
 終了コード: 0=成功 / 1=urlwatch の実行失敗・Discordへの送信失敗 / 2=設定エラー
 """
 import argparse
+import json
 import os
 import shutil
 import sys
@@ -28,7 +29,7 @@ from watchlib.report import parse_report  # noqa: E402
 from watchlib.runners import RunResult, run_urlwatch_command, run_urlwatch_report, send_to_errors_channel  # noqa: E402
 from watchlib.state import State  # noqa: E402
 from watchlib.summarize import Summarizer  # noqa: E402
-from watchlib.urlwatch_jobs import build_jobs, missing_filter_modules, write_urls_yaml  # noqa: E402
+from watchlib.urlwatch_jobs import build_jobs, revert_history, missing_filter_modules, write_urls_yaml  # noqa: E402
 from watchlib.validate import ERROR, validate_config  # noqa: E402
 
 
@@ -108,12 +109,15 @@ def main(argv=None) -> int:
             if cache.exists():
                 shutil.copy(cache, copy)
             cache = copy
+        hash_file = args.root / "build" / "content-hashes.jsonl"   # 各ジョブの内容のハッシュ(contenthash フィルターが書く)
+        hash_file.parent.mkdir(parents=True, exist_ok=True)
+        hash_file.write_text("", encoding="utf-8")
         run_timeout = int(cfg.network.get("urlwatch_run_timeout_seconds", 1800))
         retry_cfg = cfg.web.get("retry") or {}
         rounds = int(retry_cfg.get("rounds", 1) if args.retry_rounds is None else args.retry_rounds)
         wait = float(retry_cfg.get("wait_seconds", 120) if args.retry_wait is None else args.retry_wait)
         try:
-            code, report_text, err = run_urlwatch_command(urls_path, cache, args.urlwatch_cmd, run_timeout, HOOKS)
+            code, report_text, err = run_urlwatch_command(urls_path, cache, args.urlwatch_cmd, run_timeout, HOOKS, hash_file)
             if code == 0:
                 entries = parse_report(report_text, {i.name for i in infos})
                 for attempt in range(1, rounds + 1):
@@ -129,7 +133,7 @@ def main(argv=None) -> int:
                     time.sleep(wait)  # 全部の確認が終わってから。続けて同じ相手へ要求しない
                     retry_path = urls_path.with_name(urls_path.stem + "-retry.yaml")
                     write_urls_yaml([j for j in jobs if j["name"] in failed], retry_path)
-                    rcode, rtext, rerr = run_urlwatch_command(retry_path, cache, args.urlwatch_cmd, run_timeout, HOOKS)
+                    rcode, rtext, rerr = run_urlwatch_command(retry_path, cache, args.urlwatch_cmd, run_timeout, HOOKS, hash_file)
                     if rcode != 0:
                         print(f"[再試行] urlwatch の実行に失敗しました(終了コード {rcode}): {rerr.strip()[:300]}")
                         break
@@ -146,10 +150,18 @@ def main(argv=None) -> int:
             send_to_errors_channel(cfg, bot, msg, result, dry_run=args.dry_run)
             return 1
 
+    hashes: dict[str, str] = {}
+    if not args.report and hash_file.exists():
+        for line in hash_file.read_text(encoding="utf-8", errors="replace").splitlines():
+            try:
+                rec = json.loads(line)
+                hashes[str(rec["name"])] = str(rec["hash"])   # 同じ名前が複数あれば(再取得)、あとのものを使う
+            except (ValueError, KeyError, TypeError):
+                continue
     summarizer = Summarizer(cfg.ai.get("summary"), os.environ.get("GEMINI_API_KEY"))
     sent = run_urlwatch_report(cfg, report_text, infos, bot, dry_run=args.dry_run, summarizer=summarizer,
                                skip_new=args.skip_new, baseline=args.baseline, use_wayback=args.wayback, entries=entries,
-                               explain_unreported=args.explain_unreported,
+                               explain_unreported=args.explain_unreported, hashes=hashes, revert_history=revert_history(cfg),
                                state=None if args.report else error_state,
                                error_renotify_hours=float(cfg.web.get("error_renotify_hours", 24)),
                                error_min_failures=int(cfg.web.get("error_min_failures", 1)))

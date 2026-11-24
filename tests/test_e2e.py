@@ -227,6 +227,46 @@ class UrlwatchE2E(unittest.TestCase):
         self.assertTrue(all(m["flags"] == 4 for m in changed))
         self.assertEqual({m["channel"] for m in changed}, {CH_A, CH_B})          # 増えた行にある職種(原画・制作進行)だけ。他の職種や fallback には送らない
 
+    def test_flip_flop_back_to_seen_content_is_not_notified(self):
+        a = "<html><body><p>制作進行を募集</p></body></html>"
+        b = "<html><body><p>制作進行を募集</p><p>原画を募集</p></body></html>"
+        c = "<html><body><p>制作進行を募集</p><p>仕上げを募集</p></body></html>"
+
+        def changed():
+            return [m for m in self.discord.messages() if "変更検知" in m["content"]]
+        self.web.pages["/recruit/"] = a
+        self.go("--skip-new")                       # A を記録
+        self.web.pages["/recruit/"] = b
+        self.go("--skip-new")
+        self.assertTrue(changed())                  # A→B: 最初の変化は通知する
+        self.discord.requests.clear()
+        self.web.pages["/recruit/"] = a
+        self.go("--skip-new")                       # B→A: 見たことのある内容への戻り → 通知しない
+        self.assertEqual(changed(), [])
+        self.web.pages["/recruit/"] = b
+        self.go("--skip-new")                       # A→B: これも戻り
+        self.assertEqual(changed(), [])
+        self.web.pages["/recruit/"] = c
+        self.go("--skip-new")                       # 見たことのない内容 → 通知する
+        self.assertTrue(changed())
+
+    def test_revert_suppression_off_notifies_every_flip(self):
+        import yaml
+        p = self.root / "config" / "common.yaml"
+        d = yaml.safe_load(p.read_text(encoding="utf-8"))
+        d["web"]["revert_suppression"]["history"] = 0
+        p.write_text(yaml.safe_dump(d, allow_unicode=True), encoding="utf-8")
+        a = "<html><body><p>制作進行を募集</p></body></html>"
+        b = "<html><body><p>制作進行を募集</p><p>原画を募集</p></body></html>"
+        self.web.pages["/recruit/"] = a
+        self.go("--skip-new")
+        self.web.pages["/recruit/"] = b
+        self.go("--skip-new")
+        self.discord.requests.clear()
+        self.web.pages["/recruit/"] = a
+        self.go("--skip-new")
+        self.assertTrue([m for m in self.discord.messages() if "変更検知" in m["content"]])
+
     def test_error_is_retried_and_notified_every_run(self):
         import io, contextlib
         buf = io.StringIO()

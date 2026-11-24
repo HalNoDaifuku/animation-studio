@@ -436,12 +436,13 @@ _ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 
 
 def run_urlwatch_command(urls_path: Path, cache_path: Path, command: str = "urlwatch",
-                         timeout: int = 1800, hooks: Path | None = None) -> tuple[int, str, str]:
+                         timeout: int = 1800, hooks: Path | None = None, hash_file: Path | None = None) -> tuple[int, str, str]:
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     extra = ["--hooks", str(hooks)] if hooks else []
     proc = subprocess.run([command, "--urls", str(urls_path), "--cache", str(cache_path), *extra],
                           capture_output=True, timeout=timeout,
-                          env={**__import__("os").environ, "PYTHONIOENCODING": "utf-8"})
+                          env={**__import__("os").environ, "PYTHONIOENCODING": "utf-8",
+                               **({"WATCH_HASH_FILE": str(hash_file)} if hash_file else {})})
     out = _ANSI.sub("", proc.stdout.decode("utf-8", "replace"))
     return proc.returncode, out, proc.stderr.decode("utf-8", "replace")
 
@@ -451,7 +452,7 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
                         capture: Callable[[str], tuple[str, str]] | None = None,
                         probe: Callable[[str], str] | None = probe_url,
                         entries: list[ReportEntry] | None = None, state: State | None = None, explain_unreported: bool = False,
-                        error_renotify_hours: float = 24, error_min_failures: int = 1, summarizer=None, now: Callable[[], datetime] | None = None,
+                        error_renotify_hours: float = 24, error_min_failures: int = 1, summarizer=None, hashes: dict[str, str] | None = None, revert_history: int = 0, now: Callable[[], datetime] | None = None,
                         log: Callable[[str], None] = print) -> RunResult:
     """entries を渡すと、report_text を読み直さずそれを使う(再取得で差し替えた結果を渡すため)。
     state を渡すと、同じジョブのエラーは error_renotify_hours 時間は繰り返し通知しない(エラーが直ったら記録を消す)。"""
@@ -469,6 +470,11 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
         counts[e.status] = counts.get(e.status, 0) + 1
     log("urlwatch の結果: " + (", ".join(f"{k} {v}件" for k, v in sorted(counts.items())) or "報告なし")
         + f"(ジョブ {len(by_name)}件)")
+    verdicts: dict[str, str] = {}   # 内容のハッシュの判定(new/same/revert/change)。revert は「見たことのある内容への戻り」
+    if hashes and state is not None and revert_history > 0:
+        for name, digest in hashes.items():
+            if name in by_name and not any(e.name == name and e.status == "ERROR" for e in entries):
+                verdicts[name] = state.observe_content(name, digest, revert_history, commit=not dry_run)
     unreported = sorted(set(by_name) - {e.name for e in entries})
     unchanged = sorted({e.name for e in entries if e.status == "UNCHANGED"})
     if unchanged:
@@ -490,6 +496,10 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
             continue
         if baseline and entry.status in ("NEW", "CHANGED"):   # フィルターを変えた直後など、内容の差を通知せずに記録だけ進める
             log(f"[基準更新] {entry.name}: 変更を通知せず、今の内容を基準にしました")
+            result.skipped += 1
+            continue
+        if entry.status == "CHANGED" and verdicts.get(entry.name) == "revert":
+            log(f"[戻りのため通知しない] {entry.name}: 直近{revert_history}種類のうちに見た内容へ戻っただけです(行き来しているページ)")
             result.skipped += 1
             continue
         company = cfg.company(info.company_slug) or {}
