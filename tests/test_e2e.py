@@ -250,6 +250,25 @@ class UrlwatchE2E(unittest.TestCase):
         self.go("--skip-new")                       # 見たことのない内容 → 通知する
         self.assertTrue(changed())
 
+    def test_revert_after_a_long_stable_state_is_notified(self):
+        import json
+        a = "<html><body><p>制作進行を募集</p></body></html>"
+        b = "<html><body><p>制作進行を募集</p><p>原画を募集</p></body></html>"
+        self.web.pages["/recruit/"] = a
+        self.go("--skip-new")
+        self.web.pages["/recruit/"] = b
+        self.go("--skip-new")                       # A→B
+        st = self.root / ".urlwatch" / "error-state.json"
+        data = json.loads(st.read_text(encoding="utf-8"))
+        for seen in data["contents"].values():      # B が13時間前から続いていたことにする
+            for entry in seen:
+                entry[1] -= 13 * 3600
+        st.write_text(json.dumps(data), encoding="utf-8")
+        self.discord.requests.clear()
+        self.web.pages["/recruit/"] = a
+        self.go("--skip-new")                       # 長く続いた B から A へ戻った → 本当の変更として通知する
+        self.assertTrue([m for m in self.discord.messages() if "変更検知" in m["content"]])
+
     def test_revert_suppression_off_notifies_every_flip(self):
         import yaml
         p = self.root / "config" / "common.yaml"

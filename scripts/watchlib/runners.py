@@ -452,7 +452,7 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
                         capture: Callable[[str], tuple[str, str]] | None = None,
                         probe: Callable[[str], str] | None = probe_url,
                         entries: list[ReportEntry] | None = None, state: State | None = None, explain_unreported: bool = False,
-                        error_renotify_hours: float = 24, error_min_failures: int = 1, summarizer=None, hashes: dict[str, str] | None = None, revert_history: int = 0, now: Callable[[], datetime] | None = None,
+                        error_renotify_hours: float = 24, error_min_failures: int = 1, summarizer=None, hashes: dict[str, str] | None = None, revert_history: int = 0, revert_stable_hours: float = 0, now: Callable[[], datetime] | None = None,
                         log: Callable[[str], None] = print) -> RunResult:
     """entries を渡すと、report_text を読み直さずそれを使う(再取得で差し替えた結果を渡すため)。
     state を渡すと、同じジョブのエラーは error_renotify_hours 時間は繰り返し通知しない(エラーが直ったら記録を消す)。"""
@@ -474,7 +474,8 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
     if hashes and state is not None and revert_history > 0:
         for name, digest in hashes.items():
             if name in by_name and not any(e.name == name and e.status == "ERROR" for e in entries):
-                verdicts[name] = state.observe_content(name, digest, revert_history, commit=not dry_run)
+                verdicts[name] = state.observe_content(name, digest, revert_history, commit=not dry_run,
+                                                      stable_hours=revert_stable_hours)
     unreported = sorted(set(by_name) - {e.name for e in entries})
     unchanged = sorted({e.name for e in entries if e.status == "UNCHANGED"})
     if unchanged:
@@ -498,8 +499,10 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
             log(f"[基準更新] {entry.name}: 変更を通知せず、今の内容を基準にしました")
             result.skipped += 1
             continue
+        if entry.status == "CHANGED" and verdicts.get(entry.name) == "stable-revert":
+            log(f"[戻りを通知] {entry.name}: 前の状態が{revert_stable_hours:g}時間以上続いていたため、戻りも変更として通知します")
         if entry.status == "CHANGED" and verdicts.get(entry.name) == "revert":
-            log(f"[戻りのため通知しない] {entry.name}: 直近{revert_history}種類のうちに見た内容へ戻っただけです(行き来しているページ)")
+            log(f"[戻りのため通知しない] {entry.name}: 直近{revert_history}種類のうちに見た内容へ戻っただけです(前の状態は{revert_stable_hours:g}時間未満。行き来しているページ)")
             result.skipped += 1
             continue
         company = cfg.company(info.company_slug) or {}

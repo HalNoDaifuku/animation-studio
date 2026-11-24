@@ -292,6 +292,9 @@ def check_common(c: _Collector, cfg: Config) -> None:
     hist = rs.get("history", 0) if isinstance(rs, dict) else None
     if hist is None or not isinstance(hist, int) or isinstance(hist, bool) or hist < 0:
         c.error(f"{f}: web.revert_suppression.history", "0以上の整数にしてください(0 = 使わない)")
+    sh = rs.get("stable_hours", 12) if isinstance(rs, dict) else None
+    if isinstance(sh, bool) or not isinstance(sh, (int, float)) or sh < 0:
+        c.error(f"{f}: web.revert_suppression.stable_hours", "0以上の数にしてください(時間。0 = 戻りも必ず通知)")
     excludes = web.get("excludes") or {}
     if not isinstance(excludes, dict):
         c.error(f"{f}: web.excludes", "辞書ではありません")

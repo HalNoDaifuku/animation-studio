@@ -18,7 +18,7 @@ class State:
         self.last_instance: int | None = None  # 最後に使った RSSHub の番号(0始まり)。次回は、これとは別のものから使い始める
         self.errors: dict[str, float] = {}  # キー → 最後にエラー通知を送った時刻(UNIX秒)
         self.web_fails: dict[str, int] = {}  # サイト監視の名前 → 実行を続けて失敗した回数(一時的なエラーを、すぐには通知しないため)
-        self.contents: dict[str, list[str]] = {}  # サイト監視の名前 → 直近に見た内容のハッシュ(古い順。連続する同じ内容は1件)
+        self.contents: dict[str, list[list]] = {}  # サイト監視の名前 → 直近に見た内容 [ハッシュ, その内容になった時刻(UNIX秒)](古い順。連続する同じ内容は1件)
         if self.path and self.path.exists():
             try:
                 data = json.loads(self.path.read_text(encoding="utf-8"))
@@ -27,7 +27,10 @@ class State:
                 self.channels = {k: str(v) for k, v in (data.get("channels") or {}).items()}
                 self.fetched = {k: float(v) for k, v in (data.get("fetched") or {}).items()}
                 self.web_fails = {k: int(v) for k, v in (data.get("web_fails") or {}).items()}
-                self.contents = {k: [str(x) for x in v] for k, v in (data.get("contents") or {}).items() if isinstance(v, list)}
+                now = time.time()
+                for k, v in (data.get("contents") or {}).items():
+                    if isinstance(v, list):   # 古い形式(ハッシュだけ)は、いまの時刻からの経過として扱う
+                        self.contents[k] = [[str(x[0]), float(x[1])] if isinstance(x, list) and len(x) == 2 else [str(x), now] for x in v]
                 li = data.get("last_instance")
                 self.last_instance = int(li) if isinstance(li, int) and not isinstance(li, bool) and li >= 0 else None
             except (ValueError, OSError, AttributeError):
@@ -62,24 +65,29 @@ class State:
         self.errors.pop(key, None)
         self.web_fails.pop(key, None)
 
-    def observe_content(self, key: str, digest: str, keep: int, commit: bool = True) -> str:
+    def observe_content(self, key: str, digest: str, keep: int, commit: bool = True,
+                        stable_hours: float = 0, now: float | None = None) -> str:
         """内容のハッシュを記録し、何が起きたかを返す。
-          "new"    … 記録がなかった(初めて見た)
-          "same"   … 前回と同じ内容
-          "revert" … 直近 keep 種類のうちのどれかに戻った(行き来しているだけ)
-          "change" … 見たことのない内容に変わった
+          "new"           … 記録がなかった(初めて見た)
+          "same"          … 前回と同じ内容
+          "revert"        … 直近 keep 種類のうちのどれかに戻った。離れる状態が stable_hours 時間より短い(行き来しているだけ)
+          "stable-revert" … 同じく戻ったが、離れる状態が stable_hours 時間以上続いていた(本当の変更なので通知する)
+          "change"        … 見たことのない内容に変わった
         commit=False なら、判定だけして記録は変えない(試し実行用)。"""
-        seen = list(self.contents.get(key, []))
+        t = now if now is not None else time.time()
+        seen = [list(x) for x in self.contents.get(key, [])]
+        hashes = [x[0] for x in seen]
         if not seen:
             verdict = "new"
-        elif seen[-1] == digest:
+        elif hashes[-1] == digest:
             verdict = "same"
-        elif digest in seen:
-            verdict = "revert"
+        elif digest in hashes:
+            dwell = t - seen[-1][1]
+            verdict = "revert" if dwell < stable_hours * 3600 else "stable-revert"
         else:
             verdict = "change"
         if commit and verdict != "same":
-            seen = [h for h in seen if h != digest] + [digest]
+            seen = [x for x in seen if x[0] != digest] + [[digest, t]]
             self.contents[key] = seen[-max(keep, 1):]
         return verdict
 

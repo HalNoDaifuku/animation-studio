@@ -39,6 +39,16 @@ class ValidateTest(unittest.TestCase):
             p.write_text(yaml.safe_dump(d, allow_unicode=True), encoding="utf-8")
             self.assertHasError(validate_config(root), "revert_suppression")
 
+    def test_revert_suppression_stable_hours_must_be_non_negative_number(self):
+        import yaml
+        for bad in (-1, "12", True):
+            root = make_root(companies={"cloverworks": load_sample("cloverworks")})
+            p = root / "config" / "common.yaml"
+            d = yaml.safe_load(p.read_text(encoding="utf-8"))
+            d["web"]["revert_suppression"]["stable_hours"] = bad
+            p.write_text(yaml.safe_dump(d, allow_unicode=True), encoding="utf-8")
+            self.assertHasError(validate_config(root), "stable_hours")
+
     def test_same_url_in_two_companies_is_an_error(self):
         a, b = load_sample("cloverworks"), load_sample("bones")
         b["monitors"][0]["url"] = a["monitors"][0]["url"]

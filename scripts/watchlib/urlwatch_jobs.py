@@ -63,6 +63,12 @@ def revert_history(cfg: Config) -> int:
     return value if isinstance(value, int) and not isinstance(value, bool) and value > 0 else 0
 
 
+def revert_stable_hours(cfg: Config) -> float:
+    """web.revert_suppression.stable_hours: 前の状態がこの時間以上続いていたら、戻りも通知する(0なら、戻りを必ず通知する)。"""
+    value = (cfg.web.get("revert_suppression") or {}).get("stable_hours", 12)
+    return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0 else 12.0
+
+
 def build_jobs(cfg: Config, only: str | None = None) -> tuple[list[dict], list[JobInfo]]:
     jobs: list[dict] = []
     infos: list[JobInfo] = []
