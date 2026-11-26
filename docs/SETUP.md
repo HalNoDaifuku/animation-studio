@@ -39,7 +39,7 @@
 - サイトだけでも、SNSだけでも構いません。サイトだけなら `sns.accounts` は全部 null、SNSだけなら `monitors` を書かない(または空)にします。
 - `db/portals/` のファイルは、所在地(`location`)を省略できます。
 - `type` は省略すると `portal` になります(`common.yaml` の `company_types` に足せば、別の種別も使えます)。
-- 職種が決まらない通知は、`config/discord.yaml` の `channels.types.portal` のチャンネルへ送られます(未設定なら fallback)。
+- 送り先は、**アニメ会社と同じ**です(`common.yaml` の `company_types.portal.route_like_studio: true`)。通知の本文に職種の語があればその職種のチャンネルへ、なければ fallback へ送ります。portal 用のチャンネルは使いません(`false` にすると、職種では分けず `channels.types.portal` へ送る従来の動きに戻ります)。
 - フォルダと type が食い違うと(db/companies/ に portal、db/portals/ に studio)、設定チェックがエラーにします。
 
 ### 送り先のルール
@@ -49,7 +49,7 @@
 4. サイト監視のエラー・RSSHub取得エラー・urlwatch実行失敗は `errors`(未設定なら fallback / 職種のチャンネル)。
 
 > 撮影の募集ページのように、職種専用のページは、監視URLに `roles: [compositing]` のように書くと、本文から職種が分からなくてもその職種へ送れます。
-> 就活サイトなど(portal)は、職種では分けず、`types.portal` のチャンネルへ送ります。
+> 就活サイトなど(portal)も、アニメ会社と同じように職種で分けて送ります(`route_like_studio`)。
 
 ## 3. 使い方(ローカル)
 
@@ -182,7 +182,8 @@ X の取得は、1つの RSSHub だと要求の制限(タイムアウト)に当�
         web: "チャンネルID"
   ```
 - 判定できなかったとき(キー未設定・上限・失敗・読めない応答)は、「関係あり」として今までどおりの送り先に送ります(通知を隠しません)。
-- **就活ポータル(`db/portals/`)のSNS**: 単語での絞り込み(含める語・弾く語)をせず、リポスト以外の全投稿をそのままAIに渡して判定します。この動作は `config/common.yaml` の `sns.no_word_filter_types`(既定 `[portal]`)で決まります。アニメ会社(studio)は、従来どおり単語で絞ってからAIが判定します。ポータルのサイト監視は、職種ごとの振り分けをせず(`roles` を書いたときだけ職種で分けます)、AIの要約と判定で通知します。
+- **就活ポータル(`db/portals/`)のSNS**: 単語での絞り込み(含める語・弾く語)をせず、リポスト以外の全投稿をそのままAIに渡して判定します。この動作は `config/common.yaml` の `sns.no_word_filter_types`(既定 `[portal]`)で決まります。アニメ会社(studio)は、従来どおり単語で絞ってからAIが判定します。ポータルのサイト監視と送り先は、アニメ会社と同じです(職種の語があれば職種のチャンネル、なければ fallback。AIの要約と判定も同じ)。
+- **リツイート**: `sns.exclude_retweets: false`(既定)なので、リツイートも取得して、ふつうの投稿と同じように判定します(単語の絞り込みはポータル以外、職種の判定、AIの関連判定)。除きたいときは `true` にします。検索系のクエリの `-filter:retweets` は別の設定です。
 - 設定と指示・見本は `config/ai.yaml` の `relevance`(SNS)と `summary`(サイト)です。1回の実行の上限は `relevance.max_per_run`(既定60件)。誤判定は、`examples` に足すと直ります。
 - ログには `[関連判定]` の行が出ます(関係なしの投稿、判定できなかった理由、件数のまとめ)。
 

@@ -29,6 +29,9 @@ company_types:
     name: アニメ会社
   portal:
     name: 就活・求人サイト(アニメ会社ではないもの)
+    # true なら、職種の判定と送り先を、アニメ会社と同じにする(職種のチャンネル → fallback)。専用のチャンネルは使わない。
+    # false なら、職種では分けず、種別のチャンネル(discord.yaml の channels.types.portal)へ送る。
+    route_like_studio: true
 
 # -----------------------------------------------------------------------------
 # 1. 職種
@@ -291,8 +294,10 @@ sns:
       search_feed: null
 
   # リポスト(リツイート)を通知しない。true なら、RSSHubのパラメータ(user_params)に加えて、
-  # 本文が「RT @」「🔁」で始まる投稿も取り除く(検索系のクエリには -filter:retweets が付く)。
-  exclude_retweets: true
+  # 本文が「RT @」「🔁」で始まる投稿も取り除く。
+  # false(いま)なら、リツイートも取得して、ふつうの投稿と同じように、単語・職種・AIの判定にかける。
+  #   ※検索系のクエリの -filter:retweets(下の search_query_suffix)は、この設定とは別。
+  exclude_retweets: false
 
   # 単語での絞り込み(採用ワードで残す・弾く語で除く)をしない会社の種別。
   # ここに書いた種別(就活ポータルなど)は、リポスト以外の全投稿をそのままAIに渡して、関係あり/なしを判定してから通知する。

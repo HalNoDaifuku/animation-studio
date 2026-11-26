@@ -114,7 +114,26 @@ class RsshubE2E(unittest.TestCase):
         self.go()
         self.assertEqual(len(self.discord.messages(CH_A)), 1)
 
-    def test_retweets_are_not_notified(self):
+    def set_exclude_retweets(self, value: bool):
+        import yaml
+        path = self.root / "config" / "common.yaml"
+        d = yaml.safe_load(path.read_text(encoding="utf-8"))
+        d["sns"]["exclude_retweets"] = value
+        path.write_text(yaml.safe_dump(d, allow_unicode=True), encoding="utf-8")
+
+    def test_retweets_are_notified_by_default(self):
+        self.hub.feeds[self.path] = []
+        self.go()
+        self.hub.feeds[self.path] = [self.item(2, "RT @other: 原画マン募集"), self.item(1, "原画マン募集")]
+        self.go()
+        texts = [m["content"] for m in self.discord.messages(CH_A)]
+        self.assertEqual(len(texts), 2)
+        self.assertTrue(any("RT @" in t for t in texts))          # リツイートも通知(AIの判定にかける)
+        self.go()
+        self.assertEqual(len(self.discord.messages(CH_A)), 2)     # 再通知されない
+
+    def test_retweets_are_not_notified_when_excluded(self):
+        self.set_exclude_retweets(True)
         self.hub.feeds[self.path] = []
         self.go()
         self.hub.feeds[self.path] = [self.item(2, "RT @other: 原画マン募集"), self.item(1, "原画マン募集")]
@@ -460,17 +479,42 @@ class UrlwatchE2E(unittest.TestCase):
         self.assertIn(f"URL: {self.web.base}/recruit/", changed[0]["content"])   # コマンドではなく、表示用のURL
         self.assertNotIn("fetch_urlwatch_last_good", changed[0]["content"])
 
-    def test_portal_goes_to_type_channel(self):
+    def _portal_setup(self, route_like_studio: bool = True):
         import yaml
         portal = load_sample("cloverworks")
         portal.update(slug="jobsite", id="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", display_name="就活サイト", roles=[])
         portal["monitors"][0].update(url=self.web.base + "/recruit/", roles=[])
         write_company(self.root, "jobsite", portal, folder="portals")   # portals/ に置けば、type は自動で portal
         (self.root / "db" / "companies" / "cloverworks.yaml").unlink()
+        cpath = self.root / "config" / "common.yaml"
+        c = yaml.safe_load(cpath.read_text(encoding="utf-8"))
+        c["company_types"]["portal"]["route_like_studio"] = route_like_studio
+        cpath.write_text(yaml.safe_dump(c, allow_unicode=True), encoding="utf-8")
         path = self.root / "config" / "discord.yaml"
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         data["discord"]["channels"]["types"] = {"portal": "100000000000000009"}
         path.write_text(yaml.safe_dump(data), encoding="utf-8")
+
+    def test_portal_is_routed_like_a_studio(self):
+        self._portal_setup(route_like_studio=True)
+        self.web.pages["/recruit/"] = "<html><body>\n<p>お知らせ</p>\n</body></html>"
+        self.go("--skip-new")
+        self.web.pages["/recruit/"] = "<html><body>\n<p>お知らせ</p>\n<p>原画を募集</p>\n</body></html>"
+        self.go("--skip-new")
+        changed = [m for m in self.discord.messages() if "変更検知" in m["content"]]
+        self.assertEqual({m["channel"] for m in changed}, {CH_A})   # 職種(原画)のチャンネルへ。portal 用のチャンネルには送らない
+
+    def test_portal_without_role_words_goes_to_fallback(self):
+        self._portal_setup(route_like_studio=True)
+        self.web.pages["/recruit/"] = "<html><body>\n<p>お知らせ</p>\n</body></html>"
+        self.go("--skip-new")
+        self.web.pages["/recruit/"] = "<html><body>\n<p>お知らせ</p>\n<p>新着情報です</p>\n</body></html>"
+        self.go("--skip-new")
+        changed = [m for m in self.discord.messages() if "変更検知" in m["content"]]
+        self.assertEqual({m["channel"] for m in changed}, {CH_FB})  # 職種の語がなければ fallback(portal 用のチャンネルではない)
+
+    def test_portal_goes_to_type_channel_when_not_routed_like_studio(self):
+        self._portal_setup(route_like_studio=False)
         self.go("--skip-new")
         self.web.pages["/recruit/"] = "<html><body><p>新着の求人</p></body></html>"
         self.go("--skip-new")

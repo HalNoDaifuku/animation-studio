@@ -96,7 +96,7 @@ class RsshubUrlTest(unittest.TestCase):
         q = parse_qs(urlsplit(feeds[0].url).query)
         self.assertNotIn("filter", q)                                  # 就活ポータルは単語で絞らない(AIが判定する)
         self.assertNotIn("filterout", q)
-        self.assertEqual(q["includeRts"], ["0"])                       # リポストは従来どおり除く
+        self.assertNotIn("includeRts", q)                              # リツイートも取得する(exclude_retweets: false)
         cfg2, _ = cfg_with()
         feeds2, _ = rsshub.build_feeds(cfg2, "https://hub.example/", None)
         self.assertIn("filter", parse_qs(urlsplit(feeds2[0].url).query))   # アニメ会社は従来どおり
@@ -114,13 +114,16 @@ class RsshubUrlTest(unittest.TestCase):
         self.assertEqual(q["filterout"][0].split("|"), ["抽選", "発売", "プレゼント", "🎁", "キャンペーン", "舞台挨拶", "お便り"])
         self.assertEqual(q["filter"][0].split("|"), ["募集", "応募", "採用", "求人", "新卒", "企業説明会", "会社説明会"])
         self.assertEqual(q["format"], ["json"])
-        self.assertEqual(q["includeRts"], ["0"])                      # リポストを含めない
+        self.assertNotIn("includeRts", q)                             # リツイートも取得する(既定)
         self.assertNotIn("KEY123", feed.url)
         self.assertIn("key=KEY123", feed.request_url)
         self.assertNotIn("KEY123", rsshub.mask_key(feed.request_url))
 
-    def test_retweet_switch_off_removes_param(self):
+    def test_retweet_switch_adds_or_removes_param(self):
         cfg, _ = cfg_with()
+        cfg.common["sns"]["exclude_retweets"] = True
+        feeds, _ = rsshub.build_feeds(cfg, "https://hub.example")
+        self.assertIn("includeRts=0", feeds[0].url)
         cfg.common["sns"]["exclude_retweets"] = False
         feeds, _ = rsshub.build_feeds(cfg, "https://hub.example")
         self.assertNotIn("includeRts", feeds[0].url)

@@ -15,7 +15,7 @@ from .discord import DiscordError
 from .messages import (build_diff_message, build_error_message, build_summary_message, build_feed_error_message, build_sns_message,
                        split_long_text, CHUNK_LIMIT, JST)
 from .report import ReportEntry, parse_report
-from .routing import Target, pick_roles, resolve_channels
+from .routing import Target, effective_type, pick_roles, resolve_channels
 from .rsshub import Feed, FeedFetchError, fetch_feed, fetch_youtube, fetch_youtube_api, is_retweet
 from .state import State
 from .urlwatch_jobs import JobInfo
@@ -90,7 +90,7 @@ def _where(targets: list) -> str:
 
 def _targets(cfg: Config, company: dict, hint_roles, text, dry_run: bool) -> list[Target]:
     roles = pick_roles(cfg, company, hint_roles=hint_roles, text=text)
-    targets = resolve_channels(roles, cfg.discord_channels, company.get("type"))
+    targets = resolve_channels(roles, cfg.discord_channels, effective_type(cfg, company))
     if not targets and dry_run:
         targets = [Target("(未設定)", roles)]
     return targets

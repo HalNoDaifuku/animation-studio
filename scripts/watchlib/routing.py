@@ -6,8 +6,9 @@
   2. 本文から職種が分からない通知は、全職種には送らず、種別のチャンネル → fallback(未分類)へ送る。
      ただし、監視URLに roles を書いた(職種専用のページ)場合は、その職種へ送る。
   3. 職種の候補は、監視URLの roles(空なら common.yaml の全職種)。会社の roles は、その会社だけ
-     除外語を調整したいときの上書きに使う。就活サイトなど(portal)は、会社の roles を書いたときだけ職種で分け、
-     書いていなければ、種別のチャンネルへ送る。
+     除外語を調整したいときの上書きに使う。就活サイトなど(portal)も、common.yaml の
+     company_types.<種別>.route_like_studio が true なら、アニメ会社と同じように職種で分ける
+     (false なら、会社の roles を書いたときだけ職種で分け、書いていなければ種別のチャンネルへ送る)。
   4. 職種 → チャンネルは config/discord.yaml の channels.roles。未設定の職種があれば fallback へ
   5. 同じチャンネルに複数の職種が割り当てられていても、1回しか送らない
 """
@@ -58,7 +59,8 @@ def pick_roles(
 ) -> list[str]:
     """通知の対象になる職種IDのリスト。"""
     own = {e["id"]: e for e in company_role_entries(company)}   # 会社ごとの除外語の調整つきの職種
-    if company.get("type", "studio") == "studio":
+    ctype = company.get("type", "studio")
+    if ctype == "studio" or (cfg.common.get("company_types") or {}).get(ctype, {}).get("route_like_studio"):
         entries = [own.get(rid) or {"id": rid, "exclude_words": {}} for rid in cfg.job_roles]
         for rid, e in own.items():                               # 辞書にない職種IDも残す(検査でエラーになる)
             if rid not in cfg.job_roles:
@@ -80,6 +82,13 @@ class Target:
     channel_id: str
     roles: list[str] = field(default_factory=list)
     is_fallback: bool = False
+
+
+def effective_type(cfg: Config, company: dict) -> str:
+    """送り先を決めるときの種別。route_like_studio の種別(portal など)は、アニメ会社(studio)として扱う。"""
+    ctype = company.get("type") or "studio"
+    types = (getattr(cfg, "common", None) or {}).get("company_types") or {}
+    return "studio" if (types.get(ctype) or {}).get("route_like_studio") else ctype
 
 
 def resolve_channels(role_ids: list[str], discord_channels: dict, company_type: str | None = None) -> list[Target]:

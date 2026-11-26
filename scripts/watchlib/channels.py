@@ -38,7 +38,9 @@ def used_role_ids(cfg: Config) -> list[str]:
 
 def used_types(cfg: Config) -> list[str]:
     """studio 以外で、会社ファイルに使われている種別(common.yaml の並び順)。"""
-    used = {co.get("type") for co in cfg.companies if co.get("type") and co.get("type") != "studio"}
+    types = cfg.common.get("company_types") or {}
+    used = {co.get("type") for co in cfg.companies if co.get("type") and co.get("type") != "studio"
+            and not (types.get(co.get("type")) or {}).get("route_like_studio")}   # アニメ会社と同じ扱いの種別は、専用のチャンネルを作らない
     return [t for t in (cfg.common.get("company_types") or {}) if t in used]
 
 
