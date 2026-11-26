@@ -1,5 +1,5 @@
 # =============================================================================
-# db/companies/cygames-pictures.yaml — CygamesPictures
+# db/companies/cypic.yaml — Cypic(サイピク。旧 CygamesPictures)
 # =============================================================================
 # 元の .urlwatch/urls.yaml から自動生成した初期版です。
 #   確認済み: 監視URLと urlwatch の設定(元の urls.yaml のまま)
@@ -10,12 +10,13 @@
 schema_version: 1
 
 id: 74e6f4aa-36da-4153-8547-f76b2196ff20
-slug: cygames-pictures
+slug: cypic
 
-name: CygamesPictures
-display_name: CygamesPictures
-name_en: null
-name_history: []
+name: Cypic
+display_name: Cypic
+name_en: Cypic
+name_history:
+  - CygamesPictures(Cypic に社名変更。変更日は未確認。2026-11-26 に Hal から連絡。読みは「サイピク」)
 
 founded_year: null
 
@@ -52,7 +53,7 @@ sns:
     default_filter:
       include: {add: [], remove: []}
       exclude: {add: [], remove: []}
-    keywords: [CygamesPictures, Cypic, サイピク]
+    keywords: [Cypic, サイピク, CygamesPictures]
     use_presets: []
     custom: {}
 
