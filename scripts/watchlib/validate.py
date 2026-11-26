@@ -150,6 +150,13 @@ def check_ai(c: _Collector, cfg: Config) -> None:
     if judgements is not None and (not isinstance(judgements, list) or not judgements or not all(isinstance(j, str) and j.strip() for j in judgements)):
         c.error(f"{f}: summary.judgements", "文字列のリストで書いてください")
         judgements = None
+    irr = s.get("irrelevant_judgements")
+    if irr is not None and (not isinstance(irr, list) or not all(isinstance(j, str) and j.strip() for j in irr)):
+        c.error(f"{f}: summary.irrelevant_judgements", "文字列のリストで書いてください(空は [])")
+    elif irr and judgements:
+        for j in irr:
+            if j not in judgements:
+                c.error(f"{f}: summary.irrelevant_judgements", f"「{j}」は judgements にありません")
     if isinstance(s.get("instructions"), str) and "{judgements}" not in s["instructions"]:
         c.warn(f"{f}: summary.instructions", "{judgements} がありません。判定に使える言葉がAIに伝わりません")
     tmpl = s.get("user_template")

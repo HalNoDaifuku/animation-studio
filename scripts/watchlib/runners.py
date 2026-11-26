@@ -544,9 +544,10 @@ def run_urlwatch_report(cfg: Config, report_text: str, infos: list[JobInfo], bot
                                                   archive_url=archive_url, archive_status=archive_status,
                                                   summary=summary, note=note)]
                 irr_web = (cfg.discord_channels.get("irrelevant") or {}).get("web")
-                if summary and irr_web and judgement_of(summary) == "採用と無関係":
+                judged = judgement_of(summary)
+                if summary and irr_web and judged in getattr(summarizer, "irrelevant_judgements", ("採用と無関係",)):
                     targets = [Target(irr_web)]
-                    log(f"[関連判定] 採用と無関係: {entry.name} → 関係ない通知用のチャンネル")
+                    log(f"[関連判定] {judged}: {entry.name} → 関係ない通知用のチャンネル")
                 log(f"[要約] {entry.name}: " + (f"要約しました({len(summary)}字)" if summary
                                                   else f"要約なし({note})"))
             else:

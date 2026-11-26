@@ -19,7 +19,9 @@ from typing import Callable
 
 DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com"
 
-DEFAULT_JUDGEMENTS = ("募集開始・追加", "募集終了", "条件・内容の変更", "採用と無関係", "判断できない")
+DEFAULT_JUDGEMENTS = ("募集開始・追加", "募集終了", "条件・内容の変更", "採用と無関係", "変更なし", "判断できない")
+DEFAULT_IRRELEVANT_JUDGEMENTS = ("採用と無関係", "変更なし")   # この判定は、関係ない通知用のチャンネル(irrelevant.web)へ送る
+FORMAT_ONLY_SUMMARY = "改行・空白・並び順など、表記だけが変わりました。\n文章の内容は変わっていません。\n判定: 変更なし"
 DEFAULT_USER_TEMPLATE = "会社: {company}\nページ: {page}\n差分(追加は+、削除は-。長い場合は先頭のみ):\n{diff}"
 
 
@@ -89,6 +91,14 @@ def condense_diff(body: str, *, max_chars: int = 20000) -> tuple[str, bool]:
     if len(text) > max_chars:
         return text[:max_chars] + f"\n(以下省略: 差分が長いため、先頭の{max_chars}文字だけを渡しています)", True
     return text, False
+
+
+def is_format_only(condensed: str) -> bool:
+    """差分が、改行・空白だけの違いか(整形後に、変わった行がない、または削除と追加が空白を除くと同じ)。"""
+    removed = "".join(ln[1:] for ln in condensed.splitlines() if ln.startswith("-") and not ln.startswith("---"))
+    added = "".join(ln[1:] for ln in condensed.splitlines() if ln.startswith("+") and not ln.startswith("+++"))
+    strip = lambda t: re.sub(r"\s+", "", t)   # noqa: E731
+    return strip(removed) == strip(added)
 
 
 def judgement_of(summary: str | None) -> str:
@@ -177,6 +187,8 @@ class Summarizer:
         self.base_url = str(o.get("base_url", DEFAULT_BASE_URL))
         self.max_per_run = int(o.get("max_per_run", 20))
         self.system_prompt = build_system_prompt(o)
+        irr = o.get("irrelevant_judgements")
+        self.irrelevant_judgements = tuple(str(j) for j in irr) if isinstance(irr, list) else DEFAULT_IRRELEVANT_JUDGEMENTS
         self.user_template = str(o.get("user_template") or DEFAULT_USER_TEMPLATE)
         if self.enabled and not str(o.get("instructions") or "").strip():
             self.enabled = False
@@ -196,6 +208,8 @@ class Summarizer:
         condensed, truncated = condense_diff(body, max_chars=self.max_input_chars)
         if not self.enabled:
             return None, "", condensed
+        if is_format_only(condensed):   # 改行・空白だけの違い: AIに聞かず(上限も使わず)、「変更なし」と判定する
+            return FORMAT_ONLY_SUMMARY, "", condensed
         if not self.api_key:
             return None, "GEMINI_API_KEY が設定されていないため", condensed
         if self._quota_hit:

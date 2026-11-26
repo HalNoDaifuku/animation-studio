@@ -635,6 +635,32 @@ class AiSummaryE2E(unittest.TestCase):
         others = [m for m in self.changed_msgs() if m not in irr]
         self.assertEqual(others, [])
 
+    def test_format_only_change_is_judged_unchanged_without_ai_and_goes_to_irrelevant(self):
+        import yaml
+        CH_IRR = "100000000000000009"
+        dp = self.root / "config" / "discord.yaml"
+        d = yaml.safe_load(dp.read_text(encoding="utf-8"))
+        d["discord"]["channels"]["irrelevant"] = {"web": CH_IRR}
+        dp.write_text(yaml.safe_dump(d, allow_unicode=True), encoding="utf-8")
+        self.go("--skip-new")
+        self.discord.requests.clear()
+        self.gemini.requests.clear()
+        for path in ("/recruit/", "/two/"):   # 文章は同じで、改行が増えただけ
+            self.web.pages[path] = self.LONG_A.replace("</p><p>募集職種1", "</p>\n<p>募集職種1")
+        self.go("--skip-new")
+        msgs = self.changed_msgs()
+        self.assertTrue(msgs)
+        self.assertEqual(self.gemini.requests, [])                  # AIは呼ばない
+        self.assertTrue(all(m["channel"] == CH_IRR and "判定: 変更なし" in m["content"] and m["files"] for m in msgs))
+
+    def test_format_only_judgement_works_without_api_key(self):
+        self.env = {"DISCORD_BOT_TOKEN": "TOK"}
+        self.go("--skip-new")
+        self.discord.requests.clear()
+        self.web.pages["/recruit/"] = self.LONG_A.replace("</p><p>募集職種1", "</p>\n<p>募集職種1")
+        self.go("--skip-new")
+        self.assertTrue([m for m in self.changed_msgs() if "判定: 変更なし" in m["content"]])
+
     def test_summary_and_file_sent_once_per_diff(self):
         self.change(self.LONG_ADD)
         self.go("--skip-new")
